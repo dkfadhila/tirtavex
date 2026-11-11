@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { motion, useScroll, useSpring } from "motion/react";
+import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
 import { timeAgo } from "@/lib/format";
 import { safeHttpUrl, safeXUrl } from "@/lib/safe-url";
 import { Magnetic } from "./ui";
@@ -18,6 +18,7 @@ const LINKS = [
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   return (
     <>
       <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-pill focus:bg-white focus:px-3 focus:py-2">
@@ -26,7 +27,19 @@ export function Shell({ children }: { children: ReactNode }) {
       <Progress />
       <Cursor />
       <Nav />
-      <main id="content">{children}</main>
+      <main id="content">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0.001, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0.001 }}
+            transition={{ duration: 0.7, delay: 0.2, ease: [0.79, 0.03, 0.36, 1] }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </main>
       <Footer />
       <BackToTop />
     </>

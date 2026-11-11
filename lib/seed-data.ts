@@ -1,3 +1,4 @@
+import { stills } from "./stills";
 import type {
   Article,
   LegalPage,
@@ -248,7 +249,7 @@ export function buildSeed(now = new Date()): SiteContent {
     }),
   ];
 
-  const workStills = ["/media/work-1.webp", "/media/work-2.webp", "/media/work-3.webp", "/media/work-4.webp", "/media/work-5.webp", "/media/work-6.webp"];
+  const workStills = stills().panels;
   items.forEach((item, index) => {
     item.thumb.src = workStills[index % workStills.length];
     item.thumb.w = 1600;
@@ -577,7 +578,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Hero film plus three cutdowns", "Thumbnail system the partner program still uses", "Post became the best-performing launch asset that week"],
         outcome: "2.4M impressions on the hero post.",
         scope: ["AI video", "Campaign"],
-        cover: "/media/work-1.webp",
+        cover: stills().panels[0],
         accent: "#10B981",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000001",
         websiteUrl: "https://example.com/neon-bazaar",
@@ -607,7 +608,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["42-second explainer", "Still set for the docs", "Thread reduced to four posts"],
         outcome: "980K impressions. Docs linked the post instead of a loom.",
         scope: ["Web3", "AI video"],
-        cover: "/media/work-2.webp",
+        cover: stills().panels[1],
         accent: "#0F766E",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000002",
         websiteUrl: "",
@@ -637,7 +638,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Season film", "Member cutdowns", "Caption system"],
         outcome: "Reposted across the contributor graph in a day.",
         scope: ["Collab", "AI video"],
-        cover: "/media/work-3.webp",
+        cover: stills().panels[2],
         accent: "#34D399",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000004",
         websiteUrl: "",
@@ -667,7 +668,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Title sequence", "Teaser post", "Three still studies"],
         outcome: "Teaser carried the announcement. The sequence opened the drop.",
         scope: ["AI video", "Campaign"],
-        cover: "/media/work-4.webp",
+        cover: stills().panels[3],
         accent: "#065F46",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000005",
         websiteUrl: "https://example.com/archive",
@@ -697,7 +698,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Winner", "Featured by the organizer", "Still used in their recap"],
         outcome: "3.1M impressions. The entry post is the case study.",
         scope: ["Contest", "AI video"],
-        cover: "/media/work-5.webp",
+        cover: stills().panels[4],
         accent: "#047857",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000008",
         websiteUrl: "",
@@ -727,7 +728,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Format other creators borrowed", "Cohort teaching piece"],
         outcome: "A repeatable 55-second structure.",
         scope: ["Web3", "Thread"],
-        cover: "/media/work-6.webp",
+        cover: stills().panels[5],
         accent: "#059669",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000006",
         websiteUrl: "",

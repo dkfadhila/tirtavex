@@ -1,36 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { motion } from "motion/react";
+import { useState, type MouseEvent } from "react";
+import { motion, useReducedMotion, useSpring, useTransform } from "motion/react";
 import type { Project, WorkItem } from "@/lib/types";
 import { safeHttpUrl, safeXUrl } from "@/lib/safe-url";
+import { stills } from "@/lib/stills";
 import { useSite } from "./site-provider";
 import { BriefForm } from "./contact-form";
 import { Still } from "./still";
-import { Magnetic } from "./ui";
+import { Magnetic, Reveal, TextReveal } from "./ui";
+
+const shots = stills();
 
 const TILES = [
-  { src: "/media/tile-1.webp", alt: "Camera and emerald glass", className: "left-[3%] top-[18%] hidden w-[16vw] max-w-[140px] sm:block md:top-[14%]" },
-  { src: "/media/tile-2.webp", alt: "Emerald crystal still", className: "left-[2%] bottom-[16%] hidden w-[14vw] max-w-[130px] md:block" },
-  { src: "/media/tile-3.webp", alt: "Desk and a wave of light", className: "right-[3%] top-[18%] hidden w-[16vw] max-w-[140px] sm:block md:top-[12%]" },
-  { src: "/media/tile-4.webp", alt: "Green drink in daylight", className: "right-[4%] top-[48%] hidden w-[14vw] max-w-[130px] md:block" },
+  { src: shots.tiles[0], alt: "Floating still", className: "left-[3%] top-[18%] hidden w-[16vw] max-w-[140px] sm:block md:top-[14%]", shift: 1.6 },
+  { src: shots.tiles[1], alt: "Floating still", className: "left-[2%] bottom-[16%] hidden w-[14vw] max-w-[130px] md:block", shift: -1.2 },
+  { src: shots.tiles[2], alt: "Floating still", className: "right-[3%] top-[18%] hidden w-[16vw] max-w-[140px] sm:block md:top-[12%]", shift: -1.5 },
+  { src: shots.tiles[3], alt: "Floating still", className: "right-[4%] top-[48%] hidden w-[14vw] max-w-[130px] md:block", shift: 1.1 },
 ];
 
 const SERVICES = [
-  { label: "Campaign imagery", href: "/projects", src: "/media/work-1.webp", alt: "AI short film" },
-  { label: "Social content", href: "/work", src: "/media/work-6.webp", alt: "Creator collab" },
-  { label: "Product visuals", href: "/projects", src: "/media/work-3.webp", alt: "Creator brand kit" },
-  { label: "AI video", href: "/work", src: "/media/work-4.webp", alt: "Kinetic reel" },
+  { label: "Campaign imagery", href: "/projects", src: shots.services[0], alt: "Campaign imagery" },
+  { label: "Social content", href: "/work", src: shots.services[1], alt: "Social content" },
+  { label: "Product visuals", href: "/projects", src: shots.services[2], alt: "Product visual" },
+  { label: "AI video", href: "/work", src: shots.services[3], alt: "AI video" },
 ];
 
 const GALLERY = [
-  { src: "/media/gallery-1.webp", alt: "Emerald lens", className: "aspect-[3/4] md:col-span-2" },
-  { src: "/media/gallery-2.webp", alt: "Network of light", className: "aspect-video md:col-span-4" },
-  { src: "/media/gallery-3.webp", alt: "Broken emerald glass", className: "aspect-[3/4] md:col-span-2" },
-  { src: "/media/gallery-4.webp", alt: "Studio light on paper", className: "aspect-[4/3] md:col-span-4" },
-  { src: "/media/gallery-5.webp", alt: "Orchids and glass", className: "aspect-[3/4] md:col-span-2" },
-  { src: "/media/gallery-6.webp", alt: "Emerald silk in motion", className: "aspect-video md:col-span-4" },
+  { src: shots.gallery[0], alt: "Gallery still", className: "aspect-[3/4] md:col-span-2" },
+  { src: shots.gallery[1], alt: "Gallery still", className: "aspect-video md:col-span-4" },
+  { src: shots.gallery[2], alt: "Gallery still", className: "aspect-[3/4] md:col-span-2" },
+  { src: shots.gallery[3], alt: "Gallery still", className: "aspect-[4/3] md:col-span-4" },
+  { src: shots.gallery[4], alt: "Gallery still", className: "aspect-[3/4] md:col-span-2" },
+  { src: shots.gallery[5], alt: "Gallery still", className: "aspect-video md:col-span-4" },
 ];
 
 export function HomeView() {
@@ -52,22 +55,36 @@ export function HomeView() {
 
 function Hero() {
   const { settings } = useSite().content;
+  const reduce = useReducedMotion();
   const headline = settings.heroHeadline || "AI video and Web3 stories that people actually watch.";
+  const px = useSpring(0, { stiffness: 500, damping: 60, mass: 1 });
+  const py = useSpring(0, { stiffness: 500, damping: 60, mass: 1 });
+  const follow = (event: MouseEvent<HTMLElement>) => {
+    if (reduce) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    px.set((event.clientX - rect.left - rect.width / 2) / 18);
+    py.set((event.clientY - rect.top - rect.height / 2) / 18);
+  };
   return (
-    <section className="relative min-h-[100svh] overflow-hidden bg-[#e7f3ee]">
-      <div className="absolute inset-y-0 left-1/2 w-[min(600px,86vw)] -translate-x-1/2">
-        <Still src="/media/hero.webp" alt="Editorial portrait in emerald silk" sizes="(max-width: 768px) 86vw, 600px" priority className="object-cover object-[center_20%]" />
-      </div>
+    <section className="relative min-h-[100svh] overflow-hidden bg-[#e7f3ee]" onMouseMove={follow} onMouseLeave={() => { px.set(0); py.set(0); }}>
+      <motion.div
+        className="absolute inset-y-0 left-1/2 w-[min(600px,86vw)] -translate-x-1/2"
+        initial={reduce ? false : { opacity: 0.001, scale: 1.04 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.7, ease: [0.66, 0.01, 0.42, 0.97] }}
+      >
+        <Still src={shots.hero} alt="Editorial portrait" sizes="(max-width: 768px) 86vw, 600px" priority className="object-cover object-[center_20%]" />
+      </motion.div>
       {TILES.map((tile, index) => (
-        <div key={tile.src} className={`float-photo absolute aspect-square overflow-hidden shadow-[0_18px_40px_-24px_rgba(6,78,59,.45)] ${tile.className}`} style={{ animationDelay: `${index * 0.6}s` }}>
-          <Still src={tile.src} alt={tile.alt} sizes="(max-width: 768px) 28vw, 180px" />
-        </div>
+        <FloatTile key={tile.src} tile={tile} index={index} px={px} py={py} />
       ))}
       <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center">
         <div className="w-[min(600px,86vw)] bg-gradient-to-t from-black/55 via-black/20 to-transparent px-4 pt-24 pb-16 text-center text-white md:pb-20">
-        <p className="text-[12px] tracking-[0.28em] uppercase">{settings.heroEyebrow}</p>
-        <h1 className="display mx-auto mt-4 max-w-full text-[clamp(36px,4.2vw,56px)] text-white">{headline}</h1>
-        {settings.heroLede ? <p className="mx-auto mt-5 max-w-md text-[13px] tracking-[0.14em] uppercase">{settings.heroLede}</p> : null}
+        <motion.p className="text-[12px] tracking-[0.28em] uppercase" initial={reduce ? false : { opacity: 0.001, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.4, delay: 0.3 }}>
+          {settings.heroEyebrow}
+        </motion.p>
+        <TextReveal as="h1" text={headline} play="mount" y={50} bounce={0.2} duration={0.6} start={0.1} className="display mx-auto mt-4 max-w-full text-[clamp(36px,4.2vw,56px)] text-white" />
+        {settings.heroLede ? <TextReveal text={settings.heroLede} play="mount" y={10} bounce={0} duration={0.4} start={0.45} className="mx-auto mt-5 max-w-md text-[13px] tracking-[0.14em] uppercase" /> : null}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Magnetic>
             <Link className="btn" href="/projects">
@@ -87,23 +104,62 @@ function Hero() {
   );
 }
 
+function FloatTile({
+  tile,
+  index,
+  px,
+  py,
+}: {
+  tile: (typeof TILES)[number];
+  index: number;
+  px: ReturnType<typeof useSpring>;
+  py: ReturnType<typeof useSpring>;
+}) {
+  const reduce = useReducedMotion();
+  const x = useTransform(px, (value) => value * tile.shift);
+  const y = useTransform(py, (value) => value * tile.shift * 0.6);
+  return (
+    <motion.div
+      className={`absolute aspect-square overflow-hidden shadow-[0_18px_40px_-24px_rgba(6,78,59,.45)] ${tile.className}`}
+      style={reduce ? undefined : { x, y }}
+      initial={reduce ? false : { opacity: 0.001, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: "spring", bounce: 0.2, duration: 0.8, delay: 0.2 + index * 0.12 }}
+    >
+      <motion.div
+        className="absolute inset-0"
+        animate={reduce ? undefined : { y: [0, index % 2 ? -10 : 10, 0] }}
+        transition={{ duration: 6.5 + index, repeat: Infinity, ease: [0.44, 0, 0.56, 1] }}
+      >
+        <Still src={tile.src} alt={tile.alt} sizes="(max-width: 768px) 28vw, 180px" />
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function Why() {
   const { settings } = useSite().content;
   return (
     <section className="bg-white px-6 py-[clamp(96px,14vh,180px)] text-center">
-      <p className="text-[12px] tracking-[0.28em] text-emerald-700 uppercase">{settings.introRightKicker || "Why Tirta"}</p>
+      <Reveal>
+        <p className="text-[12px] tracking-[0.28em] text-emerald-700 uppercase">{settings.introRightKicker || "Why Tirta"}</p>
+      </Reveal>
       <h2 className="mx-auto mt-6 max-w-3xl">
-        <span className="display block text-[clamp(40px,5vw,68px)] text-emerald-700">{settings.introRightTitle}</span>
-        <span className="display-roman mt-2 block text-[clamp(36px,4.6vw,60px)] text-ink">{settings.introLeftTitle}</span>
+        <TextReveal text={settings.introRightTitle} y={50} bounce={0.2} duration={0.6} start={0.1} className="display block text-[clamp(40px,5vw,68px)] text-emerald-700" />
+        <TextReveal text={settings.introLeftTitle} y={20} bounce={0.1} duration={0.5} start={0.4} className="display-roman mt-2 block text-[clamp(36px,4.6vw,60px)] text-ink" />
       </h2>
-      {settings.introRightBody ? <p className="mx-auto mt-8 max-w-md text-[13px] tracking-[0.12em] text-ink-muted uppercase">{settings.introRightBody}</p> : null}
+      {settings.introRightBody ? (
+        <Reveal y={10} delay={0.5}>
+          <p className="mx-auto mt-8 max-w-md text-[13px] tracking-[0.12em] text-ink-muted uppercase">{settings.introRightBody}</p>
+        </Reveal>
+      ) : null}
     </section>
   );
 }
 
 function WordStrip() {
   const words = useSite().content.settings.marquee.slice(0, 4);
-  const photos = ["/media/tile-1.webp", "/media/tile-3.webp"];
+  const photos = shots.strip;
   const row = words.length ? words : ["Faster", "Human", "Motion", "Brand"];
   return (
     <div className="grid grid-cols-2 md:grid-cols-4">
@@ -127,12 +183,16 @@ function Services() {
   return (
     <section>
       <div className="grid grid-cols-1 md:grid-cols-2">
-        {SERVICES.map((item) => (
-          <Link key={item.label} href={item.href} className="group relative aspect-[16/10] overflow-hidden">
-            <Still src={item.src} alt={item.alt} sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
-            <span className="absolute inset-0 bg-black/15 transition group-hover:bg-black/25" />
-            <span className="absolute inset-0 grid place-items-center px-6 text-center text-[13px] tracking-[0.28em] text-white uppercase">{item.label}</span>
-          </Link>
+        {SERVICES.map((item, index) => (
+          <Reveal key={item.label} y={40} bounce={0.2} duration={0.6} delay={0.075 + index * 0.08} className="relative aspect-[16/10]">
+            <Link href={item.href} className="group absolute inset-0 overflow-hidden">
+              <motion.div className="absolute inset-0" whileHover={{ scale: 1.04 }} transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
+                <Still src={item.src} alt={item.alt} sizes="(max-width: 768px) 100vw, 50vw" />
+              </motion.div>
+              <span className="absolute inset-0 bg-black/15 transition group-hover:bg-black/25" />
+              <span className="absolute inset-0 grid place-items-center px-6 text-center text-[13px] tracking-[0.28em] text-white uppercase">{item.label}</span>
+            </Link>
+          </Reveal>
         ))}
       </div>
     </section>
@@ -166,9 +226,11 @@ function Portfolio() {
   return (
     <section className="bg-white">
       <div className="px-6 pt-24 pb-10 text-center md:px-12">
-        <p className="text-[12px] tracking-[0.28em] text-emerald-700 uppercase">Featured collection</p>
-        <h2 className="display mt-4 text-[clamp(64px,9vw,120px)]">Portfolio</h2>
-        <p className="mt-4 text-sm tracking-[0.14em] text-ink-muted uppercase">Selected films and campaigns</p>
+        <Reveal>
+          <p className="text-[12px] tracking-[0.28em] text-emerald-700 uppercase">Featured collection</p>
+          <TextReveal as="h2" text="Portfolio" y={50} bounce={0.2} duration={0.6} start={0.1} className="display mt-4 text-[clamp(64px,9vw,120px)]" />
+          <p className="mt-4 text-sm tracking-[0.14em] text-ink-muted uppercase">Selected films and campaigns</p>
+        </Reveal>
       </div>
       <div className="grid gap-3 px-3 pb-3 md:grid-cols-2">
         {projects.map((project) => (
@@ -183,7 +245,9 @@ function ProjectPanel({ project }: { project: Project }) {
   const x = safeXUrl(project.xUrl);
   return (
     <article className="group relative aspect-[16/10] overflow-hidden bg-mist">
-      <Still src={project.cover} alt={project.name} sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-[1.04]" />
+      <motion.div className="absolute inset-0" whileHover={{ scale: 1.04 }} transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
+        <Still src={project.cover} alt={project.name} sizes="(max-width: 768px) 100vw, 50vw" />
+      </motion.div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6 text-white md:p-10">
         <div>
@@ -246,11 +310,17 @@ function Process() {
       <h2 className="display mt-4 text-center text-[clamp(48px,6vw,88px)]">From brief to the post.</h2>
       <ol className="mx-auto mt-16 grid max-w-6xl gap-12 md:grid-cols-4">
         {steps.map((step, index) => (
-          <li key={step.id}>
+          <motion.li
+            key={step.id}
+            initial={{ opacity: 0.001, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ type: "spring", bounce: 0.1, duration: 0.5, delay: 0.4 + index * 0.1 }}
+          >
             <p className="text-[12px] tracking-[0.2em] text-emerald-700 uppercase">0{index + 1} {step.kicker}</p>
             <h3 className="display mt-3 text-4xl">{step.title}</h3>
             <p className="mt-4 text-sm leading-relaxed text-ink-muted">{step.body}</p>
-          </li>
+          </motion.li>
         ))}
       </ol>
     </section>
@@ -265,10 +335,10 @@ function Gallery() {
         <h2 className="display mt-3 text-[clamp(48px,7vw,100px)]">Frames people replay.</h2>
       </div>
       <div className="grid grid-cols-1 gap-3 px-3 md:grid-cols-6">
-        {GALLERY.map((shot) => (
-          <div key={shot.src} className={`relative overflow-hidden ${shot.className}`}>
+        {GALLERY.map((shot, index) => (
+          <Reveal key={shot.src} y={30} bounce={0.2} duration={0.6} delay={0.075 + (index % 3) * 0.08} className={`relative overflow-hidden ${shot.className}`}>
             <Still src={shot.src} alt={shot.alt} sizes="(max-width: 768px) 100vw, 40vw" />
-          </div>
+          </Reveal>
         ))}
       </div>
     </section>
@@ -332,7 +402,9 @@ export function WorkCard({ item, priority = false }: { item: WorkItem; priority?
   const href = safeXUrl(item.xUrl);
   const body = (
     <article className="group relative aspect-[16/10] overflow-hidden">
-      <Still src={item.thumb.src} alt={item.title} sizes="(max-width: 768px) 100vw, 50vw" priority={priority} className="object-cover transition duration-700 group-hover:scale-105" />
+      <motion.div className="absolute inset-0" whileHover={{ scale: 1.04 }} transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
+        <Still src={item.thumb.src} alt={item.title} sizes="(max-width: 768px) 100vw, 50vw" priority={priority} />
+      </motion.div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-10">
         <p className="text-[12px] tracking-[0.2em] uppercase">{item.category.replace("-", " ")}</p>

@@ -41,9 +41,10 @@ import {
 } from "./schema";
 import type { AdminSnapshot, SiteContent, Submission } from "./types";
 import { isExampleHost, isPlaceholderEmail, isPlaceholderStatusUrl } from "./safe-url";
+import { stills } from "./stills";
 import { visibleText } from "./visible";
 
-const PANELS = ["/media/work-1.webp", "/media/work-2.webp", "/media/work-3.webp", "/media/work-4.webp", "/media/work-5.webp", "/media/work-6.webp"];
+const PANELS = stills().panels;
 
 function cleanString(value: string, key?: string) {
   if (key && (key === "src" || key.endsWith("Url") || key.endsWith("At") || key === "slug" || key === "id" || key === "xUrl" || key === "logo" || key === "cover")) {

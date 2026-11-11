@@ -5,25 +5,55 @@ import { motion, useReducedMotion } from "motion/react";
 import { compactNumber, fullNumber } from "@/lib/format";
 import { safeColor, safeHttpUrl, safeXUrl } from "@/lib/safe-url";
 
-const EASE = [0.16, 1, 0.3, 1] as const;
-
-export function Reveal({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+export function Reveal({
+  children,
+  className,
+  delay = 0.075,
+  y = 10,
+  bounce = 0,
+  duration = 0.4,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+  y?: number;
+  bounce?: number;
+  duration?: number;
+}) {
   const reduce = useReducedMotion();
   return (
     <motion.div
       className={className}
       data-reveal
-      initial={reduce ? false : { opacity: 0, y: 24 }}
+      initial={reduce ? false : { opacity: 0.001, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "0px 0px -8% 0px" }}
-      transition={{ duration: reduce ? 0.15 : 0.7, ease: EASE, delay: reduce ? 0 : delay }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={reduce ? { duration: 0.01 } : { type: "spring", bounce, duration, delay }}
     >
       {children}
     </motion.div>
   );
 }
 
-export function TextReveal({ text, className, as: Tag = "span" }: { text: string; className?: string; as?: "span" | "h1" | "h2" }) {
+export function TextReveal({
+  text,
+  className,
+  as: Tag = "span",
+  y = 10,
+  bounce = 0,
+  duration = 0.4,
+  start = 0,
+  play = "view",
+}: {
+  text: string;
+  className?: string;
+  as?: "span" | "h1" | "h2";
+  y?: number;
+  bounce?: number;
+  duration?: number;
+  start?: number;
+  play?: "view" | "mount";
+}) {
   const reduce = useReducedMotion();
   if (reduce) return <Tag className={className}>{text}</Tag>;
   const words = text.split(" ");
@@ -32,17 +62,18 @@ export function TextReveal({ text, className, as: Tag = "span" }: { text: string
       <span className="sr-only">{text}</span>
       <span aria-hidden>
         {words.map((word, index) => (
-          <span key={`${word}-${index}`} className="inline-block overflow-hidden align-bottom">
-            <motion.span
-              className="inline-block"
-              initial={{ y: "110%" }}
-              animate={{ y: "0%" }}
-              transition={{ duration: 0.8, ease: EASE, delay: 0.04 * index }}
-            >
-              {word}
-              {index < words.length - 1 ? "\u00A0" : ""}
-            </motion.span>
-          </span>
+          <motion.span
+            key={`${word}-${index}`}
+            className="inline-block"
+            initial={{ opacity: 0.001, y }}
+            {...(play === "mount"
+              ? { animate: { opacity: 1, y: 0 } }
+              : { whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.4 } })}
+            transition={{ type: "spring", bounce, duration, delay: start + index * 0.075 }}
+          >
+            {word}
+            {index < words.length - 1 ? "\u00A0" : ""}
+          </motion.span>
         ))}
       </span>
     </Tag>
@@ -81,24 +112,12 @@ export function Marquee({ items, className = "" }: { items: string[]; className?
   useEffect(() => {
     const node = track.current;
     if (!node || reduce || items.length === 0) return;
+    const distance = node.scrollWidth / 2;
     const animation = node.animate([{ transform: "translateX(0)" }, { transform: "translateX(-50%)" }], {
-      duration: 38000,
+      duration: Math.max(8000, (distance / 50) * 1000),
       iterations: Infinity,
     });
-    const parent = node.parentElement;
-    const slow = () => {
-      animation.playbackRate = 0.2;
-    };
-    const fast = () => {
-      animation.playbackRate = 1;
-    };
-    parent?.addEventListener("mouseenter", slow);
-    parent?.addEventListener("mouseleave", fast);
-    return () => {
-      animation.cancel();
-      parent?.removeEventListener("mouseenter", slow);
-      parent?.removeEventListener("mouseleave", fast);
-    };
+    return () => animation.cancel();
   }, [items, reduce]);
   return (
     <div className={`marquee ${className}`}>
