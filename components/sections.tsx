@@ -36,16 +36,15 @@ export function Hero() {
         <div className="ed-hero-shade" />
         <motion.div className="ed-hero-copy" style={reduce ? undefined : { y: titleY }}>
           <p className="t-eyebrow !text-white">
-            <Split text={settings.heroEyebrow || "TirtaVEX"} mode="char" hero />
+            <Split text={heroGreeting(settings.heroEyebrow)} mode="char" hero />
           </p>
-          <motion.h1 className="t-hero mt-3 text-white" initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={spring(0.8, 0.2, 0.2)}>
+          <motion.h1 className="ed-hero-name" initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={spring(0.8, 0.2, 0.2)}>
             {title}
           </motion.h1>
-          <p className="t-body mx-auto mt-4 max-w-[320px] !text-white">
+          <p className="ed-hero-tag">
             <Split text={settings.heroTagline || settings.heroLede} mode="word" />
           </p>
         </motion.div>
-        <p className="t-meta absolute right-6 bottom-6 z-10 text-white">@tirtaVEX</p>
       </section>
       <NameTicker items={settings.marquee.length ? settings.marquee : settings.genres} />
     </>
@@ -290,6 +289,11 @@ export function ContactSection({ full = false }: { full?: boolean }) {
       </div>
     </section>
   );
+}
+
+function heroGreeting(value: string) {
+  if (!value || /tirtavex/i.test(value)) return "Meet me";
+  return value;
 }
 
 function Split({

@@ -413,10 +413,10 @@ html.intro-seen .hero-curtain { display: none; }
 @keyframes hticker { from { transform: translate3d(0,0,0); } to { transform: translate3d(-50%,0,0); } }
 .h-ticker:hover .h-track { animation-play-state: paused; }
 
-.ed-nav-wrap { pointer-events: none; position: fixed; inset: 18px 12px auto; z-index: 60; display: flex; justify-content: center; }
+.ed-nav-wrap { pointer-events: none; position: fixed; top: 18px; right: 12px; left: auto; z-index: 60; display: flex; justify-content: flex-end; }
 .ed-nav {
   pointer-events: auto;
-  width: min(1120px, calc(100vw - 28px));
+  width: min(390px, calc(100vw - 24px));
   overflow: hidden;
   border: 1px solid var(--tv-line);
   border-radius: 30px;
@@ -424,17 +424,18 @@ html.intro-seen .hero-curtain { display: none; }
   backdrop-filter: blur(16px);
   box-shadow: 0 10px 30px -18px rgba(22, 22, 22, 0.45);
 }
-.ed-nav-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; min-height: 58px; padding: 6px 8px 6px 22px; }
-.ed-nav-title { justify-self: start; text-align: left; color: #14221c; font-size: 26px; text-decoration: none; line-height: 1; }
-.ed-nav-center { min-width: 0; display: flex; justify-content: center; }
+.ed-nav-row { display: flex; align-items: center; gap: 8px; height: 60px; padding: 0 6px; }
+.ed-nav-logo { display: grid; width: 64px; height: 46px; place-items: center; border-radius: 23px; background: var(--tv-tint); }
+.ed-nav-logo img { width: 28px; height: 28px; border-radius: 999px; object-fit: cover; }
+.ed-nav-title { flex: 1; text-align: center; color: #14221c; font-size: 24px; text-decoration: none; line-height: 1; }
 .ed-nav-btn {
   width: 46px; height: 46px; border: 0; border-radius: 23px; background: #10b981; color: white;
   display: grid; place-items: center; justify-self: end;
 }
 .ed-nav-btn:hover { background: #047857; }
-.ed-menu, .ed-menu-more { display: flex; flex-flow: row wrap; justify-content: center; align-items: center; list-style: none; margin: 0; padding: 0 18px; }
-.ed-menu { gap: 0.35rem 1.6rem; padding-bottom: 0.35rem; }
-.ed-menu a { font-family: var(--tv-font-display); font-style: italic; font-weight: 400; font-size: clamp(20px, 2.2vw, 30px); letter-spacing: -0.03em; text-decoration: none; color: var(--tv-ink); }
+.ed-menu, .ed-menu-more { display: flex; justify-content: center; align-items: center; list-style: none; margin: 0; }
+.ed-menu { flex-direction: column; gap: 0.7rem; padding: 0.4rem 1.5rem 0.2rem; }
+.ed-menu a { font-family: var(--tv-font-display); font-style: normal; font-weight: 400; font-size: 32px; letter-spacing: -0.02em; text-transform: uppercase; text-decoration: none; color: var(--tv-forest); }
 .ed-menu a[aria-current="page"] { color: #047857; }
 .ed-menu-more { gap: 0.6rem 1.1rem; padding: 0.7rem 18px 1rem; }
 .ed-menu-more a { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none; color: var(--tv-ink-muted); }
@@ -449,7 +450,7 @@ html.intro-seen .hero-curtain { display: none; }
 .ed-hero-copy { position: relative; z-index: 4; display: flex; min-height: 100svh; flex-direction: column; align-items: center; justify-content: flex-end; width: 100%; padding: 8rem 1.5rem 4.5rem; text-align: center; }
 .ed-kicker { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #047857; font-weight: 600; }
 .ed-hero .ed-kicker { color: rgba(255, 255, 255, 0.82); }
-.ed-hero h1 { margin: 0; color: white; }
+.ed-hero-name { margin: 0.2rem 0 0; color: white; font-family: var(--tv-font-display); font-style: italic; font-weight: 400; font-size: clamp(84px, 14vw, 156px); line-height: 0.84; letter-spacing: -0.03em; text-transform: none; }
 .ed-hero-sub { margin: 0.15rem 0 0; font-family: var(--tv-font-display); font-style: italic; font-size: clamp(28px, 4vw, 48px); letter-spacing: -0.03em; }
 .ed-hero-tag { max-width: 22ch; margin: 0.85rem 0 0; font-size: clamp(16px, 2vw, 20px); line-height: 1.4; color: rgba(255, 255, 255, 0.9); }
 .ed-watermark { position: absolute; right: 1.25rem; bottom: 1.15rem; z-index: 4; font-family: var(--tv-font-display); font-style: italic; font-size: clamp(16px, 2vw, 26px); color: rgba(255, 255, 255, 0.72); }

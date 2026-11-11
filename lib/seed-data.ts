@@ -97,7 +97,7 @@ export function buildSeed(now = new Date()): SiteContent {
   const daysAgo = (days: number) => new Date(now.getTime() - days * 86400000).toISOString();
 
   const settings: Settings = {
-    heroEyebrow: "TirtaVEX",
+    heroEyebrow: "Meet me",
     heroTitle: "Tirta",
     heroHeadline: "Tirta",
     heroLede: "AI video, cut with a director’s eye.",
