@@ -10,7 +10,7 @@ import { Magnetic } from "./ui";
 import { useSite } from "./site-provider";
 
 const LINKS = [
-  { href: "/#work", label: "Work" },
+  { href: "/work", label: "Work" },
   { href: "/projects", label: "Projects" },
   { href: "/about", label: "About" },
   { href: "/journal", label: "Journal" },
@@ -150,7 +150,12 @@ function Footer() {
             <span className={stale ? "stale-dot" : "live-dot"} />
             {stale ? "Reconnecting" : `Agent synced ${ago}`}
           </p>
-          <p className="muted">Words in {"{{braces}}"} are placeholders you can edit.</p>
+          <p className="flex flex-wrap gap-4">
+            <Link href="/work">Work</Link>
+            <Link href="/pulse">Numbers</Link>
+            <Link href="/programs">Programs</Link>
+            <Link href="/contests">Contests</Link>
+          </p>
           <p className="flex gap-4">
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>

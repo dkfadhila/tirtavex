@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import Link from "next/link";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { formatDate, placementLabel } from "@/lib/format";
@@ -8,15 +10,13 @@ import type { Article, Project } from "@/lib/types";
 import { useSite } from "./site-provider";
 import { BriefForm } from "./contact-form";
 import { CopyEmail } from "./home-view";
-import { Markdown, Reveal, SectionHeading, Thumb, headings } from "./ui";
+import { Markdown, Reveal, SectionHeading, headings } from "./ui";
 
 export function ProjectsIndex() {
   const { projects, settings } = useSite().content;
   const scopes = ["All", ...new Set(projects.flatMap((item) => item.scope))];
   const [scope, setScope] = useState("All");
-  const [pos, setPos] = useState({ x: 0, y: 0, id: "" });
   const list = projects.filter((item) => scope === "All" || item.scope.includes(scope));
-  const active = list.find((item) => item.id === pos.id);
   return (
     <article className="pt-32">
       <header className="wrap">
@@ -31,31 +31,19 @@ export function ProjectsIndex() {
           </button>
         ))}
       </div>
-      <div className="wrap mt-6 divide-y divide-line border-t border-line">
-        {list.map((item, index) => (
-          <Link
-            key={item.id}
-            href={`/projects/${item.slug}`}
-            className="grid items-end gap-3 py-8 md:grid-cols-12"
-            onMouseMove={(event) => setPos({ x: event.clientX, y: event.clientY, id: item.id })}
-            onMouseLeave={() => setPos((current) => ({ ...current, id: "" }))}
-          >
-            <span className="tabular text-emerald-700 md:col-span-1">0{index + 1}</span>
-            <span className="display text-5xl md:col-span-7 md:text-7xl">{item.name}</span>
-            <span className="text-sm md:col-span-4">
-              {item.client}
-              <br />
-              <span className="muted">{item.date}</span>
+      <div className="mt-10 grid gap-3 px-3 md:grid-cols-2">
+        {list.map((item) => (
+          <Link key={item.id} href={`/projects/${item.slug}`} className="group relative min-h-[68vh] overflow-hidden">
+            <img src={item.cover} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+            <span className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+            <span className="absolute inset-x-0 bottom-0 p-6 text-white md:p-8">
+              <span className="text-[12px] tracking-[0.18em] uppercase">{[item.date, item.client].filter(Boolean).join(" · ")}</span>
+              <span className="display mt-2 block text-5xl md:text-6xl">{item.name}</span>
             </span>
           </Link>
         ))}
         {list.length === 0 ? <p className="py-10">No projects in this scope yet.</p> : null}
       </div>
-      {active ? (
-        <div className="pointer-events-none fixed z-40 hidden h-48 w-72 overflow-hidden rounded-card shadow-lift md:block" style={{ left: pos.x + 20, top: pos.y - 30 }}>
-          <Thumb src={active.cover} alt="" dominant={active.accent} className="h-full w-full" />
-        </div>
-      ) : null}
     </article>
   );
 }
@@ -67,11 +55,12 @@ export function CaseStudy({ project }: { project: Project }) {
   const site = safeHttpUrl(live.websiteUrl);
   const next = projects.find((item) => item.sortOrder > live.sortOrder) ?? projects.find((item) => item.id !== live.id);
   return (
-    <article className="pt-28">
-      <header className="relative overflow-hidden">
-        <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, white, ${live.accent})` }} />
-        <div className="wrap relative py-20">
-          <p className="eyebrow">{live.industry}</p>
+    <article className="pt-24">
+      <header className="relative min-h-[78vh] overflow-hidden">
+        <img src={live.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-black/10" />
+        <div className="wrap relative flex min-h-[78vh] flex-col justify-end py-16 text-white">
+          <p className="text-[12px] tracking-[0.28em] uppercase">{live.industry}</p>
           <h1 className="display mt-3 text-[clamp(64px,12vw,160px)]">{live.name}</h1>
           <p className="mt-4 max-w-2xl text-xl">{live.overview}</p>
           <p className="mt-6 text-sm uppercase tracking-[0.16em] text-forest">{live.date}</p>
@@ -347,7 +336,7 @@ export function ContactView() {
         <BriefForm budgets={settings.budgetOptions} />
       </div>
       <div className="mt-16 border-t border-line">
-        {rows.map(([label, value, href]) =>
+        {rows.filter(([, value]) => value).map(([label, value, href]) =>
           href ? (
             <a key={label} href={href} className="group grid border-b border-line px-6 py-8 md:grid-cols-12" target={href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer">
               <span className="eyebrow md:col-span-3">{label}</span>

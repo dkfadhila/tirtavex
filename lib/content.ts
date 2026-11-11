@@ -40,27 +40,61 @@ import {
   workItems,
 } from "./schema";
 import type { AdminSnapshot, SiteContent, Submission } from "./types";
+import { visibleText } from "./visible";
+
+const PANELS = ["/media/panel-fashion.jpg", "/media/panel-food.jpg", "/media/panel-object.jpg", "/media/panel-sport.jpg", "/media/tile-motion.jpg", "/media/tile-cup.jpg"];
+
+function cleanString(value: string, key?: string) {
+  if (key && (key === "src" || key.endsWith("Url") || key.endsWith("At") || key === "slug" || key === "id" || key === "xUrl" || key === "logo" || key === "cover")) {
+    return value;
+  }
+  if (!value.includes("{{")) return value;
+  return visibleText(value) ?? "";
+}
+
+function cleanValue(value: unknown, key?: string): unknown {
+  if (typeof value === "string") return cleanString(value, key);
+  if (Array.isArray(value)) return value.map((item) => cleanValue(item)).filter((item) => item !== "");
+  if (value && typeof value === "object") {
+    const next: Record<string, unknown> = {};
+    for (const [childKey, child] of Object.entries(value)) next[childKey] = cleanValue(child, childKey);
+    return next;
+  }
+  return value;
+}
 
 function byOrder<T extends { sortOrder: number }>(rows: T[]) {
   return [...rows].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 export function toPublic(content: SiteContent): SiteContent {
+  const cleaned = cleanValue(content) as SiteContent;
   const visible = <T extends { hidden: boolean; sortOrder: number }>(rows: T[]) =>
     byOrder(rows.filter((row) => !row.hidden));
+  const settings = cleaned.settings;
+  settings.marquee = settings.marquee.filter(Boolean);
+  settings.budgetOptions = settings.budgetOptions.filter(Boolean);
+  settings.socials = settings.socials.filter((item) => item.label && item.url);
   return {
-    ...content,
-    work: byOrder(content.work.filter((item) => item.status === "live")),
-    collabs: visible(content.collabs),
-    programs: visible(content.programs),
-    ambassadors: visible(content.ambassadors),
-    projects: visible(content.projects),
-    contests: visible(content.contests),
-    testimonials: visible(content.testimonials),
-    process: visible(content.process),
-    tools: visible(content.tools),
-    articles: visible(content.articles),
-    links: visible(content.links),
+    ...cleaned,
+    settings,
+    work: byOrder(cleaned.work.filter((item) => item.status === "live" && item.title)).map((item, index) => ({
+      ...item,
+      thumb: { ...item.thumb, src: item.thumb.src || PANELS[index % PANELS.length] },
+    })),
+    collabs: visible(cleaned.collabs).filter((item) => item.name),
+    programs: visible(cleaned.programs).filter((item) => item.name),
+    ambassadors: visible(cleaned.ambassadors).filter((item) => item.project),
+    projects: visible(cleaned.projects).filter((item) => item.name).map((item, index) => ({
+      ...item,
+      cover: item.cover || PANELS[index % PANELS.length],
+    })),
+    contests: visible(cleaned.contests).filter((item) => item.name),
+    testimonials: visible(cleaned.testimonials).filter((item) => item.quote),
+    process: visible(cleaned.process).filter((item) => item.title),
+    tools: visible(cleaned.tools).filter((item) => item.name),
+    articles: visible(cleaned.articles).filter((item) => item.title),
+    links: visible(cleaned.links).filter((item) => item.label),
   };
 }
 

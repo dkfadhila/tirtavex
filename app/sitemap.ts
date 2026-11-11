@@ -4,7 +4,7 @@ import { getContent } from "@/lib/content";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const content = await getContent();
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://tirtavex.vercel.app";
-  const staticRoutes = ["", "/projects", "/about", "/journal", "/contact", "/terms", "/privacy"].map((path) => ({
+  const staticRoutes = ["", "/work", "/projects", "/about", "/journal", "/contact", "/pulse", "/programs", "/contests", "/terms", "/privacy"].map((path) => ({
     url: `${base}${path}`,
     changeFrequency: "weekly" as const,
     priority: path === "" ? 1 : 0.7,

@@ -22,8 +22,8 @@
   --tv-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --tv-section: clamp(96px, 14vh, 180px);
   --tv-max: 1320px;
-  --tv-font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
-  --tv-font-display: var(--font-bricolage), ui-sans-serif, sans-serif;
+  --tv-font-sans: var(--font-dm), ui-sans-serif, system-ui, sans-serif;
+  --tv-font-display: var(--font-instrument), "Iowan Old Style", Georgia, serif;
   --tv-font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
@@ -86,9 +86,17 @@ body::before {
 .section { padding-block: var(--tv-section); }
 .display {
   font-family: var(--tv-font-display);
-  font-weight: 700;
-  letter-spacing: -0.045em;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.03em;
   line-height: 0.9;
+}
+.display-roman {
+  font-family: var(--tv-font-display);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
 }
 .eyebrow {
   font-family: var(--tv-font-mono);
@@ -178,6 +186,8 @@ body::before {
 .spin-slow { animation: spin 22s linear infinite; transform-origin: center; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .scroll-cue { animation: bob 1.6s ease-in-out infinite; }
+.float-photo { animation: floaty 8s ease-in-out infinite; }
+@keyframes floaty { 50% { translate: 0 -12px; } }
 @keyframes bob { 50% { transform: translateY(6px); } }
 
 .text-stroke { color: transparent; -webkit-text-stroke: 1.5px var(--tv-emerald-700); }
@@ -328,7 +338,7 @@ dialog::backdrop { background: color-mix(in srgb, var(--tv-forest) 28%, transpar
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
-  .aurora i, .spin-slow, .scroll-cue, .live-dot, .medal { animation: none !important; }
+  .aurora i, .spin-slow, .scroll-cue, .live-dot, .medal, .float-photo { animation: none !important; }
   .flip-inner { transform: none !important; }
   .flip-face { position: relative; transform: none !important; }
   .flip { min-height: 0; }
