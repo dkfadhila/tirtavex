@@ -42,7 +42,7 @@ import {
 import type { AdminSnapshot, SiteContent, Submission } from "./types";
 import { visibleText } from "./visible";
 
-const PANELS = ["/media/panel-fashion.jpg", "/media/panel-food.jpg", "/media/panel-object.jpg", "/media/panel-sport.jpg", "/media/tile-motion.jpg", "/media/tile-cup.jpg"];
+const PANELS = ["/media/work-1.webp", "/media/work-2.webp", "/media/work-3.webp", "/media/work-4.webp", "/media/work-5.webp", "/media/work-6.webp"];
 
 function cleanString(value: string, key?: string) {
   if (key && (key === "src" || key.endsWith("Url") || key.endsWith("At") || key === "slug" || key === "id" || key === "xUrl" || key === "logo" || key === "cover")) {

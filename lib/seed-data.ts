@@ -253,6 +253,13 @@ export function buildSeed(now = new Date()): SiteContent {
     }),
   ];
 
+  const workStills = ["/media/work-1.webp", "/media/work-2.webp", "/media/work-3.webp", "/media/work-4.webp", "/media/work-5.webp", "/media/work-6.webp"];
+  items.forEach((item, index) => {
+    item.thumb.src = workStills[index % workStills.length];
+    item.thumb.w = 1600;
+    item.thumb.h = 1000;
+  });
+
   const articles: Article[] = [
     {
       id: "article_01",
@@ -561,7 +568,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
       {
         id: "project_01",
         slug: "neon-bazaar",
-        name: "{{neon_bazaar}}",
+        name: "AI short film",
         year: 2026,
         client: "{{aurora_labs}}",
         date: "Jan 28, 2026",
@@ -575,7 +582,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Hero film plus three cutdowns", "Thumbnail system the partner program still uses", "Post became the best-performing launch asset that week"],
         outcome: "2.4M impressions on the hero post.",
         scope: ["AI video", "Campaign"],
-        cover: "",
+        cover: "/media/work-1.webp",
         accent: "#10B981",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000001",
         websiteUrl: "https://example.com/neon-bazaar",
@@ -591,7 +598,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
       {
         id: "project_02",
         slug: "mint-protocol",
-        name: "{{mint_protocol}}",
+        name: "Web3 launch",
         year: 2026,
         client: "{{mint_protocol}}",
         date: "Nov 02, 2025",
@@ -605,7 +612,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["42-second explainer", "Still set for the docs", "Thread reduced to four posts"],
         outcome: "980K impressions. Docs linked the post instead of a loom.",
         scope: ["Web3", "AI video"],
-        cover: "",
+        cover: "/media/work-2.webp",
         accent: "#0F766E",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000002",
         websiteUrl: "",
@@ -621,7 +628,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
       {
         id: "project_03",
         slug: "lumen-season",
-        name: "{{lumen_dao}} season",
+        name: "Creator brand kit",
         year: 2025,
         client: "{{lumen_dao}}",
         date: "Aug 14, 2025",
@@ -635,7 +642,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Season film", "Member cutdowns", "Caption system"],
         outcome: "Reposted across the contributor graph in a day.",
         scope: ["Collab", "AI video"],
-        cover: "",
+        cover: "/media/work-3.webp",
         accent: "#34D399",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000004",
         websiteUrl: "",
@@ -651,7 +658,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
       {
         id: "project_04",
         slug: "archive-drop",
-        name: "{{archive_drop}}",
+        name: "Kinetic reel",
         year: 2026,
         client: "{{archive_house}}",
         date: "Feb 02, 2026",
@@ -665,7 +672,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Title sequence", "Teaser post", "Three still studies"],
         outcome: "Teaser carried the announcement. The sequence opened the drop.",
         scope: ["AI video", "Campaign"],
-        cover: "",
+        cover: "/media/work-4.webp",
         accent: "#065F46",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000005",
         websiteUrl: "https://example.com/archive",
@@ -681,7 +688,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
       {
         id: "project_05",
         slug: "open-contest",
-        name: "{{open_contest}}",
+        name: "Onchain lattice",
         year: 2025,
         client: "{{contest_organizer}}",
         date: "May 19, 2025",
@@ -695,7 +702,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Winner", "Featured by the organizer", "Still used in their recap"],
         outcome: "3.1M impressions. The entry post is the case study.",
         scope: ["Contest", "AI video"],
-        cover: "",
+        cover: "/media/work-5.webp",
         accent: "#047857",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000008",
         websiteUrl: "",
@@ -711,7 +718,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
       {
         id: "project_06",
         slug: "week-notes",
-        name: "Week {{nn}} notes",
+        name: "Creator collab",
         year: 2026,
         client: "Self-initiated",
         date: "Mar 03, 2026",
@@ -725,7 +732,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         achievements: ["Format other creators borrowed", "Cohort teaching piece"],
         outcome: "A repeatable 55-second structure.",
         scope: ["Web3", "Thread"],
-        cover: "",
+        cover: "/media/work-6.webp",
         accent: "#059669",
         xUrl: "https://x.com/TirtaVEX/status/1000000000000000006",
         websiteUrl: "",

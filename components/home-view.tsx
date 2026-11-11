@@ -1,8 +1,5 @@
 "use client";
 
-/* Editorial stills are full-bleed art direction, not content images. */
-/* eslint-disable @next/next/no-img-element */
-
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "motion/react";
@@ -10,21 +7,30 @@ import type { Project, WorkItem } from "@/lib/types";
 import { safeHttpUrl, safeXUrl } from "@/lib/safe-url";
 import { useSite } from "./site-provider";
 import { BriefForm } from "./contact-form";
+import { Still } from "./still";
 import { Magnetic } from "./ui";
 
 const TILES = [
-  { src: "/media/tile-face.jpg", className: "left-[2%] top-[9%] w-[12vw] min-w-16 max-w-[150px] aspect-[3/4]" },
-  { src: "/media/tile-friends.jpg", className: "left-[6%] top-[38%] hidden w-[10vw] max-w-[130px] aspect-[4/3] md:block" },
-  { src: "/media/tile-cup.jpg", className: "left-[1.5%] bottom-[12%] w-[13vw] min-w-16 max-w-[170px] aspect-square" },
-  { src: "/media/tile-motion.jpg", className: "right-[2%] top-[7%] w-[12vw] min-w-16 max-w-[160px] aspect-[3/4]" },
-  { src: "/media/tile-hands.jpg", className: "right-[3%] top-[46%] hidden w-[11vw] max-w-[140px] aspect-square md:block" },
+  { src: "/media/tile-1.webp", alt: "Camera and emerald glass", className: "left-[3%] top-[14%] w-[22vw] max-w-[180px]" },
+  { src: "/media/tile-2.webp", alt: "Emerald crystal still", className: "left-[2%] bottom-[16%] hidden w-[18vw] max-w-[150px] md:block" },
+  { src: "/media/tile-3.webp", alt: "Desk and a wave of light", className: "right-[3%] top-[12%] w-[22vw] max-w-[180px]" },
+  { src: "/media/tile-4.webp", alt: "Green drink in daylight", className: "right-[4%] top-[48%] hidden w-[18vw] max-w-[150px] md:block" },
 ];
 
 const SERVICES = [
-  { label: "Campaign imagery", href: "/projects", src: "/media/panel-fashion.jpg" },
-  { label: "Social content", href: "/work", src: "/media/panel-food.jpg" },
-  { label: "Product visuals", href: "/projects", src: "/media/panel-object.jpg" },
-  { label: "AI video", href: "/work", src: "/media/panel-sport.jpg" },
+  { label: "Campaign imagery", href: "/projects", src: "/media/work-1.webp", alt: "AI short film" },
+  { label: "Social content", href: "/work", src: "/media/work-6.webp", alt: "Creator collab" },
+  { label: "Product visuals", href: "/projects", src: "/media/work-3.webp", alt: "Creator brand kit" },
+  { label: "AI video", href: "/work", src: "/media/work-4.webp", alt: "Kinetic reel" },
+];
+
+const GALLERY = [
+  { src: "/media/gallery-1.webp", alt: "Emerald lens", className: "aspect-[3/4] md:col-span-2" },
+  { src: "/media/gallery-2.webp", alt: "Network of light", className: "aspect-video md:col-span-4" },
+  { src: "/media/gallery-3.webp", alt: "Broken emerald glass", className: "aspect-[3/4] md:col-span-2" },
+  { src: "/media/gallery-4.webp", alt: "Studio light on paper", className: "aspect-[4/3] md:col-span-4" },
+  { src: "/media/gallery-5.webp", alt: "Orchids and glass", className: "aspect-[3/4] md:col-span-2" },
+  { src: "/media/gallery-6.webp", alt: "Emerald silk in motion", className: "aspect-video md:col-span-4" },
 ];
 
 export function HomeView() {
@@ -49,13 +55,18 @@ function Hero() {
   const headline = settings.heroHeadline || "AI video and Web3 stories that people actually watch.";
   return (
     <section className="relative min-h-[100svh] overflow-hidden bg-[#e7f3ee]">
-      <img src="/media/hero-portrait.jpg" alt="" className="absolute top-0 left-1/2 h-full w-[min(920px,92vw)] -translate-x-1/2 object-cover object-top" />
+      <div className="absolute inset-y-0 left-1/2 w-[min(600px,86vw)] -translate-x-1/2">
+        <Still src="/media/hero.webp" alt="Editorial portrait in emerald silk" sizes="(max-width: 768px) 86vw, 600px" priority className="object-cover object-[center_20%]" />
+      </div>
       {TILES.map((tile, index) => (
-        <img key={tile.src} src={tile.src} alt="" className={`float-photo absolute object-cover shadow-[0_18px_40px_-24px_rgba(6,78,59,.45)] ${tile.className}`} style={{ animationDelay: `${index * 0.6}s` }} />
+        <div key={tile.src} className={`float-photo absolute aspect-square overflow-hidden shadow-[0_18px_40px_-24px_rgba(6,78,59,.45)] ${tile.className}`} style={{ animationDelay: `${index * 0.6}s` }}>
+          <Still src={tile.src} alt={tile.alt} sizes="(max-width: 768px) 28vw, 180px" />
+        </div>
       ))}
-      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/45 via-black/10 to-transparent px-4 pt-28 pb-16 text-center text-white md:pb-20">
+      <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center">
+        <div className="w-[min(600px,86vw)] bg-gradient-to-t from-black/55 via-black/20 to-transparent px-4 pt-24 pb-16 text-center text-white md:pb-20">
         <p className="text-[12px] tracking-[0.28em] uppercase">{settings.heroEyebrow}</p>
-        <h1 className="display mx-auto mt-4 max-w-5xl text-[clamp(52px,7.4vw,108px)] text-white">{headline}</h1>
+        <h1 className="display mx-auto mt-4 max-w-full text-[clamp(36px,4.2vw,56px)] text-white">{headline}</h1>
         {settings.heroLede ? <p className="mx-auto mt-5 max-w-md text-[13px] tracking-[0.14em] uppercase">{settings.heroLede}</p> : null}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Magnetic>
@@ -69,8 +80,9 @@ function Hero() {
             </Link>
           </Magnetic>
         </div>
+        </div>
       </div>
-      <p className="absolute bottom-6 left-6 z-10 text-[11px] tracking-[0.22em] text-white/90 uppercase">Visual stories</p>
+      <p className="absolute bottom-6 left-6 z-10 text-[11px] tracking-[0.22em] text-forest uppercase">Visual stories</p>
     </section>
   );
 }
@@ -91,7 +103,7 @@ function Why() {
 
 function WordStrip() {
   const words = useSite().content.settings.marquee.slice(0, 4);
-  const photos = ["/media/tile-motion.jpg", "/media/tile-face.jpg", "/media/tile-cup.jpg", "/media/panel-sport.jpg"];
+  const photos = ["/media/tile-1.webp", "/media/tile-3.webp"];
   const row = words.length ? words : ["Faster", "Human", "Motion", "Brand"];
   return (
     <div className="grid grid-cols-2 md:grid-cols-4">
@@ -102,7 +114,7 @@ function WordStrip() {
           </div>
         ) : (
           <div key={word} className="relative min-h-[220px] md:min-h-[320px]">
-            <img src={photos[index % photos.length]} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <Still src={photos[index % photos.length]} alt="" sizes="(max-width: 768px) 50vw, 25vw" />
             <span className="absolute inset-0 grid place-items-center bg-black/15 text-sm tracking-[0.22em] text-white uppercase">{word}</span>
           </div>
         ),
@@ -116,8 +128,8 @@ function Services() {
     <section>
       <div className="grid grid-cols-1 md:grid-cols-2">
         {SERVICES.map((item) => (
-          <Link key={item.label} href={item.href} className="group relative min-h-[46vh] overflow-hidden">
-            <img src={item.src} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+          <Link key={item.label} href={item.href} className="group relative aspect-[16/10] overflow-hidden">
+            <Still src={item.src} alt={item.alt} sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
             <span className="absolute inset-0 bg-black/15 transition group-hover:bg-black/25" />
             <span className="absolute inset-0 grid place-items-center px-6 text-center text-[13px] tracking-[0.28em] text-white uppercase">{item.label}</span>
           </Link>
@@ -150,7 +162,7 @@ function Partners() {
 }
 
 function Portfolio() {
-  const projects = useSite().content.projects.filter((item) => !item.hidden).slice(0, 4);
+  const projects = useSite().content.projects.filter((item) => !item.hidden);
   return (
     <section className="bg-white">
       <div className="px-6 pt-24 pb-10 text-center md:px-12">
@@ -170,8 +182,8 @@ function Portfolio() {
 function ProjectPanel({ project }: { project: Project }) {
   const x = safeXUrl(project.xUrl);
   return (
-    <article className="group relative min-h-[70vh] overflow-hidden bg-mist">
-      <img src={project.cover} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]" />
+    <article className="group relative aspect-[16/10] overflow-hidden bg-mist">
+      <Still src={project.cover} alt={project.name} sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-[1.04]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6 text-white md:p-10">
         <div>
@@ -245,17 +257,16 @@ function Process() {
 }
 
 function Gallery() {
-  const shots = ["/media/tile-friends.jpg", "/media/panel-food.jpg", "/media/hero-portrait.jpg", "/media/panel-fashion.jpg", "/media/tile-motion.jpg"];
   return (
     <section className="bg-white pb-6">
       <div className="px-6 py-16 text-center">
         <p className="text-[12px] tracking-[0.28em] text-emerald-700 uppercase">Show reel</p>
         <h2 className="display mt-3 text-[clamp(48px,7vw,100px)]">Frames people replay.</h2>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5">
-        {shots.map((src) => (
-          <div key={src} className="relative min-h-[42vh] overflow-hidden">
-            <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      <div className="grid grid-cols-1 gap-3 px-3 md:grid-cols-6">
+        {GALLERY.map((shot) => (
+          <div key={shot.src} className={`relative overflow-hidden ${shot.className}`}>
+            <Still src={shot.src} alt={shot.alt} sizes="(max-width: 768px) 100vw, 40vw" />
           </div>
         ))}
       </div>
@@ -319,8 +330,8 @@ export function CopyEmail({ email }: { email: string }) {
 export function WorkCard({ item }: { item: WorkItem }) {
   const href = safeXUrl(item.xUrl);
   const body = (
-    <article className="group relative min-h-[68vh] overflow-hidden">
-      <img src={item.thumb.src} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+    <article className="group relative aspect-[16/10] overflow-hidden">
+      <Still src={item.thumb.src} alt={item.title} sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-10">
         <p className="text-[12px] tracking-[0.2em] uppercase">{item.category.replace("-", " ")}</p>

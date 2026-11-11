@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import Link from "next/link";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { formatDate, placementLabel } from "@/lib/format";
@@ -10,6 +8,7 @@ import type { Article, Project } from "@/lib/types";
 import { useSite } from "./site-provider";
 import { BriefForm } from "./contact-form";
 import { CopyEmail } from "./home-view";
+import { Still } from "./still";
 import { Markdown, Reveal, SectionHeading, headings } from "./ui";
 
 export function ProjectsIndex() {
@@ -33,8 +32,8 @@ export function ProjectsIndex() {
       </div>
       <div className="mt-10 grid gap-3 px-3 md:grid-cols-2">
         {list.map((item) => (
-          <Link key={item.id} href={`/projects/${item.slug}`} className="group relative min-h-[68vh] overflow-hidden">
-            <img src={item.cover} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+          <Link key={item.id} href={`/projects/${item.slug}`} className="group relative aspect-[16/10] overflow-hidden">
+            <Still src={item.cover} alt={item.name} sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
             <span className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
             <span className="absolute inset-x-0 bottom-0 p-6 text-white md:p-8">
               <span className="text-[12px] tracking-[0.18em] uppercase">{[item.date, item.client].filter(Boolean).join(" · ")}</span>
@@ -57,13 +56,13 @@ export function CaseStudy({ project }: { project: Project }) {
   return (
     <article className="pt-24">
       <header className="relative min-h-[78vh] overflow-hidden">
-        <img src={live.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <Still src={live.cover} alt={live.name} sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-black/10" />
         <div className="wrap relative flex min-h-[78vh] flex-col justify-end py-16 text-white">
           <p className="text-[12px] tracking-[0.28em] uppercase">{live.industry}</p>
           <h1 className="display mt-3 text-[clamp(64px,12vw,160px)]">{live.name}</h1>
           <p className="mt-4 max-w-2xl text-xl">{live.overview}</p>
-          <p className="mt-6 text-sm uppercase tracking-[0.16em] text-forest">{live.date}</p>
+          <p className="mt-6 text-sm tracking-[0.16em] text-white/80 uppercase">{live.date}</p>
         </div>
       </header>
       <section className="section">
