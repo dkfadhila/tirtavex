@@ -68,7 +68,7 @@ function sampleStats(stats: Stats): Stats {
     videos: 0,
     bestPostId: "",
     placeholder: true,
-    platforms: stats.platforms.map((row) => ({ ...row, engagement: 0, likes: 0, videos: 0, placeholder: true })),
+    platforms: stats.platforms.map((row) => ({ ...row, impressions: 0, followers: 0, videos: 0, engagement: 0, likes: 0, placeholder: true })),
   };
 }
 

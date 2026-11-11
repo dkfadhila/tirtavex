@@ -326,9 +326,11 @@ export function normalizePlatforms(value: unknown): PlatformStat[] {
       label: typeof row.label === "string" ? row.label : row.platform,
       handle: typeof row.handle === "string" ? row.handle : "",
       url: typeof row.url === "string" ? row.url : "",
+      impressions: numberOrZero(row.impressions),
+      followers: numberOrZero(row.followers),
+      videos: numberOrZero(row.videos),
       engagement: numberOrZero(row.engagement),
       likes: numberOrZero(row.likes),
-      videos: numberOrZero(row.videos),
       placeholder: Boolean(row.placeholder),
     }];
   });

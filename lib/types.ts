@@ -281,9 +281,11 @@ export type PlatformStat = {
   label: string;
   handle: string;
   url: string;
+  impressions: number;
+  followers: number;
+  videos: number;
   engagement: number;
   likes: number;
-  videos: number;
   placeholder: boolean;
 };
 

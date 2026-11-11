@@ -149,7 +149,7 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
       <div className="ed-wrap">
         <div className="px-2 text-center">
           <Split text="Partners" mode="char" className="t-eyebrow" />
-          <h2 className="t-statement mx-auto mt-8 max-w-[18ch]">
+          <h2 className="t-statement ed-measure mx-auto mt-8">
             <span className="text-[color:var(--tv-accent-deep)]">Ambassador seats.</span> Creator partners and collaborations, labeled until the real projects are in.
           </h2>
           <p className="t-body mx-auto mt-10 max-w-[340px]">{settings.partnersLede}</p>
@@ -185,43 +185,36 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
 
 export function StatsSection({ full = false }: { full?: boolean }) {
   const { settings, stats } = useSite().content;
-  const overall = stats.platforms.find((row) => row.platform === "overall");
-  const rest = stats.platforms.filter((row) => row.platform !== "overall");
-  const engagement = overall?.engagement ?? stats.engagement;
-  const likes = overall?.likes ?? stats.likes;
-  const videos = overall?.videos ?? stats.videos;
-  const placeholder = overall?.placeholder ?? stats.placeholder;
+  const platforms = stats.platforms.filter((row) => row.platform !== "overall");
+  const placeholder = platforms.length > 0 ? platforms.every((row) => row.placeholder) : stats.placeholder;
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="stats">
       <div className="ed-wrap">
-        <TitleBlock eyebrow="Numbers" title={settings.statsTitle || "Engagement"} suffix="By platform" copy={settings.statsLede} href={full ? undefined : "/stats"} more="By platform" as={full ? "h1" : "h2"} />
-        {placeholder ? <p className="ed-ph">Placeholder</p> : null}
-        <div className="ed-stats" style={{ marginTop: "1.5rem" }}>
-          <Stat value={engagement} label="Total engagement" placeholder={placeholder} />
-          <Stat value={likes} label="Likes" placeholder={placeholder} />
-          <Stat value={videos} label="Videos published" placeholder={placeholder} />
-        </div>
+        <TitleBlock eyebrow="Numbers" title={settings.statsTitle || "Engagement"} suffix="By platform" copy={settings.statsLede} as={full ? "h1" : "h2"} />
+        {placeholder ? <p className="ed-ph ed-ph-center">Placeholder</p> : null}
         <div className="ed-platforms">
-          {rest.map((row) => (
-            <article key={row.platform} className="ed-platform">
-              <strong>{row.label}</strong>
-              {row.handle ? <span>@{row.handle.replace(/^@/, "")}</span> : null}
-              {full ? (
-                <div className="ed-stats" style={{ marginTop: "0.8rem" }}>
-                  <Stat value={row.engagement} label="Engagement" placeholder={row.placeholder} compact />
-                  <Stat value={row.likes} label="Likes" placeholder={row.placeholder} compact />
-                  <Stat value={row.videos} label="Videos" placeholder={row.placeholder} compact />
+          {platforms.map((row) => {
+            const profile = safeHttpUrl(row.url);
+            return (
+              <article key={row.platform} className="ed-platform">
+                <header className="ed-platform-head">
+                  {profile ? (
+                    <a href={profile} target="_blank" rel="noopener noreferrer">
+                      <strong>{row.label}</strong>
+                    </a>
+                  ) : (
+                    <strong>{row.label}</strong>
+                  )}
+                  {row.handle ? <span>@{row.handle.replace(/^@/, "")}</span> : null}
+                </header>
+                <div className="ed-platform-metrics">
+                  <Stat value={row.impressions} label="Impressions" placeholder={row.placeholder} />
+                  <Stat value={row.followers} label="Followers" placeholder={row.placeholder} />
+                  <Stat value={row.videos} label="Videos published" placeholder={row.placeholder} />
                 </div>
-              ) : (
-                <span>{row.placeholder ? "Placeholder totals" : `${fullNumber(row.videos)} videos`}</span>
-              )}
-              {row.url && !row.placeholder ? (
-                <a className="ed-link" href={row.url} target="_blank" rel="noopener noreferrer">
-                  Profile
-                </a>
-              ) : null}
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -512,16 +505,16 @@ function SkillRow({ item, full }: { item: Tool; full: boolean }) {
   );
 }
 
-function Stat({ value, label, placeholder, compact = false }: { value: number; label: string; placeholder: boolean; compact?: boolean }) {
+function Stat({ value, label, placeholder }: { value: number; label: string; placeholder: boolean }) {
   return (
     <div>
-      <CountUp value={value} placeholder={placeholder} compact={compact} />
+      <CountUp value={value} placeholder={placeholder} />
       <p className="ed-stat-label">{label}</p>
     </div>
   );
 }
 
-function CountUp({ value, placeholder, compact }: { value: number; placeholder: boolean; compact?: boolean }) {
+function CountUp({ value, placeholder }: { value: number; placeholder: boolean }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });
@@ -537,7 +530,7 @@ function CountUp({ value, placeholder, compact }: { value: number; placeholder: 
     return () => controls.stop();
   }, [inView, placeholder, reduce, value]);
   return (
-    <span ref={ref} className="ed-num" style={compact ? { fontSize: "clamp(32px, 4vw, 48px)" } : undefined}>
+    <span ref={ref} className="ed-num">
       {display}
     </span>
   );
