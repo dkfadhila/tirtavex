@@ -506,7 +506,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
         { platform: "overall", label: "Overall", handle: "", url: "", impressions: 8500, followers: 2450, videos: 34, engagement: 82, likes: 280, placeholder: false },
         { platform: "x", label: "X", handle: "tirtavex", url: "https://x.com/tirtavex", impressions: 4233, followers: 1079, videos: 8, engagement: 74, likes: 79, placeholder: false },
         { platform: "tiktok", label: "TikTok", handle: "0xtirta", url: "https://www.tiktok.com/@0xtirta", impressions: 1800, followers: 456, videos: 10, engagement: 80, likes: 95, placeholder: false },
-        { platform: "instagram", label: "Instagram", handle: "0xtirta", url: "https://www.instagram.com/0xtirta", impressions: 2467, followers: 920, videos: 16, engagement: 88, likes: 106, placeholder: false },
+        { platform: "instagram", label: "Instagram", handle: "0xtirta", url: "https://www.instagram.com/0xtirta", impressions: 4083, followers: 922, videos: 16, engagement: 88, likes: 106, placeholder: false },
       ],
     },
     agent: { lastHeartbeatAt: null, message: "" },
