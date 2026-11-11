@@ -211,7 +211,7 @@ export const getContent = cache(async (): Promise<SiteContent> => {
   } catch (error) {
     console.error("[content] database unavailable, using sample layout", error instanceof Error ? error.message : "unknown");
   }
-  return toPublic(buildSeed(), { sample: true });
+  return toPublic(buildSeed());
 });
 
 export async function listSubmissions(): Promise<Submission[]> {
