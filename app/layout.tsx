@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <body>
         <Script id="intro-seen" strategy="beforeInteractive">
-          {`try{if(sessionStorage.getItem("tvIntroSeen"))document.documentElement.classList.add("intro-seen")}catch(e){}`}
+          {`try{var t=localStorage.getItem("tv-theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t;if(sessionStorage.getItem("tvIntroSeen"))document.documentElement.classList.add("intro-seen")}catch(e){}`}
         </Script>
         <noscript>
           <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>

@@ -55,6 +55,22 @@
   --tv-font-display: var(--font-instrument), Georgia, serif;
   --tv-font-wordmark: var(--font-instrument), Georgia, serif;
   --tv-font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --tv-bg: #0e0e0e;
+  --tv-white: #161616;
+  --tv-surface: #141414;
+  --tv-mist: #1a1a1a;
+  --tv-tint: #242424;
+  --tv-ink: #f4f1ea;
+  --tv-ink-60: rgba(244, 241, 234, 0.64);
+  --tv-ink-muted: #a3a3a3;
+  --tv-line: rgba(255, 255, 255, 0.14);
+  --tv-line-strong: rgba(255, 255, 255, 0.28);
+  --tv-forest: #f4f1ea;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -425,8 +441,14 @@ html.intro-seen .hero-curtain { display: none; }
   box-shadow: 0 10px 30px -18px rgba(22, 22, 22, 0.45);
 }
 .ed-nav-row { display: flex; align-items: center; gap: 8px; height: 60px; padding: 0 6px; }
-.ed-nav-logo { display: grid; width: 64px; height: 46px; place-items: center; border-radius: 23px; background: var(--tv-tint); }
-.ed-nav-logo img { width: 28px; height: 28px; border-radius: 999px; object-fit: cover; }
+.ed-nav-logo { display: grid; width: 46px; height: 46px; place-items: center; border: 0; border-radius: 23px; background: var(--tv-tint); color: var(--tv-ink); cursor: pointer; }
+html[data-theme="dark"] .ed-nav { background: #111; border-color: rgba(255, 255, 255, 0.12); }
+html[data-theme="dark"] .ed-nav-title,
+html[data-theme="dark"] .ed-menu a { color: #f4f1ea; }
+html[data-theme="dark"] .ed-frame,
+html[data-theme="dark"] .ed-partner,
+html[data-theme="dark"] .ed-logo { background: #161616; }
+html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .ed-nav-title { flex: 1; text-align: center; color: #14221c; font-size: 24px; text-decoration: none; line-height: 1; }
 .ed-nav-btn {
   width: 46px; height: 46px; border: 0; border-radius: 23px; background: #10b981; color: white;

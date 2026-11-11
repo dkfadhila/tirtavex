@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
 import { uiSpring } from "@/lib/motion";
 
@@ -85,9 +84,7 @@ function Nav() {
         transition={reduce ? { duration: 0.01 } : uiSpring}
       >
         <div className="ed-nav-row">
-          <Link href="/" className="ed-nav-logo" aria-label="Home">
-            <Image src="/media/hero.webp" alt="" width={28} height={28} />
-          </Link>
+          <ThemeToggle />
           <Link href="/" className="wordmark ed-nav-title">
             Tirtavex
           </Link>
@@ -139,6 +136,57 @@ function Nav() {
         </AnimatePresence>
       </motion.nav>
     </header>
+  );
+}
+
+function themeDark() {
+  return document.documentElement.dataset.theme === "dark";
+}
+
+function ThemeToggle() {
+  const dark = useSyncExternalStore(subscribeTheme, themeDark, () => false);
+  function toggle() {
+    const theme = dark ? "light" : "dark";
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("tv-theme", theme);
+    } catch {
+      /* ignore private mode */
+    }
+    window.dispatchEvent(new Event("tv-theme"));
+  }
+  return (
+    <button
+      type="button"
+      className="ed-nav-logo"
+      aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
+      aria-pressed={dark}
+      onClick={toggle}
+    >
+      {dark ? <SunIcon /> : <MoonIcon />}
+    </button>
+  );
+}
+
+function subscribeTheme(onChange: () => void) {
+  window.addEventListener("tv-theme", onChange);
+  return () => window.removeEventListener("tv-theme", onChange);
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+      <path fill="currentColor" d="M15.5 2.5a8.8 8.8 0 1 0 6 14.2A8 8 0 0 1 15.5 2.5z" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+      <circle cx="12" cy="12" r="4" fill="currentColor" />
+      <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.1 5.1l1.6 1.6M17.3 17.3l1.6 1.6M18.9 5.1l-1.6 1.6M6.7 17.3l-1.6 1.6" />
+    </svg>
   );
 }
 
