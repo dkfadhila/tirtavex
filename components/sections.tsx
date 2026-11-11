@@ -265,9 +265,10 @@ export function ContactSection({ full = false }: { full?: boolean }) {
   const { settings } = useSite().content;
   const links = contactLinks(settings);
   return (
-    <section className={full ? "ed-page ed-section" : "ed-section"} id="contact">
-      <div className="ed-wrap">
-        <TitleBlock eyebrow="Creative" title="Tirtavex" suffix="Open DMs" copy={settings.contactLede} as={full ? "h1" : "h2"} />
+    <section className={full ? "ed-page ed-section contact-band" : "ed-section contact-band"} id="contact">
+      <div className="ed-wrap contact-lock">
+        {full ? <h1 className="t-display">Tirtavex</h1> : <h2 className="t-display">Tirtavex</h2>}
+        <p className="t-body foot-copy">{settings.contactLede}</p>
         <div className="ed-contact">
           {links.map((item, index) => (
             <motion.a
