@@ -493,7 +493,6 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
   align-items: center;
   gap: 4.5rem;
   padding: 1.25rem 0;
-  animation: hticker 36s linear infinite;
 }
 .logo-item {
   display: inline-flex;
@@ -526,7 +525,7 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .ed-genres { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 1.25rem; padding: 0; list-style: none; }
 .ed-genres li { border: 1px solid var(--tv-line-strong); border-radius: 999px; padding: 0.35rem 0.75rem; font-size: 13px; }
 .ed-frame { border: 1px solid #161616; background: #fbfaf7; padding: 12px; }
-.ed-frame img { width: 100%; aspect-ratio: 1024 / 483; object-fit: cover; object-position: center 42%; display: block; }
+.ed-frame img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: center 30%; display: block; }
 .ed-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
 .ed-tab { position: relative; border: 0; background: transparent; padding: 0.55rem 0.2rem; margin-right: 1rem; font: inherit; font-size: 15px; color: var(--tv-ink-muted); cursor: pointer; }
 .ed-tab[aria-selected="true"] { color: var(--tv-ink); }
@@ -573,11 +572,13 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .ed-icon-btn svg { width: 24px; height: 24px; }
 .ed-page { padding-top: 7.5rem; }
 .ed-foot { border-top: 1px solid var(--tv-line); }
-.foot-strip { display: flex; width: 100%; overflow: hidden; }
-.foot-cell { position: relative; height: 148px; flex: 1 1 0; }
-.foot-lock { position: relative; padding: 4.5rem 1.5rem 1rem; text-align: center; }
-.foot-lock .t-display { font-size: clamp(72px, 12vw, 140px); line-height: 0.9; }
-.foot-open { position: absolute; right: max(8vw, 24px); bottom: 1.2rem; }
+.foot-kicker { margin: 0; font-family: var(--tv-font-sans); font-size: 13px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--tv-accent-deep); }
+.foot-lock { position: relative; padding: 5.5rem 1.5rem 2.5rem; text-align: center; }
+.foot-lock .t-display { font-size: clamp(72px, 12vw, 148px); line-height: 0.9; }
+.foot-open { position: absolute; right: max(8vw, 24px); top: 58%; }
+.foot-side { position: absolute; top: 68%; }
+.foot-side.left { left: max(4vw, 20px); }
+.foot-side.right { right: max(4vw, 20px); }
 .foot-cols { display: grid; gap: 2rem; width: 100%; padding: 2.5rem max(4vw, 24px) 1.5rem; }
 @media (min-width: 800px) { .foot-cols { grid-template-columns: 1fr 1fr 1fr; } }
 .foot-cols p, .foot-cols a { display: block; margin-top: 0.45rem; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: var(--tv-ink-60); }

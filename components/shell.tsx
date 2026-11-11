@@ -1,13 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
 import { uiSpring } from "@/lib/motion";
 import { safeXUrl } from "@/lib/safe-url";
-import { stills } from "@/lib/stills";
 import { useSite } from "./site-provider";
 
 const NAV = [
@@ -207,26 +205,20 @@ function MenuGlyph({ open }: { open: boolean }) {
 function Footer() {
   const { settings } = useSite().content;
   const year = new Date().getFullYear();
-  const strip = [...stills().gallery, ...stills().panels].slice(0, 8);
   const x = safeXUrl(settings.xUrl);
   return (
     <footer className="ed-foot">
-      <div className="foot-strip">
-        {strip.map((src) => (
-          <div key={src} className="foot-cell">
-            <Image src={src} alt="" fill sizes="14vw" className="object-cover" />
-          </div>
-        ))}
-      </div>
       <div className="foot-lock">
-        <p className="t-eyebrow">Creative</p>
+        <p className="t-meta foot-side left">09 Contact</p>
+        <p className="t-meta foot-side right">Anytime</p>
+        <p className="foot-kicker">Creative</p>
         <p className="t-display">Tirtavex</p>
-        <p className="t-eyebrow foot-open">Open DMs</p>
+        <p className="foot-kicker foot-open">Open DMs</p>
         <p className="t-body foot-copy">{settings.contactLede}</p>
       </div>
       <div className="foot-cols">
         <div>
-          <p className="t-eyebrow">Get in touch</p>
+          <p className="foot-kicker">Get in touch</p>
           {settings.email ? <a href={`mailto:${settings.email}`}>{settings.email}</a> : null}
           {x ? (
             <a href={x} target="_blank" rel="noopener noreferrer">
@@ -235,7 +227,7 @@ function Footer() {
           ) : null}
         </div>
         <nav aria-label="Footer">
-          <p className="t-eyebrow">Navigation</p>
+          <p className="foot-kicker">Navigation</p>
           {NAV.map((link) => (
             <Link key={link.href} href={link.href}>
               {link.label}
@@ -243,7 +235,7 @@ function Footer() {
           ))}
         </nav>
         <div>
-          <p className="t-eyebrow">About</p>
+          <p className="foot-kicker">About</p>
           <p>AI video creator</p>
           <p>Based in Indonesia</p>
           <p>© Tirta {year}</p>

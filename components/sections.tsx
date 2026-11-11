@@ -393,7 +393,11 @@ function LogoStrip() {
   const loop = [...half, ...half];
   return (
     <div className="logo-strip" aria-label="Tools">
-      <div className="logo-track">
+      <motion.div
+        className="logo-track"
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
+      >
         {loop.map((item, index) => (
           <span key={`${item.name}-${index}`} className="logo-item">
             <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden>
@@ -402,7 +406,7 @@ function LogoStrip() {
             <span>{item.name}</span>
           </span>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
