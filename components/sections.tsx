@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { animate, motion, useInView, useReducedMotion } from "motion/react";
 import { fullNumber, laneLabel, partnerRoleLabel, placementLabel } from "@/lib/format";
 import { isPlaceholderEmail, safeHttpUrl, safeXUrl } from "@/lib/safe-url";
@@ -18,20 +18,53 @@ export function Hero() {
   const { settings } = useSite().content;
   const reduce = useReducedMotion();
   const title = settings.heroTitle || "Tirta";
+  const cutout = !settings.heroImage || settings.heroImage === "/media/hero.webp";
   return (
-    <section className="ed-hero" aria-label="Intro">
-      <Portrait src={settings.heroImage || "/media/hero.webp"} alt={settings.heroImageAlt || "Tirta"} priority hero />
-      <div className="ed-hero-shade" />
-      <div className="ed-hero-copy">
-        <motion.div initial={reduce ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduce ? 0.01 : 0.7, ease: [0.16, 1, 0.3, 1] }}>
-          <p className="ed-kicker">{settings.heroEyebrow || "TirtaVEX"}</p>
-          <h1>{title}</h1>
-          <p className="ed-hero-sub">TirtaVEX</p>
-          <p className="ed-hero-tag">{settings.heroTagline || settings.heroLede}</p>
-        </motion.div>
-      </div>
-      <p className="ed-watermark">@tirtaVEX</p>
-    </section>
+    <>
+      <section className="ed-hero" aria-label="Intro">
+        <div className="ed-stage">
+          <HeroRings reduce={Boolean(reduce)} />
+          {cutout ? (
+            <motion.div
+              initial={reduce ? false : { opacity: 0, y: 36 }}
+              animate={reduce ? { opacity: 1 } : { opacity: 1, y: [0, -12, 0] }}
+              transition={
+                reduce
+                  ? { duration: 0.01 }
+                  : { opacity: { duration: 0.7 }, y: { duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 0.45 } }
+              }
+            >
+              <Image
+                src="/media/hero-cut.webp"
+                alt={settings.heroImageAlt || "Tirta"}
+                width={950}
+                height={1011}
+                priority
+                className="ed-cutout"
+              />
+            </motion.div>
+          ) : (
+            <Portrait src={settings.heroImage} alt={settings.heroImageAlt || "Tirta"} priority hero />
+          )}
+        </div>
+        <div className="ed-hero-copy">
+          <motion.p className="ed-kicker" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+            {settings.heroEyebrow || "TirtaVEX"}
+          </motion.p>
+          <h1>
+            <Words text={title} />
+          </h1>
+          <motion.p className="ed-hero-sub" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduce ? 0 : 0.28, duration: 0.55 }}>
+            TirtaVEX
+          </motion.p>
+          <motion.p className="ed-hero-tag" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduce ? 0 : 0.4, duration: 0.55 }}>
+            {settings.heroTagline || settings.heroLede}
+          </motion.p>
+        </div>
+        <p className="ed-watermark">@tirtaVEX</p>
+      </section>
+      <Marquee items={settings.marquee.length ? settings.marquee : settings.genres} />
+    </>
   );
 }
 
@@ -56,8 +89,10 @@ export function AboutSection({ full = false }: { full?: boolean }) {
             ))}
           </div>
           <ul className="ed-genres" aria-label="Genres">
-            {settings.genres.map((genre) => (
-              <li key={genre}>{genre}</li>
+            {settings.genres.map((genre, index) => (
+              <Rise key={genre} delay={index * 0.04} as="li">
+                {genre}
+              </Rise>
             ))}
           </ul>
           {full ? (
@@ -68,9 +103,9 @@ export function AboutSection({ full = false }: { full?: boolean }) {
             </ul>
           ) : null}
         </div>
-        <div className="ed-frame">
+        <Rise className="ed-frame" delay={0.12}>
           <Portrait src={settings.aboutImage || "/media/about.webp"} alt={settings.aboutImageAlt || "Portrait of Tirta"} width={1400} height={1400} />
-        </div>
+        </Rise>
       </div>
     </section>
   );
@@ -101,8 +136,10 @@ export function WorkSection({ full = false }: { full?: boolean }) {
           ))}
         </div>
         <div className="ed-grid two">
-          {shown.map((item) => (
-            <WorkCard key={item.id} item={item} />
+          {shown.map((item, index) => (
+            <Rise key={item.id} delay={index * 0.06}>
+              <WorkCard item={item} />
+            </Rise>
           ))}
         </div>
         {shown.length === 0 ? <p className="ed-note">No {laneLabel(lane).toLowerCase()} pieces yet.</p> : null}
@@ -126,8 +163,10 @@ export function CampaignSection({ full = false }: { full?: boolean }) {
           heading={full ? "h1" : "h2"}
         />
         <div>
-          {shown.map((item) => (
-            <CampaignRow key={item.id} item={item} />
+          {shown.map((item, index) => (
+            <Rise key={item.id} delay={index * 0.05}>
+              <CampaignRow item={item} />
+            </Rise>
           ))}
         </div>
         {shown.length === 0 ? <p className="ed-note">No campaigns yet.</p> : null}
@@ -151,8 +190,10 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
           heading={full ? "h1" : "h2"}
         />
         <div className="ed-grid three">
-          {shown.map((item) => (
-            <PartnerCard key={item.id} item={item} />
+          {shown.map((item, index) => (
+            <Rise key={item.id} delay={index * 0.08}>
+              <PartnerCard item={item} />
+            </Rise>
           ))}
         </div>
         {shown.length === 0 ? <p className="ed-note">No partners yet.</p> : null}
@@ -233,14 +274,18 @@ export function SkillsSection({ full = false }: { full?: boolean }) {
         <div className="ed-two">
           <div>
             <p className="ed-kicker">Skills</p>
-            {shownSkills.map((item) => (
-              <SkillRow key={item.id} item={item} full={full} />
+            {shownSkills.map((item, index) => (
+              <Rise key={item.id} delay={index * 0.05}>
+                <SkillRow item={item} full={full} />
+              </Rise>
             ))}
           </div>
           <div>
             <p className="ed-kicker">Tools</p>
-            {shownTools.map((item) => (
-              <SkillRow key={item.id} item={item} full={full} />
+            {shownTools.map((item, index) => (
+              <Rise key={item.id} delay={index * 0.05}>
+                <SkillRow item={item} full={full} />
+              </Rise>
             ))}
           </div>
         </div>
@@ -264,10 +309,21 @@ export function ContactSection({ full = false }: { full?: boolean }) {
           heading={full ? "h1" : "h2"}
         />
         <div className="ed-contact">
-          {links.map((item) => (
-            <a key={item.label} className="ed-icon-btn" href={item.href} aria-label={item.aria} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}>
+          {links.map((item, index) => (
+            <motion.a
+              key={item.label}
+              className="ed-icon-btn"
+              href={item.href}
+              aria-label={item.aria}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
+              initial={false}
+              whileHover={{ scale: 1.08, backgroundColor: "#10B981", color: "#ffffff", borderColor: "#10B981" }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", duration: 0.35, bounce: 0.2, delay: index * 0.04 }}
+            >
               <ContactIcon name={item.label} />
-            </a>
+            </motion.a>
           ))}
         </div>
       </div>
@@ -292,7 +348,7 @@ function SectionHead({
 }) {
   const Title = heading;
   return (
-    <header className="ed-head">
+    <Rise className="ed-head">
       <div>
         <p className="ed-kicker">{kicker}</p>
         <Title className="ed-title">{title}</Title>
@@ -303,7 +359,87 @@ function SectionHead({
           {more}
         </Link>
       ) : null}
-    </header>
+    </Rise>
+  );
+}
+
+function Rise({
+  children,
+  delay = 0,
+  className,
+  as = "div",
+}: {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+  as?: "div" | "li";
+}) {
+  const reduce = useReducedMotion();
+  const Tag = as === "li" ? motion.li : motion.div;
+  return (
+    <Tag
+      className={className}
+      initial={reduce ? false : { opacity: 0, y: 26 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.28 }}
+      transition={reduce ? { duration: 0.01 } : { type: "spring", duration: 0.7, bounce: 0.16, delay }}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+function Words({ text }: { text: string }) {
+  const reduce = useReducedMotion();
+  const words = text.split(" ");
+  if (reduce) return <>{text}</>;
+  return (
+    <>
+      {words.map((word, index) => (
+        <motion.span
+          key={`${word}-${index}`}
+          style={{ display: "inline-block" }}
+          initial={{ opacity: 0.001, y: 36 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", duration: 0.7, bounce: 0.2, delay: 0.08 + index * 0.07 }}
+        >
+          {word}
+          {index < words.length - 1 ? "\u00A0" : ""}
+        </motion.span>
+      ))}
+    </>
+  );
+}
+
+function HeroRings({ reduce }: { reduce: boolean }) {
+  const sizes = [240, 360, 500, 660];
+  return (
+    <div className="ed-rings" aria-hidden>
+      {sizes.map((size, index) => (
+        <motion.span
+          key={size}
+          className={index % 2 ? "ed-ring dashed" : "ed-ring"}
+          style={{ width: size, height: size, left: "50%", top: "50%", marginLeft: -size / 2, marginTop: -size / 2 }}
+          animate={reduce ? undefined : { rotate: index % 2 ? -360 : 360 }}
+          transition={{ duration: 18 + index * 8, repeat: Infinity, ease: "linear" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function Marquee({ items }: { items: string[] }) {
+  const reduce = useReducedMotion();
+  const line = [...items, ...items, ...items, ...items];
+  if (reduce) return <p className="ed-marquee-static">{items.join("  ·  ")}</p>;
+  return (
+    <div className="ed-marquee">
+      <motion.div className="ed-marquee-track" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 32, repeat: Infinity, ease: "linear" }}>
+        {line.map((item, index) => (
+          <span key={`${item}-${index}`}>{item}</span>
+        ))}
+      </motion.div>
+    </div>
   );
 }
 

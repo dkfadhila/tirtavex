@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
+import { uiSpring } from "@/lib/motion";
 
 const NAV = [
   { href: "/about", label: "About" },
@@ -52,7 +53,7 @@ export function Shell({ children }: { children: ReactNode }) {
 function Nav() {
   const pathname = usePathname();
   const reduce = useReducedMotion();
-  const navRef = useRef<HTMLElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
   const [openPath, setOpenPath] = useState<string | null>(null);
   const open = openPath === pathname;
 
@@ -74,12 +75,47 @@ function Nav() {
 
   return (
     <header className="ed-nav-wrap">
-      <nav ref={navRef} aria-label="Primary" className={open ? "ed-nav is-open" : "ed-nav"}>
+      <motion.nav
+        ref={navRef}
+        aria-label="Primary"
+        className="ed-nav"
+        initial={reduce ? false : { opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0.01 } : uiSpring}
+      >
         <div className="ed-nav-row">
-          <span className="ed-nav-spacer" aria-hidden />
           <Link href="/" className="wordmark ed-nav-title">
             Tirtavex
           </Link>
+          <div className="ed-nav-center">
+            <AnimatePresence initial={false}>
+              {open ? (
+                <motion.ul
+                  id="site-menu"
+                  key="menu"
+                  className="ed-menu"
+                  initial={reduce ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reduce ? 0.01 : 0.25 }}
+                >
+                  {NAV.map((link, index) => (
+                    <motion.li
+                      key={link.href}
+                      initial={reduce ? false : { opacity: 0, x: 16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={reduce ? undefined : { opacity: 0, x: 8 }}
+                      transition={{ type: "spring", duration: 0.45, bounce: 0.12, delay: reduce ? 0 : 0.04 * index }}
+                    >
+                      <Link href={link.href} aria-current={pathname === link.href ? "page" : undefined} onClick={() => setOpenPath(null)}>
+                        {link.label}
+                      </Link>
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              ) : null}
+            </AnimatePresence>
+          </div>
           <button
             type="button"
             className="ed-nav-btn"
@@ -94,39 +130,21 @@ function Nav() {
         <AnimatePresence initial={false}>
           {open ? (
             <motion.div
-              id="site-menu"
-              key="menu"
-              initial={reduce ? false : { height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
-              transition={{ duration: reduce ? 0.01 : 0.38, ease: [0.44, 0, 0.56, 1] }}
-              style={{ overflow: "hidden" }}
+              className="ed-menu-more"
+              initial={reduce ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, delay: reduce ? 0 : 0.12 }}
             >
-              <ul className="ed-menu">
-                {NAV.map((link, index) => (
-                  <motion.li
-                    key={link.href}
-                    initial={reduce ? false : { opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.32, delay: reduce ? 0 : 0.04 * index, ease: [0.44, 0, 0.56, 1] }}
-                  >
-                    <Link href={link.href} aria-current={pathname === link.href ? "page" : undefined} onClick={() => setOpenPath(null)}>
-                      {link.label}
-                    </Link>
-                  </motion.li>
-                ))}
-              </ul>
-              <div className="ed-menu-more">
-                {OTHER.map((link) => (
-                  <Link key={link.href} href={link.href} onClick={() => setOpenPath(null)}>
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+              {OTHER.map((link) => (
+                <Link key={link.href} href={link.href} onClick={() => setOpenPath(null)}>
+                  {link.label}
+                </Link>
+              ))}
             </motion.div>
           ) : null}
         </AnimatePresence>
-      </nav>
+      </motion.nav>
     </header>
   );
 }
