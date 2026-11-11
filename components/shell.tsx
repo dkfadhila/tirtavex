@@ -208,14 +208,6 @@ function Footer() {
   const x = safeXUrl(settings.xUrl);
   return (
     <footer className="ed-foot">
-      <div className="foot-lock">
-        <p className="t-meta foot-side left">09 Contact</p>
-        <p className="t-meta foot-side right">Anytime</p>
-        <p className="foot-kicker">Creative</p>
-        <p className="t-display">Tirtavex</p>
-        <p className="foot-kicker foot-open">Open DMs</p>
-        <p className="t-body foot-copy">{settings.contactLede}</p>
-      </div>
       <div className="foot-cols">
         <div>
           <p className="foot-kicker">Get in touch</p>
