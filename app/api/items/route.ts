@@ -6,11 +6,13 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const category = url.searchParams.get("category") || "all";
+  const lane = url.searchParams.get("lane") || "";
   const sort = url.searchParams.get("sort") || "latest";
   const cursor = Math.max(0, Number(url.searchParams.get("cursor") || "0") || 0);
   const limit = Math.min(24, Math.max(1, Number(url.searchParams.get("limit") || "12") || 12));
   const content = await getContent();
   let items = content.work.filter((item) => category === "all" || item.category === category);
+  if (lane === "generation" || lane === "motion") items = items.filter((item) => item.lane === lane);
   items = [...items].sort((a, b) => {
     if (sort === "liked") return b.metrics.likes - a.metrics.likes;
     if (sort === "viewed") return b.metrics.impressions - a.metrics.impressions;

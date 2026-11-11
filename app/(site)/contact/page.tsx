@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ContactView } from "@/components/page-views";
+import { ContactSection } from "@/components/sections";
 
 export const metadata: Metadata = { title: "Contact", alternates: { canonical: "/contact" } };
 
 export default function Page() {
-  return <ContactView />;
+  return <ContactSection full />;
 }

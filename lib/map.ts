@@ -4,7 +4,10 @@ import type {
   Collab,
   Contest,
   CustomLink,
+  Lane,
   LegalPage,
+  PartnerRole,
+  PlatformStat,
   ProcessStep,
   Program,
   Project,
@@ -15,6 +18,7 @@ import type {
   Tool,
   WorkItem,
 } from "./types";
+import { LANES, PARTNER_ROLES, PLATFORMS } from "./types";
 import { buildSeed } from "./seed-data";
 import { safeColor } from "./safe-url";
 import type {
@@ -53,6 +57,7 @@ export function mergeSettings(data: unknown): Settings {
     ...defaults,
     ...record,
     marquee: strings(record.marquee).length ? strings(record.marquee) : defaults.marquee,
+    genres: strings(record.genres).length ? strings(record.genres) : defaults.genres,
     budgetOptions: strings(record.budgetOptions).length ? strings(record.budgetOptions) : defaults.budgetOptions,
     socials: Array.isArray(record.socials)
       ? record.socials.flatMap((item) => {
@@ -72,6 +77,9 @@ export function mapWork(row: typeof workItems.$inferSelect): WorkItem {
     title: row.title,
     note: row.note,
     category: row.category as WorkItem["category"],
+    lane: normalizeLane(row.lane),
+    videoUrl: row.videoUrl ?? "",
+    placeholder: Boolean(row.placeholder),
     tags: strings(row.tags),
     pinned: row.pinned,
     thumb: {
@@ -142,6 +150,10 @@ export function mapAmbassador(row: typeof ambassadors.$inferSelect): Ambassador 
     status: row.status as Ambassador["status"],
     duties: strings(row.duties),
     postIds: strings(row.postIds),
+    logo: row.logo ?? "",
+    summary: row.summary ?? "",
+    roleType: normalizeRole(row.roleType),
+    placeholder: Boolean(row.placeholder),
     hidden: row.hidden,
     sortOrder: row.sortOrder,
   };
@@ -187,10 +199,13 @@ export function mapContest(row: typeof contests.$inferSelect): Contest {
     organizer: row.organizer,
     date: row.dateLabel,
     year: row.year,
-    placement: row.placement as Contest["placement"],
+    placement: row.placement === "winner" || row.placement === "finalist" || row.placement === "top10" || row.placement === "participant" ? row.placement : "",
+    result: row.result ?? "",
+    link: row.link ?? "",
     entryPostId: row.entryPostId,
     thumb: row.thumb,
     xUrl: row.xUrl,
+    placeholder: Boolean(row.placeholder),
     hidden: row.hidden,
     sortOrder: row.sortOrder,
   };
@@ -227,6 +242,9 @@ export function mapTool(row: typeof tools.$inferSelect): Tool {
     id: row.id,
     name: row.name,
     group: row.groupName,
+    kind: row.kind === "skill" ? "skill" : "tool",
+    icon: row.icon ?? "",
+    note: row.note ?? "",
     hidden: row.hidden,
     sortOrder: row.sortOrder,
   };
@@ -280,9 +298,44 @@ export function mapStats(row: typeof stats.$inferSelect): Stats {
     likes: row.likes,
     posts: row.posts,
     followers: row.followers,
+    engagement: row.engagement ?? 0,
+    videos: row.videos ?? 0,
+    placeholder: row.placeholder ?? true,
+    platforms: normalizePlatforms(row.platforms),
     bestPostId: row.bestPostId,
     updatedAt: toIso(row.updatedAt),
   };
+}
+
+function normalizeLane(value: string | null | undefined): Lane {
+  return (LANES as readonly string[]).includes(value ?? "") ? (value as Lane) : "generation";
+}
+
+function normalizeRole(value: string | null | undefined): PartnerRole {
+  return (PARTNER_ROLES as readonly string[]).includes(value ?? "") ? (value as PartnerRole) : "ambassador";
+}
+
+export function normalizePlatforms(value: unknown): PlatformStat[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Partial<PlatformStat>;
+    if (typeof row.platform !== "string" || !(PLATFORMS as readonly string[]).includes(row.platform)) return [];
+    return [{
+      platform: row.platform,
+      label: typeof row.label === "string" ? row.label : row.platform,
+      handle: typeof row.handle === "string" ? row.handle : "",
+      url: typeof row.url === "string" ? row.url : "",
+      engagement: numberOrZero(row.engagement),
+      likes: numberOrZero(row.likes),
+      videos: numberOrZero(row.videos),
+      placeholder: Boolean(row.placeholder),
+    }];
+  });
+}
+
+function numberOrZero(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
 export function mapAgent(row: typeof agentState.$inferSelect | undefined) {

@@ -25,6 +25,13 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/contests", destination: "/campaigns", permanent: false },
+      { source: "/programs", destination: "/partners", permanent: false },
+      { source: "/pulse", destination: "/stats", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

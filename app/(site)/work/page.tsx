@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { WorkIndex } from "@/components/studio-pages";
+import { WorkSection } from "@/components/sections";
 
-export const metadata: Metadata = { title: "Work", alternates: { canonical: "/work" } };
+export const metadata: Metadata = { title: "The Cut", alternates: { canonical: "/work" } };
 
 export default function Page() {
-  return <WorkIndex />;
+  return <WorkSection full />;
 }

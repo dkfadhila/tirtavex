@@ -8,31 +8,40 @@ import type { AdminSnapshot, Settings, SiteContent } from "@/lib/types";
 const NAV = [
   ["", "Overview"],
   ["settings", "Settings"],
-  ["work", "Work"],
+  ["work", "The Cut"],
   ["articles", "Journal"],
   ["links", "Links"],
   ["projects", "Projects"],
   ["collabs", "Collabs"],
   ["programs", "Programs"],
-  ["ambassadors", "Ambassadors"],
-  ["contests", "Contests"],
+  ["ambassadors", "Partners"],
+  ["contests", "Campaigns"],
   ["testimonials", "Reviews"],
   ["process", "Process"],
-  ["tools", "Toolkit"],
+  ["tools", "Skills & tools"],
   ["legal", "Legal"],
   ["stats", "Stats"],
   ["submissions", "Inbox"],
 ] as const;
 
-type Field = { key: string; label: string; type: "text" | "textarea" | "number" | "checkbox" | "comma" | "lines" | "select" | "image"; options?: string[] };
+type Field = {
+  key: string;
+  label: string;
+  type: "text" | "textarea" | "number" | "checkbox" | "comma" | "lines" | "select" | "image";
+  options?: string[];
+  optionLabels?: Record<string, string>;
+};
 
 const FIELDS: Record<string, Field[]> = {
   work: [
     { key: "title", label: "Title", type: "text" },
     { key: "xUrl", label: "X URL", type: "text" },
     { key: "note", label: "Note", type: "textarea" },
-    { key: "category", label: "Category", type: "select", options: ["ai-video", "web3", "contest", "collab"] },
-    { key: "tags", label: "Tags", type: "comma" },
+    { key: "lane", label: "Showcase", type: "select", options: ["generation", "motion"], optionLabels: { generation: "AI video generation", motion: "Motion design" } },
+    { key: "category", label: "Legacy category", type: "select", options: ["ai-video", "web3", "contest", "collab"] },
+    { key: "tags", label: "Genre tags", type: "comma" },
+    { key: "videoUrl", label: "Video file or URL", type: "text" },
+    { key: "placeholder", label: "Placeholder", type: "checkbox" },
     { key: "status", label: "Visibility", type: "select", options: ["live", "hidden", "deleted"] },
     { key: "pinned", label: "Pinned", type: "checkbox" },
     { key: "thumb.src", label: "Thumbnail URL", type: "image" },
@@ -120,7 +129,11 @@ const FIELDS: Record<string, Field[]> = {
     { key: "hidden", label: "Hidden", type: "checkbox" },
   ],
   ambassadors: [
-    { key: "project", label: "Project", type: "text" },
+    { key: "project", label: "Project name", type: "text" },
+    { key: "roleType", label: "Role", type: "select", options: ["ambassador", "creator-partner", "collaboration-partner"], optionLabels: { ambassador: "Ambassador", "creator-partner": "Creator Partner", "collaboration-partner": "Collaboration Partner" } },
+    { key: "summary", label: "Short description", type: "textarea" },
+    { key: "logo", label: "Project logo URL", type: "image" },
+    { key: "placeholder", label: "Placeholder", type: "checkbox" },
     { key: "title", label: "Title", type: "text" },
     { key: "region", label: "Region", type: "text" },
     { key: "start", label: "Start", type: "text" },
@@ -130,11 +143,14 @@ const FIELDS: Record<string, Field[]> = {
     { key: "hidden", label: "Hidden", type: "checkbox" },
   ],
   contests: [
-    { key: "name", label: "Name", type: "text" },
-    { key: "organizer", label: "Organizer", type: "text" },
+    { key: "name", label: "Title", type: "text" },
+    { key: "organizer", label: "Campaign / organizer", type: "text" },
+    { key: "link", label: "Link", type: "text" },
     { key: "date", label: "Date", type: "text" },
     { key: "year", label: "Year", type: "number" },
-    { key: "placement", label: "Placement", type: "select", options: ["winner", "finalist", "top10", "participant"] },
+    { key: "placement", label: "Placement", type: "select", options: ["", "winner", "finalist", "top10", "participant"], optionLabels: { "": "No result yet", winner: "Winner", finalist: "Finalist", top10: "Top 10", participant: "Participant" } },
+    { key: "result", label: "Result note", type: "text" },
+    { key: "placeholder", label: "Placeholder", type: "checkbox" },
     { key: "entryPostId", label: "Work id", type: "text" },
     { key: "xUrl", label: "X URL", type: "text" },
     { key: "thumb", label: "Thumb URL", type: "image" },
@@ -158,7 +174,10 @@ const FIELDS: Record<string, Field[]> = {
   ],
   tools: [
     { key: "name", label: "Name", type: "text" },
+    { key: "kind", label: "Kind", type: "select", options: ["skill", "tool"], optionLabels: { skill: "Skill", tool: "Tool" } },
     { key: "group", label: "Group", type: "text" },
+    { key: "icon", label: "Icon key or logo URL", type: "text" },
+    { key: "note", label: "Note", type: "textarea" },
     { key: "hidden", label: "Hidden", type: "checkbox" },
   ],
 };
@@ -354,7 +373,7 @@ function Collection({
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-4xl capitalize">{type}</h1>
+        <h1 className="font-display text-4xl">{({ work: "The Cut", contests: "Campaigns & quests", ambassadors: "Partners", tools: "Skills & tools" } as Record<string, string>)[type] || type}</h1>
         <button className="btn" disabled={disabled} onClick={() => { setDraft(structuredClone(blank)); setMode("create"); }}>
           New
         </button>
@@ -447,7 +466,7 @@ function Editor({
               <span>{field.label}</span>
               <select value={String(current ?? "")} onChange={(event) => set(event.target.value)}>
                 {field.options?.map((option) => (
-                  <option key={option}>{option}</option>
+                  <option key={option || "empty"} value={option}>{field.optionLabels?.[option] || option || "None"}</option>
                 ))}
               </select>
             </label>
@@ -507,6 +526,7 @@ function ImageUpload({ onUrl }: { onUrl: (url: string) => void }) {
 function XImport({ disabled, onDone }: { disabled: boolean; onDone: (snapshot: AdminSnapshot) => void }) {
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("ai-video");
+  const [lane, setLane] = useState("generation");
   const [tags, setTags] = useState("");
   const [pinned, setPinned] = useState(false);
   const [preview, setPreview] = useState("");
@@ -517,7 +537,7 @@ function XImport({ disabled, onDone }: { disabled: boolean; onDone: (snapshot: A
     const response = await fetch(path, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ xUrl: url, url, category, tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean), pinned }),
+      body: JSON.stringify({ xUrl: url, url, category, lane, tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean), pinned }),
     });
     const json = (await response.json().catch(() => ({}))) as { error?: string; title?: string; text?: string; snapshot?: AdminSnapshot };
     if (!response.ok) {
@@ -537,7 +557,14 @@ function XImport({ disabled, onDone }: { disabled: boolean; onDone: (snapshot: A
           <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://x.com/TirtaVEX/status/…" />
         </label>
         <label className="field">
-          <span>Category</span>
+          <span>Showcase</span>
+          <select value={lane} onChange={(event) => setLane(event.target.value)}>
+            <option value="generation">AI video generation</option>
+            <option value="motion">Motion design</option>
+          </select>
+        </label>
+        <label className="field">
+          <span>Legacy category</span>
           <select value={category} onChange={(event) => setCategory(event.target.value)}>
             {["ai-video", "web3", "contest", "collab"].map((option) => (
               <option key={option}>{option}</option>
@@ -584,7 +611,7 @@ function XImport({ disabled, onDone }: { disabled: boolean; onDone: (snapshot: A
 
 function SettingsForm({ settings, disabled, onSave }: { settings: Settings; disabled: boolean; onSave: (data: Settings) => void }) {
   const [draft, setDraft] = useState(settings);
-  const keys: (keyof Settings)[] = ["heroEyebrow", "heroTitle", "heroHeadline", "heroLede", "heroPrimaryLabel", "heroSecondaryLabel", "introLeftKicker", "introLeftTitle", "introLeftBody", "introRightKicker", "introRightTitle", "introRightBody", "bio", "bioLong", "email", "phone", "location", "availability", "xHandle", "xUrl", "footerBlurb", "contactHeadline", "contactLede", "metaTitle", "metaDescription", "pressNote", "pulseLede"];
+  const keys: (keyof Settings)[] = ["heroEyebrow", "heroTitle", "heroTagline", "heroHeadline", "heroLede", "heroPrimaryLabel", "heroSecondaryLabel", "heroImage", "heroImageAlt", "aboutEyebrow", "aboutTitle", "aboutMore", "aboutImage", "aboutImageAlt", "workTitle", "workLede", "campaignsTitle", "campaignsLede", "partnersTitle", "partnersLede", "statsTitle", "statsLede", "skillsTitle", "skillsLede", "contactTitle", "introLeftKicker", "introLeftTitle", "introLeftBody", "introRightKicker", "introRightTitle", "introRightBody", "bio", "bioLong", "email", "phone", "location", "availability", "xHandle", "xUrl", "tiktokUrl", "instagramUrl", "footerBlurb", "contactHeadline", "contactLede", "metaTitle", "metaDescription", "pressNote", "pulseLede"];
   return (
     <form
       className="grid gap-3"
@@ -604,6 +631,10 @@ function SettingsForm({ settings, disabled, onSave }: { settings: Settings; disa
           )}
         </label>
       ))}
+      <label className="field">
+        <span>Genres</span>
+        <input value={draft.genres.join(", ")} onChange={(event) => setDraft({ ...draft, genres: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} />
+      </label>
       <label className="field">
         <span>Marquee words</span>
         <input value={draft.marquee.join(", ")} onChange={(event) => setDraft({ ...draft, marquee: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} />
@@ -667,6 +698,14 @@ function LegalForm({ content, disabled, onSave }: { content: SiteContent; disabl
 
 function StatsForm({ stats, disabled, onSave }: { stats: SiteContent["stats"]; disabled: boolean; onSave: (data: SiteContent["stats"]) => void }) {
   const [draft, setDraft] = useState(stats);
+  function setPlatform(index: number, key: "engagement" | "likes" | "videos" | "handle" | "label" | "url", value: string) {
+    const platforms = draft.platforms.map((row, i) => {
+      if (i !== index) return row;
+      if (key === "engagement" || key === "likes" || key === "videos") return { ...row, [key]: Number(value) || 0 };
+      return { ...row, [key]: value };
+    });
+    setDraft({ ...draft, platforms });
+  }
   return (
     <form
       className="grid gap-3"
@@ -675,8 +714,25 @@ function StatsForm({ stats, disabled, onSave }: { stats: SiteContent["stats"]; d
         onSave(draft);
       }}
     >
-      <h1 className="font-display text-4xl">Live totals</h1>
-      {(["impressionsAll", "impressions30d", "likes", "posts", "followers"] as const).map((key) => (
+      <h1 className="font-display text-4xl">Engagement</h1>
+      <p className="text-sm muted">Leave “placeholder” on until the numbers are real. The public site shows a dash instead of a fake total.</p>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={draft.placeholder} onChange={(event) => setDraft({ ...draft, placeholder: event.target.checked, platforms: draft.platforms.map((row) => ({ ...row, placeholder: event.target.checked })) })} />
+        These figures are placeholders
+      </label>
+      {draft.platforms.map((row, index) => (
+        <fieldset key={row.platform} className="grid gap-2 rounded-card bg-white p-4">
+          <legend className="px-1 text-sm">{row.label || row.platform}</legend>
+          <label className="field"><span>Label</span><input value={row.label} onChange={(event) => setPlatform(index, "label", event.target.value)} /></label>
+          <label className="field"><span>Handle</span><input value={row.handle} onChange={(event) => setPlatform(index, "handle", event.target.value)} /></label>
+          <label className="field"><span>Profile URL</span><input value={row.url} onChange={(event) => setPlatform(index, "url", event.target.value)} /></label>
+          <label className="field"><span>Total engagement</span><input type="number" value={row.engagement} onChange={(event) => setPlatform(index, "engagement", event.target.value)} /></label>
+          <label className="field"><span>Likes</span><input type="number" value={row.likes} onChange={(event) => setPlatform(index, "likes", event.target.value)} /></label>
+          <label className="field"><span>Videos published</span><input type="number" value={row.videos} onChange={(event) => setPlatform(index, "videos", event.target.value)} /></label>
+        </fieldset>
+      ))}
+      <h2 className="font-display text-2xl">Legacy totals</h2>
+      {(["impressionsAll", "impressions30d", "likes", "posts", "followers", "engagement", "videos"] as const).map((key) => (
         <label key={key} className="field">
           <span>{key}</span>
           <input type="number" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: Number(event.target.value) })} />

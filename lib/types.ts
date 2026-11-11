@@ -1,8 +1,17 @@
 export const CATEGORIES = ["ai-video", "web3", "contest", "collab"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
+export const LANES = ["generation", "motion"] as const;
+export type Lane = (typeof LANES)[number];
+
 export const PLACEMENTS = ["winner", "finalist", "top10", "participant"] as const;
-export type Placement = (typeof PLACEMENTS)[number];
+export type Placement = (typeof PLACEMENTS)[number] | "";
+
+export const PARTNER_ROLES = ["ambassador", "creator-partner", "collaboration-partner"] as const;
+export type PartnerRole = (typeof PARTNER_ROLES)[number];
+
+export const PLATFORMS = ["overall", "x", "tiktok", "instagram"] as const;
+export type PlatformKey = (typeof PLATFORMS)[number];
 
 export type Metrics = {
   impressions: number;
@@ -20,6 +29,12 @@ export type WorkItem = {
   title: string;
   note: string;
   category: Category;
+  /** Public showcase split: generated AI video, or AI motion design. */
+  lane: Lane;
+  /** Optional hosted or remote video. The X post stays the primary link. */
+  videoUrl: string;
+  /** True while the card is a labeled stand-in, not a published film. */
+  placeholder: boolean;
   tags: string[];
   pinned: boolean;
   thumb: {
@@ -76,6 +91,10 @@ export type Ambassador = {
   status: "active" | "past";
   duties: string[];
   postIds: string[];
+  logo: string;
+  summary: string;
+  roleType: PartnerRole;
+  placeholder: boolean;
   hidden: boolean;
   sortOrder: number;
 };
@@ -118,9 +137,14 @@ export type Contest = {
   date: string;
   year: number;
   placement: Placement;
+  /** Free-text result, used when a placement label is not enough. */
+  result: string;
+  /** Campaign or entry link. Any https URL. xUrl stays X-only. */
+  link: string;
   entryPostId: string;
   thumb: string;
   xUrl: string;
+  placeholder: boolean;
   hidden: boolean;
   sortOrder: number;
 };
@@ -151,6 +175,11 @@ export type Tool = {
   id: string;
   name: string;
   group: string;
+  /** Skills and tools are edited in one collection and rendered apart. */
+  kind: "skill" | "tool";
+  /** Icon key (camera, type, audio…) or an https logo URL. */
+  icon: string;
+  note: string;
   hidden: boolean;
   sortOrder: number;
 };
@@ -221,8 +250,41 @@ export type Settings = {
   metaDescription: string;
   pressNote: string;
   pulseLede: string;
+  heroTagline: string;
+  aboutEyebrow: string;
+  aboutTitle: string;
+  aboutMore: string;
+  workTitle: string;
+  workLede: string;
+  campaignsTitle: string;
+  campaignsLede: string;
+  partnersTitle: string;
+  partnersLede: string;
+  statsTitle: string;
+  statsLede: string;
+  skillsTitle: string;
+  skillsLede: string;
+  contactTitle: string;
+  genres: string[];
+  tiktokUrl: string;
+  instagramUrl: string;
+  heroImage: string;
+  aboutImage: string;
+  heroImageAlt: string;
+  aboutImageAlt: string;
   budgetOptions: string[];
   socials: SocialLink[];
+};
+
+export type PlatformStat = {
+  platform: PlatformKey;
+  label: string;
+  handle: string;
+  url: string;
+  engagement: number;
+  likes: number;
+  videos: number;
+  placeholder: boolean;
 };
 
 export type Stats = {
@@ -231,6 +293,10 @@ export type Stats = {
   likes: number;
   posts: number;
   followers: number;
+  engagement: number;
+  videos: number;
+  placeholder: boolean;
+  platforms: PlatformStat[];
   bestPostId: string;
   updatedAt: string;
 };

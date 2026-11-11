@@ -94,6 +94,23 @@ export function placementLabel(placement: string): string {
     case "participant":
       return "Participant";
     default:
-      return placement;
+      return "";
+  }
+}
+
+export function laneLabel(lane: string): string {
+  return lane === "motion" ? "Motion design" : "AI video";
+}
+
+export function partnerRoleLabel(role: string): string {
+  switch (role) {
+    case "creator-partner":
+      return "Creator Partner";
+    case "collaboration-partner":
+      return "Collaboration Partner";
+    case "ambassador":
+      return "Ambassador";
+    default:
+      return role;
   }
 }

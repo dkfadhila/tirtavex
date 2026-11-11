@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { getDb, getSql } from "./db";
-import { mapArticle, mapProject, mapStats, mapWork, mergeSettings, toIso } from "./map";
+import { mapArticle, mapProject, mapStats, mapWork, mergeSettings, normalizePlatforms, toIso } from "./map";
 import type { FetchedPost } from "./metrics";
 import { getMetricsProvider } from "./metrics";
 import { buildSeed } from "./seed-data";
@@ -44,7 +44,8 @@ import type {
   Tool,
   WorkItem,
 } from "./types";
-import { CATEGORIES, PLACEMENTS, RESOURCE_TYPES } from "./types";
+import { CATEGORIES, LANES, PARTNER_ROLES, PLACEMENTS, RESOURCE_TYPES } from "./types";
+import type { PlatformStat } from "./types";
 
 export class HttpError extends Error {
   status: number;
@@ -77,6 +78,19 @@ function choice<T extends string>(value: unknown, allowed: readonly T[], fallbac
   return typeof value === "string" && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
 }
 
+function parsePlacement(value: unknown): Contest["placement"] {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  return (PLACEMENTS as readonly string[]).includes(trimmed) ? (trimmed as Contest["placement"]) : "";
+}
+
+function mediaRef(value: unknown, fallback: string) {
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim();
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.includes("..")) return trimmed;
+  return safeHttpUrl(trimmed) ?? fallback;
+}
+
 function dateOr(value: unknown, fallback: string) {
   if (typeof value === "string" && !Number.isNaN(new Date(value).getTime())) return new Date(value).toISOString();
   return fallback;
@@ -106,6 +120,9 @@ function parseWork(input: unknown, existing?: WorkItem): Omit<WorkItem, "id" | "
     title,
     note: cleanText(raw.note ?? existing?.note ?? "", 280),
     category: choice(raw.category ?? existing?.category, CATEGORIES, "ai-video"),
+    lane: choice(raw.lane ?? existing?.lane, LANES, "generation"),
+    videoUrl: safeHttpUrl(typeof raw.videoUrl === "string" ? raw.videoUrl : existing?.videoUrl) ?? "",
+    placeholder: Boolean(raw.placeholder ?? existing?.placeholder ?? false),
     tags: cleanLines(raw.tags ?? existing?.tags ?? [], 12),
     pinned: Boolean(raw.pinned ?? existing?.pinned ?? false),
     thumb: {
@@ -141,6 +158,9 @@ function workRow(item: WorkItem) {
     title: item.title,
     note: item.note,
     category: item.category,
+    lane: item.lane,
+    videoUrl: item.videoUrl,
+    placeholder: item.placeholder,
     tags: item.tags,
     pinned: item.pinned,
     thumbSrc: item.thumb.src,
@@ -263,6 +283,10 @@ function parseAmbassador(input: unknown, existing?: Ambassador): Ambassador {
     status: choice(raw.status ?? existing?.status, ["active", "past"] as const, "active"),
     duties: cleanLines(raw.duties ?? existing?.duties ?? [], 12),
     postIds: cleanLines(raw.postIds ?? existing?.postIds ?? [], 20),
+    logo: safeHttpUrl(typeof raw.logo === "string" ? raw.logo : existing?.logo) ?? "",
+    summary: cleanBlock(raw.summary ?? existing?.summary ?? "", 400),
+    roleType: choice(raw.roleType ?? existing?.roleType, PARTNER_ROLES, "ambassador"),
+    placeholder: Boolean(raw.placeholder ?? existing?.placeholder ?? false),
     hidden: Boolean(raw.hidden ?? existing?.hidden ?? false),
     sortOrder: existing?.sortOrder ?? 0,
   };
@@ -319,10 +343,13 @@ function parseContest(input: unknown, existing?: Contest): Contest {
     organizer: cleanText(raw.organizer ?? existing?.organizer ?? "", 120),
     date: cleanText(raw.date ?? existing?.date ?? "", 40),
     year: Math.round(num(raw.year, existing?.year ?? new Date().getUTCFullYear())),
-    placement: choice(raw.placement ?? existing?.placement, PLACEMENTS, "participant"),
+    placement: parsePlacement(raw.placement ?? existing?.placement),
+    result: cleanText(raw.result ?? existing?.result ?? "", 160),
+    link: safeHttpUrl(typeof raw.link === "string" ? raw.link : existing?.link) ?? "",
     entryPostId: cleanText(raw.entryPostId ?? existing?.entryPostId ?? "", 40),
     thumb: safeHttpUrl(typeof raw.thumb === "string" ? raw.thumb : existing?.thumb) ?? "",
     xUrl: xUrl || "",
+    placeholder: Boolean(raw.placeholder ?? existing?.placeholder ?? false),
     hidden: Boolean(raw.hidden ?? existing?.hidden ?? false),
     sortOrder: existing?.sortOrder ?? 0,
   };
@@ -368,6 +395,9 @@ function parseTool(input: unknown, existing?: Tool): Tool {
     id: existing?.id ?? nid("tool"),
     name,
     group: cleanText(raw.group ?? existing?.group ?? "", 40),
+    kind: choice(raw.kind ?? existing?.kind, ["skill", "tool"] as const, "tool"),
+    icon: cleanText(raw.icon ?? existing?.icon ?? "", 200),
+    note: cleanText(raw.note ?? existing?.note ?? "", 240),
     hidden: Boolean(raw.hidden ?? existing?.hidden ?? false),
     sortOrder: existing?.sortOrder ?? 0,
   };
@@ -589,7 +619,7 @@ async function updateProgram(id: string, data: unknown) {
 async function insertAmbassador(item: Ambassador) {
   const db = dbOrThrow();
   item.sortOrder = await nextOrder(await db.select({ sortOrder: ambassadors.sortOrder }).from(ambassadors));
-  await db.insert(ambassadors).values({ id: item.id, project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, hidden: item.hidden, sortOrder: item.sortOrder });
+  await db.insert(ambassadors).values({ id: item.id, project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden, sortOrder: item.sortOrder });
   await emit("content.refresh", { type: "ambassadors" });
   return item;
 }
@@ -597,9 +627,9 @@ async function updateAmbassador(id: string, data: unknown) {
   const db = dbOrThrow();
   const rows = await db.select().from(ambassadors).where(eq(ambassadors.id, id)).limit(1);
   if (!rows[0]) throw new HttpError("Not found", 404);
-  const current: Ambassador = { id, project: rows[0].project, title: rows[0].title, region: rows[0].region, start: rows[0].startLabel, status: rows[0].status as Ambassador["status"], duties: rows[0].duties ?? [], postIds: rows[0].postIds ?? [], hidden: rows[0].hidden, sortOrder: rows[0].sortOrder };
+  const current: Ambassador = { id, project: rows[0].project, title: rows[0].title, region: rows[0].region, start: rows[0].startLabel, status: rows[0].status as Ambassador["status"], duties: rows[0].duties ?? [], postIds: rows[0].postIds ?? [], logo: rows[0].logo ?? "", summary: rows[0].summary ?? "", roleType: choice(rows[0].roleType, PARTNER_ROLES, "ambassador"), placeholder: Boolean(rows[0].placeholder), hidden: rows[0].hidden, sortOrder: rows[0].sortOrder };
   const item = parseAmbassador(data, current);
-  await db.update(ambassadors).set({ project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, hidden: item.hidden }).where(eq(ambassadors.id, id));
+  await db.update(ambassadors).set({ project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden }).where(eq(ambassadors.id, id));
   await emit("content.refresh", { type: "ambassadors" });
   return item;
 }
@@ -630,7 +660,7 @@ async function updateProject(id: string, data: unknown) {
 async function insertContest(item: Contest) {
   const db = dbOrThrow();
   item.sortOrder = await nextOrder(await db.select({ sortOrder: contests.sortOrder }).from(contests));
-  await db.insert(contests).values({ id: item.id, name: item.name, organizer: item.organizer, dateLabel: item.date, year: item.year, placement: item.placement, entryPostId: item.entryPostId, thumb: item.thumb, xUrl: item.xUrl, hidden: item.hidden, sortOrder: item.sortOrder });
+  await db.insert(contests).values({ id: item.id, name: item.name, organizer: item.organizer, dateLabel: item.date, year: item.year, placement: item.placement, result: item.result, link: item.link, entryPostId: item.entryPostId, thumb: item.thumb, xUrl: item.xUrl, placeholder: item.placeholder, hidden: item.hidden, sortOrder: item.sortOrder });
   await emit("content.refresh", { type: "contests" });
   return item;
 }
@@ -638,9 +668,9 @@ async function updateContest(id: string, data: unknown) {
   const db = dbOrThrow();
   const rows = await db.select().from(contests).where(eq(contests.id, id)).limit(1);
   if (!rows[0]) throw new HttpError("Not found", 404);
-  const current: Contest = { id, name: rows[0].name, organizer: rows[0].organizer, date: rows[0].dateLabel, year: rows[0].year, placement: rows[0].placement as Contest["placement"], entryPostId: rows[0].entryPostId, thumb: rows[0].thumb, xUrl: rows[0].xUrl, hidden: rows[0].hidden, sortOrder: rows[0].sortOrder };
+  const current: Contest = { id, name: rows[0].name, organizer: rows[0].organizer, date: rows[0].dateLabel, year: rows[0].year, placement: parsePlacement(rows[0].placement), result: rows[0].result ?? "", link: rows[0].link ?? "", entryPostId: rows[0].entryPostId, thumb: rows[0].thumb, xUrl: rows[0].xUrl, placeholder: Boolean(rows[0].placeholder), hidden: rows[0].hidden, sortOrder: rows[0].sortOrder };
   const item = parseContest(data, current);
-  await db.update(contests).set({ name: item.name, organizer: item.organizer, dateLabel: item.date, year: item.year, placement: item.placement, entryPostId: item.entryPostId, thumb: item.thumb, xUrl: item.xUrl, hidden: item.hidden }).where(eq(contests.id, id));
+  await db.update(contests).set({ name: item.name, organizer: item.organizer, dateLabel: item.date, year: item.year, placement: item.placement, result: item.result, link: item.link, entryPostId: item.entryPostId, thumb: item.thumb, xUrl: item.xUrl, placeholder: item.placeholder, hidden: item.hidden }).where(eq(contests.id, id));
   await emit("content.refresh", { type: "contests" });
   return item;
 }
@@ -679,7 +709,7 @@ async function updateProcess(id: string, data: unknown) {
 async function insertTool(item: Tool) {
   const db = dbOrThrow();
   item.sortOrder = await nextOrder(await db.select({ sortOrder: tools.sortOrder }).from(tools));
-  await db.insert(tools).values({ id: item.id, name: item.name, groupName: item.group, hidden: item.hidden, sortOrder: item.sortOrder });
+  await db.insert(tools).values({ id: item.id, name: item.name, groupName: item.group, kind: item.kind, icon: item.icon, note: item.note, hidden: item.hidden, sortOrder: item.sortOrder });
   await emit("content.refresh", { type: "tools" });
   return item;
 }
@@ -687,8 +717,8 @@ async function updateTool(id: string, data: unknown) {
   const db = dbOrThrow();
   const rows = await db.select().from(tools).where(eq(tools.id, id)).limit(1);
   if (!rows[0]) throw new HttpError("Not found", 404);
-  const item = parseTool(data, { id, name: rows[0].name, group: rows[0].groupName, hidden: rows[0].hidden, sortOrder: rows[0].sortOrder });
-  await db.update(tools).set({ name: item.name, groupName: item.group, hidden: item.hidden }).where(eq(tools.id, id));
+  const item = parseTool(data, { id, name: rows[0].name, group: rows[0].groupName, kind: rows[0].kind === "skill" ? "skill" : "tool", icon: rows[0].icon ?? "", note: rows[0].note ?? "", hidden: rows[0].hidden, sortOrder: rows[0].sortOrder });
+  await db.update(tools).set({ name: item.name, groupName: item.group, kind: item.kind, icon: item.icon, note: item.note, hidden: item.hidden }).where(eq(tools.id, id));
   await emit("content.refresh", { type: "tools" });
   return item;
 }
@@ -759,6 +789,28 @@ export async function saveSettings(data: unknown) {
   settings.pulseLede = cleanText(settings.pulseLede, 240);
   settings.heroHeadline = cleanText(settings.heroHeadline, 200);
   settings.heroLede = cleanText(settings.heroLede, 400);
+  settings.heroTagline = cleanText(settings.heroTagline, 180);
+  settings.aboutEyebrow = cleanText(settings.aboutEyebrow, 80);
+  settings.aboutTitle = cleanText(settings.aboutTitle, 80);
+  settings.aboutMore = cleanBlock(settings.aboutMore, 2000);
+  settings.workTitle = cleanText(settings.workTitle, 80);
+  settings.workLede = cleanText(settings.workLede, 400);
+  settings.campaignsTitle = cleanText(settings.campaignsTitle, 80);
+  settings.campaignsLede = cleanText(settings.campaignsLede, 400);
+  settings.partnersTitle = cleanText(settings.partnersTitle, 80);
+  settings.partnersLede = cleanText(settings.partnersLede, 400);
+  settings.statsTitle = cleanText(settings.statsTitle, 80);
+  settings.statsLede = cleanText(settings.statsLede, 400);
+  settings.skillsTitle = cleanText(settings.skillsTitle, 80);
+  settings.skillsLede = cleanText(settings.skillsLede, 400);
+  settings.contactTitle = cleanText(settings.contactTitle, 80);
+  settings.genres = cleanLines(settings.genres, 16).map((item) => cleanText(item, 40)).filter(Boolean);
+  settings.tiktokUrl = safeHttpUrl(settings.tiktokUrl) ?? "";
+  settings.instagramUrl = safeHttpUrl(settings.instagramUrl) ?? "";
+  settings.heroImage = mediaRef(settings.heroImage, "/media/hero.webp");
+  settings.aboutImage = mediaRef(settings.aboutImage, "/media/about.webp");
+  settings.heroImageAlt = cleanText(settings.heroImageAlt, 180);
+  settings.aboutImageAlt = cleanText(settings.aboutImageAlt, 180);
   settings.metaTitle = cleanText(settings.metaTitle, 80);
   settings.metaDescription = cleanText(settings.metaDescription, 200);
   await db.insert(siteSettings).values({ id: 1, data: settings }).onConflictDoUpdate({ target: siteSettings.id, set: { data: settings } });
@@ -782,21 +834,49 @@ export async function saveLegal(slug: unknown, data: unknown) {
   return { ...page, updatedAt: page.updatedAt.toISOString() };
 }
 
+function parsePlatforms(value: unknown, fallback: PlatformStat[]): PlatformStat[] {
+  const parsed = normalizePlatforms(value).map((row) => ({
+    ...row,
+    label: cleanText(row.label, 40) || row.platform,
+    handle: cleanText(row.handle, 40).replace(/^@/, ""),
+    url: safeHttpUrl(row.url) ?? "",
+  }));
+  return parsed.length ? parsed : fallback;
+}
+
 export async function saveStats(data: unknown) {
   const raw = record(data);
   const db = dbOrThrow();
+  const existing = await db.select().from(stats).where(eq(stats.id, 1));
+  const current = existing[0] ? mapStats(existing[0]) : buildSeed().stats;
   const next: Stats = {
-    impressionsAll: num(raw.impressionsAll),
-    impressions30d: num(raw.impressions30d),
-    likes: num(raw.likes),
-    posts: num(raw.posts),
-    followers: num(raw.followers),
-    bestPostId: cleanText(raw.bestPostId, 40),
+    impressionsAll: num(raw.impressionsAll, current.impressionsAll),
+    impressions30d: num(raw.impressions30d, current.impressions30d),
+    likes: num(raw.likes, current.likes),
+    posts: num(raw.posts, current.posts),
+    followers: num(raw.followers, current.followers),
+    engagement: num(raw.engagement, current.engagement),
+    videos: num(raw.videos, current.videos),
+    placeholder: Boolean(raw.placeholder ?? current.placeholder),
+    platforms: parsePlatforms(raw.platforms, current.platforms),
+    bestPostId: cleanText(raw.bestPostId ?? current.bestPostId, 40),
     updatedAt: new Date().toISOString(),
   };
   await db.insert(stats).values({ id: 1, ...next, updatedAt: new Date(next.updatedAt) }).onConflictDoUpdate({
     target: stats.id,
-    set: { impressionsAll: next.impressionsAll, impressions30d: next.impressions30d, likes: next.likes, posts: next.posts, followers: next.followers, bestPostId: next.bestPostId, updatedAt: new Date(next.updatedAt) },
+    set: {
+      impressionsAll: next.impressionsAll,
+      impressions30d: next.impressions30d,
+      likes: next.likes,
+      posts: next.posts,
+      followers: next.followers,
+      engagement: next.engagement,
+      videos: next.videos,
+      placeholder: next.placeholder,
+      platforms: next.platforms,
+      bestPostId: next.bestPostId,
+      updatedAt: new Date(next.updatedAt),
+    },
   });
   await emit("stats.update", next);
   return next;
@@ -832,6 +912,9 @@ export async function addWorkByX(input: unknown) {
     title: cleanText(raw.title, 180) || suggestTitle(fetched?.text ?? ""),
     note: cleanText(raw.note, 280),
     category: choice(raw.category, CATEGORIES, "ai-video"),
+    lane: choice(raw.lane, LANES, "generation"),
+    videoUrl: safeHttpUrl(typeof raw.videoUrl === "string" ? raw.videoUrl : "") ?? "",
+    placeholder: Boolean(raw.placeholder),
     tags: cleanLines(raw.tags ?? [], 12),
     pinned: Boolean(raw.pinned),
     thumb: {
@@ -1025,6 +1108,10 @@ export async function replaceWithSeed(content: SiteContent = buildSeed()) {
     likes: content.stats.likes,
     posts: content.stats.posts,
     followers: content.stats.followers,
+    engagement: content.stats.engagement,
+    videos: content.stats.videos,
+    placeholder: content.stats.placeholder,
+    platforms: content.stats.platforms,
     bestPostId: content.stats.bestPostId,
     updatedAt: new Date(content.stats.updatedAt),
   });
@@ -1054,15 +1141,15 @@ export async function replaceWithSeed(content: SiteContent = buildSeed()) {
     await db.insert(programs).values(content.programs.map((item) => ({ id: item.id, name: item.name, role: item.role, startLabel: item.start, endLabel: item.end, status: item.status, highlights: item.highlights, postIds: item.postIds, impressions: item.impressions, likes: item.likes, hidden: item.hidden, sortOrder: item.sortOrder })));
   }
   if (content.ambassadors.length) {
-    await db.insert(ambassadors).values(content.ambassadors.map((item) => ({ id: item.id, project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, hidden: item.hidden, sortOrder: item.sortOrder })));
+    await db.insert(ambassadors).values(content.ambassadors.map((item) => ({ id: item.id, project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden, sortOrder: item.sortOrder })));
   }
   if (content.projects.length) await db.insert(projects).values(content.projects.map(projectValues));
   if (content.contests.length) {
-    await db.insert(contests).values(content.contests.map((item) => ({ id: item.id, name: item.name, organizer: item.organizer, dateLabel: item.date, year: item.year, placement: item.placement, entryPostId: item.entryPostId, thumb: item.thumb, xUrl: item.xUrl, hidden: item.hidden, sortOrder: item.sortOrder })));
+    await db.insert(contests).values(content.contests.map((item) => ({ id: item.id, name: item.name, organizer: item.organizer, dateLabel: item.date, year: item.year, placement: item.placement, result: item.result, link: item.link, entryPostId: item.entryPostId, thumb: item.thumb, xUrl: item.xUrl, placeholder: item.placeholder, hidden: item.hidden, sortOrder: item.sortOrder })));
   }
   if (content.testimonials.length) await db.insert(testimonials).values(content.testimonials);
   if (content.process.length) await db.insert(processSteps).values(content.process);
-  if (content.tools.length) await db.insert(tools).values(content.tools.map((item) => ({ id: item.id, name: item.name, groupName: item.group, hidden: item.hidden, sortOrder: item.sortOrder })));
+  if (content.tools.length) await db.insert(tools).values(content.tools.map((item) => ({ id: item.id, name: item.name, groupName: item.group, kind: item.kind, icon: item.icon, note: item.note, hidden: item.hidden, sortOrder: item.sortOrder })));
   if (content.articles.length) await db.insert(articles).values(content.articles.map(articleValues));
   if (content.links.length) await db.insert(links).values(content.links.map((item) => ({ id: item.id, label: item.label, url: item.url, groupName: item.group, hidden: item.hidden, sortOrder: item.sortOrder })));
   await db.insert(legalPages).values([
