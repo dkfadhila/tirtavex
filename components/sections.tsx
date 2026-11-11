@@ -47,7 +47,6 @@ export function Hero() {
           </p>
         </motion.div>
       </section>
-      <LogoStrip />
     </>
   );
 }
@@ -376,37 +375,6 @@ function TitleBlock({
           {more}
         </Link>
       ) : null}
-    </div>
-  );
-}
-
-const LOGO_STRIP = [
-  { name: "Seedance", src: "/logos/bytedance.svg" },
-  { name: "Grok", src: "/logos/grok.png" },
-  { name: "ElevenLabs", src: "/logos/elevenlabs.svg" },
-  { name: "Remotion", src: "/logos/remotion.svg" },
-  { name: "Canva", src: "/logos/canva.svg" },
-];
-
-function LogoStrip() {
-  const half = [...LOGO_STRIP, ...LOGO_STRIP, ...LOGO_STRIP, ...LOGO_STRIP];
-  const loop = [...half, ...half];
-  return (
-    <div className="logo-strip" aria-label="Tools">
-      <motion.div
-        className="logo-track"
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 70, repeat: Infinity, ease: "linear" }}
-      >
-        {loop.map((item, index) => (
-          <span key={`${item.name}-${index}`} className="logo-item">
-            {/* Brand marks are static files, not optimized photos. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={item.src} alt="" />
-            <span>{item.name}</span>
-          </span>
-        ))}
-      </motion.div>
     </div>
   );
 }
