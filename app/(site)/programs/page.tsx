@@ -1,8 +1,5 @@
-import type { Metadata } from "next";
-import { ProgramsPage } from "@/components/studio-pages";
-
-export const metadata: Metadata = { title: "Programs", alternates: { canonical: "/programs" } };
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <ProgramsPage />;
+  redirect("/partners");
 }

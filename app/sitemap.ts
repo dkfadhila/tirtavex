@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const content = await getContent();
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://tirtavex.vercel.app";
-  const staticRoutes = ["", "/work", "/projects", "/about", "/journal", "/contact", "/pulse", "/programs", "/contests", "/terms", "/privacy"].map((path) => ({
+  const staticRoutes = ["", "/work", "/about", "/campaigns", "/partners", "/stats", "/skills", "/contact", "/journal", "/projects", "/terms", "/privacy"].map((path) => ({
     url: `${base}${path}`,
     changeFrequency: "weekly" as const,
     priority: path === "" ? 1 : 0.7,

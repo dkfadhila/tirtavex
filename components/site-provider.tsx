@@ -66,6 +66,7 @@ export function SiteProvider({ initial, children }: { initial: SiteContent; chil
     let stopped = false;
     const boot = async () => {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (window.matchMedia("(pointer: coarse)").matches) return;
       const [{ default: Lenis }, gsapModule, stModule] = await Promise.all([
         import("lenis"),
         import("gsap"),

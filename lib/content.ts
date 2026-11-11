@@ -39,15 +39,53 @@ import {
   tools,
   workItems,
 } from "./schema";
-import type { AdminSnapshot, SiteContent, Submission } from "./types";
+import type { AdminSnapshot, SiteContent, Stats, Submission, WorkItem } from "./types";
 import { isExampleHost, isPlaceholderEmail, isPlaceholderStatusUrl } from "./safe-url";
 import { stills } from "./stills";
 import { visibleText } from "./visible";
 
 const PANELS = stills().panels;
 
+const ZERO_METRICS: WorkItem["metrics"] = {
+  impressions: 0,
+  likes: 0,
+  reposts: 0,
+  replies: 0,
+  bookmarks: 0,
+  quotes: 0,
+  updatedAt: new Date(0).toISOString(),
+};
+
+function sampleStats(stats: Stats): Stats {
+  return {
+    ...stats,
+    impressionsAll: 0,
+    impressions30d: 0,
+    likes: 0,
+    posts: 0,
+    followers: 0,
+    engagement: 0,
+    videos: 0,
+    bestPostId: "",
+    placeholder: true,
+    platforms: stats.platforms.map((row) => ({ ...row, engagement: 0, likes: 0, videos: 0, placeholder: true })),
+  };
+}
+
+function publicWork(item: WorkItem, index: number): WorkItem {
+  const standIn = item.placeholder || isPlaceholderStatusUrl(item.xUrl);
+  return {
+    ...item,
+    placeholder: standIn,
+    xUrl: isPlaceholderStatusUrl(item.xUrl) ? "" : item.xUrl,
+    videoUrl: isExampleHost(item.videoUrl) ? "" : item.videoUrl,
+    metrics: standIn ? { ...ZERO_METRICS, updatedAt: item.metrics.updatedAt } : item.metrics,
+    thumb: { ...item.thumb, src: standIn ? item.thumb.src : item.thumb.src || PANELS[index % PANELS.length] },
+  };
+}
+
 function cleanString(value: string, key?: string) {
-  if (key && (key === "src" || key.endsWith("Url") || key.endsWith("At") || key === "slug" || key === "id" || key === "xUrl" || key === "logo" || key === "cover")) {
+  if (key && (key === "src" || key.endsWith("Url") || key.endsWith("At") || key.endsWith("Image") || key === "slug" || key === "id" || key === "xUrl" || key === "logo" || key === "cover" || key === "icon" || key === "link")) {
     return value;
   }
   if (!value.includes("{{")) return value;
@@ -79,21 +117,14 @@ export function toPublic(content: SiteContent, options?: { sample?: boolean }): 
   settings.socials = settings.socials.filter((item) => item.label && item.url && !isExampleHost(item.url));
   if (isPlaceholderEmail(settings.email)) settings.email = "";
   const sample = options?.sample || !databaseUrl();
-  const stats = sample
-    ? { impressionsAll: 0, impressions30d: 0, likes: 0, posts: 0, followers: 0, bestPostId: "", updatedAt: cleaned.stats.updatedAt }
-    : cleaned.stats;
+  const stats = sample ? sampleStats(cleaned.stats) : cleaned.stats;
   const agent = sample ? { lastHeartbeatAt: null, message: "" } : cleaned.agent;
   return {
     ...cleaned,
     settings,
     stats,
     agent,
-    work: byOrder(
-      cleaned.work.filter((item) => item.status === "live" && item.title && !isPlaceholderStatusUrl(item.xUrl)),
-    ).map((item, index) => ({
-      ...item,
-      thumb: { ...item.thumb, src: item.thumb.src || PANELS[index % PANELS.length] },
-    })),
+    work: byOrder(cleaned.work.filter((item) => item.status === "live" && item.title)).map((item, index) => publicWork(item, index)),
     collabs: visible(cleaned.collabs).filter((item) => item.name),
     programs: visible(cleaned.programs).filter((item) => item.name),
     ambassadors: visible(cleaned.ambassadors).filter((item) => item.project),
@@ -112,6 +143,7 @@ export function toPublic(content: SiteContent, options?: { sample?: boolean }): 
     contests: visible(cleaned.contests).filter((item) => item.name).map((item) => ({
       ...item,
       xUrl: isPlaceholderStatusUrl(item.xUrl) ? "" : item.xUrl,
+      link: isExampleHost(item.link) ? "" : item.link,
     })),
     testimonials: visible(cleaned.testimonials).filter((item) => item.quote && item.name),
     process: visible(cleaned.process).filter((item) => item.title),

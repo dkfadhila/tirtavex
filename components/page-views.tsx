@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { compactNumber, formatDate, placementLabel } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { safeHttpUrl, safeXUrl } from "@/lib/safe-url";
 import type { Article, Project } from "@/lib/types";
 import { useSite } from "./site-provider";
-import { BriefForm } from "./contact-form";
-import { CopyEmail } from "./home-view";
 import { Still } from "./still";
-import { Markdown, Reveal, SectionHeading, headings } from "./ui";
+import { Markdown, headings } from "./ui";
 
 export function ProjectsIndex() {
   const { projects, settings } = useSite().content;
@@ -140,64 +138,6 @@ export function CaseStudy({ project }: { project: Project }) {
   );
 }
 
-export function AboutView() {
-  const { settings, stats, tools, contests, programs } = useSite().content;
-  const wins = contests.filter((item) => item.placement === "winner").length;
-  const figures = [
-    stats.impressionsAll ? [compactNumber(stats.impressionsAll), "Impressions mirrored"] : null,
-    stats.followers ? [compactNumber(stats.followers), "Followers on X"] : null,
-    programs.length ? [String(programs.length), "Programs"] : null,
-    wins ? [String(wins), "Wins"] : null,
-  ].filter((row): row is [string, string] => row !== null);
-  return (
-    <article className="pt-28">
-      <div className="wrap grid gap-8 md:grid-cols-12">
-        <p className="display text-[18vw] leading-[0.8] text-mint-300 md:col-span-4" aria-hidden>
-          {settings.heroTitle}
-        </p>
-        <div className="md:col-span-8">
-          <p className="eyebrow">About</p>
-          <h1 className="display mt-3 text-[clamp(48px,7vw,100px)]">One director. A live record.</h1>
-          <div className="mt-6 max-w-2xl space-y-4 text-lg">
-            {settings.bioLong.split("\n").filter(Boolean).map((paragraph) => (
-              <p key={paragraph.slice(0, 24)}>{paragraph}</p>
-            ))}
-          </div>
-        </div>
-      </div>
-      <section className="section">
-        <div className="wrap grid gap-4 md:grid-cols-4">
-          {figures.map(([value, label]) => (
-            <Reveal key={label} className="rounded-card bg-mist p-6">
-              <p className="display text-6xl text-emerald-700">{value}</p>
-              <p className="mt-2 text-sm muted">{label}</p>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-      <section className="wrap pb-20">
-        <SectionHeading index="—" kicker="Toolkit" title="What the films are made with." />
-        <div className="flex flex-wrap gap-2">
-          {tools.map((tool) => (
-            <span key={tool.id} className="rounded-pill border border-line px-4 py-2 text-sm">
-              {tool.name}
-            </span>
-          ))}
-        </div>
-        <div className="mt-12 divide-y divide-line border-t border-line">
-          {contests.map((item) => (
-            <div key={item.id} className="grid gap-2 py-4 md:grid-cols-4">
-              <span className="eyebrow">{item.year}</span>
-              <span className="md:col-span-2">{item.name}</span>
-              <span>{placementLabel(item.placement)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-    </article>
-  );
-}
-
 export function JournalIndex() {
   const { articles, links } = useSite().content;
   const tags = ["All", ...new Set(articles.flatMap((item) => item.tags))];
@@ -310,64 +250,6 @@ export function ArticleView({ article }: { article: Article }) {
           <p className="font-display text-4xl">{next.title}</p>
         </Link>
       ) : null}
-    </article>
-  );
-}
-
-export function ContactView() {
-  const { settings } = useSite().content;
-  const x = safeXUrl(settings.xUrl);
-  const rows = [
-    ["DM", `Message @${settings.xHandle}`, x],
-    ["Email", settings.email, settings.email.includes("@") ? `mailto:${settings.email}` : null],
-    ["Place", settings.location, null],
-  ] as const;
-  return (
-    <article className="pt-28">
-      <div className="wrap grid gap-12 lg:grid-cols-2">
-        <div className="lg:sticky lg:top-28 lg:self-start">
-          <p className="eyebrow">Contact</p>
-          <h1 className="display text-[clamp(56px,8vw,110px)]">{settings.contactHeadline}</h1>
-          <p className="mt-4 max-w-md text-lg muted">{settings.contactLede}</p>
-          <div className="relative mt-10 hidden h-40 md:block">
-            <div className="absolute top-0 left-0 h-40 w-40 rounded-full bg-emerald-500/30 blur-2xl" />
-          </div>
-        </div>
-        <BriefForm budgets={settings.budgetOptions} />
-      </div>
-      <div className="mt-16 border-t border-line">
-        {rows.filter(([, value]) => value).map(([label, value, href]) =>
-          href ? (
-            <a key={label} href={href} className="group grid border-b border-line px-6 py-8 md:grid-cols-12" target={href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer">
-              <span className="eyebrow md:col-span-3">{label}</span>
-              <span className="display text-4xl transition group-hover:text-emerald-700 md:col-span-9 md:text-6xl">{value}</span>
-            </a>
-          ) : (
-            <div key={label} className="grid border-b border-line px-6 py-8 md:grid-cols-12">
-              <span className="eyebrow md:col-span-3">{label}</span>
-              <span className="display text-4xl md:col-span-9 md:text-6xl">{value}</span>
-            </div>
-          ),
-        )}
-      </div>
-      <div className="wrap flex gap-3 py-10">
-        <CopyEmail email={settings.email} />
-        <button
-          className="btn ghost"
-          onClick={() => {
-            const text = `${settings.heroTitle} (@${settings.xHandle})\n${settings.bio}\n${settings.pressNote}\n${settings.email}`;
-            const blob = new Blob([text], { type: "text/plain" });
-            const url = URL.createObjectURL(blob);
-            const anchor = document.createElement("a");
-            anchor.href = url;
-            anchor.download = "tirtavex-press.txt";
-            anchor.click();
-            URL.revokeObjectURL(url);
-          }}
-        >
-          Download press kit
-        </button>
-      </div>
     </article>
   );
 }

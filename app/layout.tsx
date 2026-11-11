@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { DM_Sans, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { DM_Sans, Geist_Mono, Instrument_Serif, Outfit } from "next/font/google";
 import { getContent } from "@/lib/content";
 import "./globals.css";
 
-const display = Instrument_Serif({
+const display = Outfit({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+const wordmark = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
   style: ["normal", "italic"],
@@ -17,7 +23,7 @@ const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", dis
 export const dynamic = "force-dynamic";
 
 export const viewport: Viewport = {
-  themeColor: "#F4FBF8",
+  themeColor: "#F6F3EE",
   width: "device-width",
   initialScale: 1,
 };
@@ -43,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const plausible = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${wordmark.variable} ${sans.variable} ${mono.variable}`}>
       <body>
         <Script id="intro-seen" strategy="beforeInteractive">
           {`try{if(sessionStorage.getItem("tvIntroSeen"))document.documentElement.classList.add("intro-seen")}catch(e){}`}
