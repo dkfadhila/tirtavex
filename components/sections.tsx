@@ -381,22 +381,23 @@ function TitleBlock({
 }
 
 const LOGO_STRIP = [
-  { name: "Placeholder 01", path: "M8 4h8l4 8-4 8H8l-4-8z" },
-  { name: "Placeholder 02", path: "M12 3l3 6 6 .8-4.5 4.2 1.2 6.5L12 17.5 6.3 20.5 7.5 14 3 9.8 9 9z" },
-  { name: "Placeholder 03", path: "M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" },
-  { name: "Placeholder 04", path: "M5 7h14v3H5zm0 7h10v3H5z" },
-  { name: "Placeholder 05", path: "M12 3l8 5v8l-8 5-8-5V8z" },
+  { name: "Seedance", path: "M8 6l10 6-10 6z" },
+  { name: "Grok", path: "M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z" },
+  { name: "ElevenLabs", path: "M5 10v4M9 7v10M13 4v16M17 8v8M21 11v2" },
+  { name: "Remotion", path: "M8 8l-4 4 4 4M16 8l4 4-4 4" },
+  { name: "Canva", path: "M4 6h16v12H4zM4 10h16" },
 ];
 
 function LogoStrip() {
-  const loop = [...LOGO_STRIP, ...LOGO_STRIP];
+  const half = [...LOGO_STRIP, ...LOGO_STRIP, ...LOGO_STRIP, ...LOGO_STRIP];
+  const loop = [...half, ...half];
   return (
-    <div className="logo-strip" aria-label="Placeholder logos">
-      <div className="h-track logo-track" style={{ animationDuration: "28s" }}>
+    <div className="logo-strip" aria-label="Tools">
+      <div className="logo-track">
         {loop.map((item, index) => (
           <span key={`${item.name}-${index}`} className="logo-item">
-            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden>
-              <path d={item.path} fill="none" stroke="currentColor" strokeWidth="1.4" />
+            <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden>
+              <path d={item.path} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
             </svg>
             <span>{item.name}</span>
           </span>
