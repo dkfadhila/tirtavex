@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { DM_Sans, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { getContent } from "@/lib/content";
 import "./globals.css";
@@ -44,6 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <body>
+        <Script id="intro-seen" strategy="beforeInteractive">
+          {`try{if(sessionStorage.getItem("tvIntroSeen"))document.documentElement.classList.add("intro-seen")}catch(e){}`}
+        </Script>
         <noscript>
           <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
         </noscript>

@@ -34,7 +34,7 @@ export function ProjectsIndex() {
         {list.map((item) => (
           <Link key={item.id} href={`/projects/${item.slug}`} className="group relative aspect-[16/10] overflow-hidden">
             <Still src={item.cover} alt={item.name} sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
-            <span className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+            <span className="absolute inset-0 scrim" />
             <span className="absolute inset-x-0 bottom-0 p-6 text-white md:p-8">
               <span className="text-[12px] tracking-[0.18em] uppercase">{[item.date, item.client].filter(Boolean).join(" · ")}</span>
               <span className="display mt-2 block text-5xl md:text-6xl">{item.name}</span>
@@ -57,7 +57,7 @@ export function CaseStudy({ project }: { project: Project }) {
     <article className="pt-24">
       <header className="relative min-h-[78vh] overflow-hidden">
         <Still src={live.cover} alt={live.name} sizes="100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-black/10" />
+        <div className="absolute inset-0 scrim" />
         <div className="wrap relative flex min-h-[78vh] flex-col justify-end py-16 text-white">
           <p className="text-[12px] tracking-[0.28em] uppercase">{live.industry}</p>
           <h1 className="display mt-3 text-[clamp(64px,12vw,160px)]">{live.name}</h1>

@@ -1,29 +1,58 @@
 @import "tailwindcss";
 
 :root {
+  --tv-bg: #ffffff;
   --tv-white: #ffffff;
-  --tv-mist: #f4fbf8;
+  --tv-surface: #f7fcfa;
+  --tv-mist: #f7fcfa;
+  --tv-tint: #ecfdf5;
+  --tv-tint-2: #f0fdf4;
+  --tv-mint: #d1fae5;
   --tv-mint-100: #d1fae5;
   --tv-mint-300: #6ee7b7;
+  --tv-accent: #10b981;
   --tv-emerald-500: #10b981;
+  --tv-accent-hover: #059669;
   --tv-emerald-600: #059669;
+  --tv-accent-deep: #047857;
   --tv-emerald-700: #047857;
   --tv-forest: #064e3b;
   --tv-ink: #0b1f1a;
+  --tv-ink-60: rgba(11, 31, 26, 0.6);
   --tv-ink-muted: #4b6b61;
-  --tv-line: rgba(6, 78, 59, 0.1);
+  --tv-line: rgba(6, 78, 59, 0.12);
+  --tv-line-strong: rgba(6, 78, 59, 0.18);
+  --tv-on-image: #ffffff;
+  --tv-scrim: linear-gradient(180deg, rgba(6, 78, 59, 0) 45%, rgba(6, 78, 59, 0.55) 100%);
   --tv-teal: #2dd4bf;
   --tv-amber: #b45309;
-  --tv-shadow: 0 24px 60px -20px rgba(5, 150, 105, 0.35);
-  --tv-radius-chip: 12px;
-  --tv-radius-card: 28px;
-  --tv-radius-hero: 40px;
+  --tv-shadow: 0 12px 32px -12px rgba(5, 150, 105, 0.25);
+  --sh-float: 0 12px 32px -12px rgba(5, 150, 105, 0.25);
+  --sh-float-hover: 0 18px 40px -14px rgba(5, 150, 105, 0.35);
+  --tv-radius-chip: 0px;
+  --tv-radius-card: 0px;
+  --tv-radius-hero: 0px;
   --tv-radius-pill: 999px;
-  --tv-ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --tv-section: clamp(96px, 14vh, 180px);
-  --tv-max: 1320px;
+  --r-nav: 30px;
+  --tv-ease: cubic-bezier(0.44, 0, 0.56, 1);
+  --ease-menu: cubic-bezier(0.66, 0.01, 0.42, 0.97);
+  --ease-hero: cubic-bezier(0.94, 0, 0.56, 1);
+  --ease-stairs: cubic-bezier(0.44, 0, 0.11, 1);
+  --tv-section: 240px;
+  --section-gap: 240px;
+  --tv-max: 100%;
+  --pad-x: 24px;
+  --t-hero: 160px;
+  --t-display: 140px;
+  --t-statement: 60px;
+  --t-quote: 56px;
+  --t-stat: 60px;
+  --t-card-title: 36px;
+  --t-eyebrow: 24px;
+  --t-body: 16px;
+  --t-meta: 12px;
   --tv-font-sans: var(--font-dm), ui-sans-serif, system-ui, sans-serif;
-  --tv-font-display: var(--font-instrument), "Iowan Old Style", Georgia, serif;
+  --tv-font-display: var(--font-instrument), Georgia, serif;
   --tv-font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
@@ -56,13 +85,21 @@
   html { scroll-padding-top: 96px; }
   body {
     margin: 0;
-    background: var(--tv-white);
+    background: var(--tv-bg);
     color: var(--tv-ink);
     font-family: var(--tv-font-sans);
-    font-size: 17px;
-    line-height: 1.6;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 1.1;
     text-rendering: optimizeLegibility;
   }
+  h1, h2, h3, h4 {
+    font-family: var(--tv-font-display);
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.02em;
+  }
+  img, video { border-radius: 0; box-shadow: none; }
   ::selection { background: var(--tv-mint-100); color: var(--tv-forest); }
   :focus-visible { outline: 2px solid var(--tv-emerald-700); outline-offset: 3px; }
   a { color: inherit; }
@@ -99,12 +136,24 @@ body::before {
   line-height: 0.92;
 }
 .eyebrow {
-  font-family: var(--tv-font-mono);
-  font-size: 12px;
-  letter-spacing: 0.16em;
+  font-family: var(--tv-font-display);
+  font-weight: 400;
+  font-style: normal;
+  font-size: var(--t-eyebrow);
+  line-height: 1.2;
+  letter-spacing: 0;
   text-transform: uppercase;
-  color: var(--tv-emerald-700);
+  color: var(--tv-accent-deep);
 }
+.t-hero { font: italic 400 var(--t-hero)/0.9 var(--tv-font-display); letter-spacing: -0.03em; text-transform: uppercase; }
+.t-display { font: italic 400 var(--t-display)/1.2 var(--tv-font-display); letter-spacing: -0.02em; text-transform: uppercase; }
+.t-statement { font: 400 var(--t-statement)/1.2 var(--tv-font-display); letter-spacing: -0.02em; }
+.t-quote { font: italic 400 var(--t-quote)/1.1 var(--tv-font-display); }
+.t-stat { font: 400 var(--t-stat)/0.8 var(--tv-font-display); color: var(--tv-accent-deep); font-variant-numeric: tabular-nums; }
+.t-meta { font: 600 var(--t-meta)/1 var(--tv-font-sans); text-transform: uppercase; letter-spacing: 0; }
+.t-body { font: 500 var(--t-body)/1.1 var(--tv-font-sans); text-transform: uppercase; color: var(--tv-ink-60); }
+.scrim { background: var(--tv-scrim); }
+.scrim-veil { background: radial-gradient(ellipse at center, rgba(6, 78, 59, 0) 40%, rgba(6, 78, 59, 0.35) 100%); }
 .muted { color: var(--tv-ink-muted); }
 .tabular { font-family: var(--tv-font-mono); font-variant-numeric: tabular-nums; }
 .hairline { border-color: var(--tv-line); }
@@ -142,14 +191,21 @@ body::before {
   padding: 0 1.25rem;
   border-radius: var(--tv-radius-pill);
   border: 1px solid transparent;
-  background: var(--tv-emerald-700);
+  background: var(--tv-accent);
   color: white;
+  font-family: var(--tv-font-sans);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0;
   text-decoration: none;
   font-weight: 600;
   letter-spacing: -0.02em;
   transition: transform 0.32s var(--tv-ease), background 0.32s var(--tv-ease);
 }
-.btn:hover { background: var(--tv-forest); }
+.btn:hover { background: var(--tv-accent-hover); }
+.btn:active { background: var(--tv-accent-deep); }
 .btn.ghost {
   background: transparent;
   color: var(--tv-forest);
@@ -315,10 +371,17 @@ dialog::backdrop { background: color-mix(in srgb, var(--tv-forest) 28%, transpar
 }
 
 .top-btn {
-  position: fixed; right: 18px; bottom: 18px; z-index: 50;
-  width: 52px; height: 52px; border: 0; border-radius: 999px;
-  background: var(--tv-emerald-700); color: white;
-  box-shadow: var(--tv-shadow);
+  position: fixed; right: 24px; bottom: 24px; z-index: 40;
+  width: 48px; height: 48px; border: 0; border-radius: 999px;
+  background: var(--tv-accent); color: white;
+  box-shadow: var(--sh-float);
+}
+.top-btn:hover { background: var(--tv-accent-hover); box-shadow: var(--sh-float-hover); }
+.top-btn[hidden] { visibility: hidden; pointer-events: none; }
+@media (max-width: 809px) {
+  .top-btn { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 44px; height: 44px; }
+  .v-ticker { width: 52px; }
+  .v-ticker img, .v-ticker .relative { height: 72px; }
 }
 
 .progress {
@@ -332,13 +395,32 @@ dialog::backdrop { background: color-mix(in srgb, var(--tv-forest) 28%, transpar
 .admin table { width: 100%; border-collapse: collapse; }
 .admin th, .admin td { text-align: left; padding: 0.7rem 0.4rem; border-bottom: 1px solid var(--tv-line); vertical-align: top; font-size: 14px; }
 
+@media (max-width: 1399px) and (min-width: 1280px) {
+  :root { --t-hero: 140px; --t-display: 120px; --t-statement: 52px; --t-quote: 48px; --t-stat: 48px; --t-card-title: 32px; --t-eyebrow: 22px; }
+}
+@media (max-width: 1279px) and (min-width: 810px) {
+  :root { --t-hero: 120px; --t-display: 100px; --t-statement: 48px; --t-quote: 32px; --t-stat: 38px; --t-card-title: 24px; --t-eyebrow: 18px; --section-gap: 180px; }
+}
+@media (max-width: 809px) {
+  :root { --t-hero: 58px; --t-display: 60px; --t-statement: 32px; --t-quote: 32px; --t-stat: 38px; --t-card-title: 22px; --t-eyebrow: 18px; --t-body: 14px; --section-gap: 120px; }
+}
+html.intro-seen .hero-curtain { display: none; }
+.v-ticker { position: absolute; top: 0; height: 100%; width: 86px; overflow: hidden; z-index: 2; }
+.v-ticker img { width: 100%; height: 118px; object-fit: cover; border-radius: 0; }
+.v-track { display: flex; flex-direction: column; gap: 10px; animation: vticker linear infinite; }
+.v-ticker.slow:hover .v-track { animation-duration: calc(var(--dur) / 0.6); }
+@keyframes vticker { from { transform: translate3d(0,0,0); } to { transform: translate3d(0,-50%,0); } }
+.h-track { display: flex; width: max-content; animation: hticker linear infinite; }
+@keyframes hticker { from { transform: translate3d(0,0,0); } to { transform: translate3d(-50%,0,0); } }
+.h-ticker:hover .h-track { animation-play-state: paused; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
-  .aurora i, .spin-slow, .scroll-cue, .live-dot, .medal, .float-photo { animation: none !important; }
+  .aurora i, .spin-slow, .scroll-cue, .live-dot, .medal, .float-photo, .v-track, .h-track { animation: none !important; }
   .flip-inner { transform: none !important; }
   .flip-face { position: relative; transform: none !important; }
   .flip { min-height: 0; }

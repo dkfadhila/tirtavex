@@ -50,5 +50,10 @@ const REFERENCE = {
 };
 
 export function stills() {
-  return STILL_SOURCE === "emerald" ? EMERALD : REFERENCE;
+  const set = STILL_SOURCE === "emerald" ? EMERALD : REFERENCE;
+  return {
+    ...set,
+    /** Option B: our own hero.webp sits under an emerald fade. The reference portrait does not. */
+    heroFade: STILL_SOURCE === "emerald",
+  };
 }
