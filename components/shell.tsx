@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
+import { uiSpring } from "@/lib/motion";
 import { safeXUrl } from "@/lib/safe-url";
 import { useSite } from "./site-provider";
-import { Spectrum } from "./spectrum";
 
 const NAV = [
   { href: "/about", label: "About" },
@@ -32,8 +32,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-white focus:px-3 focus:py-2">
         Skip to content
       </a>
-      <Corner />
-      <Spectrum />
+      <Nav />
       <main id="content" tabIndex={-1}>
         <AnimatePresence mode="wait">
           <motion.div
@@ -53,14 +52,91 @@ export function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-function Corner() {
+function Nav() {
   const pathname = usePathname();
+  const reduce = useReducedMotion();
+  const navRef = useRef<HTMLDivElement>(null);
+  const [openPath, setOpenPath] = useState<string | null>(null);
+  const open = openPath === pathname;
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenPath(null);
+    };
+    const onPointer = (event: PointerEvent) => {
+      if (!navRef.current?.contains(event.target as Node)) setOpenPath(null);
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [open]);
+
   return (
-    <header className={`ed-corner${pathname === "/" ? " on-hero" : ""}`}>
-      <Link href="/" className="wordmark ed-corner-mark">
-        Tirtavex
-      </Link>
-      <ThemeToggle />
+    <header className="ed-nav-wrap">
+      <motion.nav
+        ref={navRef}
+        aria-label="Primary"
+        className="ed-nav"
+        initial={reduce ? false : { opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduce ? { duration: 0.01 } : uiSpring}
+      >
+        <div className="ed-nav-row">
+          <ThemeToggle />
+          <Link href="/" className="wordmark ed-nav-title">
+            Tirtavex
+          </Link>
+          <button
+            type="button"
+            className="ed-nav-btn"
+            aria-expanded={open}
+            aria-controls="site-menu"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpenPath(open ? null : pathname)}
+          >
+            <MenuGlyph open={open} />
+          </button>
+        </div>
+        <AnimatePresence initial={false}>
+          {open ? (
+            <motion.div
+              id="site-menu"
+              key="menu"
+              initial={reduce ? false : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={reduce ? { duration: 0.01 } : { duration: 0.45, ease: [0.66, 0.01, 0.42, 0.97] }}
+              style={{ overflow: "hidden" }}
+            >
+              <ul className="ed-menu">
+                {NAV.map((link, index) => (
+                  <motion.li
+                    key={link.href}
+                    initial={reduce ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "spring", duration: 0.4, bounce: 0, delay: reduce ? 0 : index * 0.04 }}
+                  >
+                    <Link href={link.href} aria-current={pathname === link.href ? "page" : undefined} onClick={() => setOpenPath(null)}>
+                      {link.label}
+                    </Link>
+                  </motion.li>
+                ))}
+              </ul>
+              <div className="ed-menu-more">
+                {OTHER.map((link) => (
+                  <Link key={link.href} href={link.href} onClick={() => setOpenPath(null)}>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </motion.nav>
     </header>
   );
 }
@@ -84,7 +160,7 @@ function ThemeToggle() {
   return (
     <button
       type="button"
-      className="ed-corner-theme"
+      className="ed-nav-logo"
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
       aria-pressed={dark}
       onClick={toggle}
@@ -113,6 +189,16 @@ function SunIcon() {
       <circle cx="12" cy="12" r="4" fill="currentColor" />
       <path stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.1 5.1l1.6 1.6M17.3 17.3l1.6 1.6M18.9 5.1l-1.6 1.6M6.7 17.3l-1.6 1.6" />
     </svg>
+  );
+}
+
+function MenuGlyph({ open }: { open: boolean }) {
+  return (
+    <span className="relative block h-3 w-4" aria-hidden>
+      <span className={`absolute left-0 h-0.5 w-4 bg-white transition ${open ? "top-1.5 rotate-45" : "top-0"}`} />
+      <span className={`absolute top-1.5 left-0 h-0.5 w-4 bg-white transition ${open ? "opacity-0" : ""}`} />
+      <span className={`absolute left-0 h-0.5 w-4 bg-white transition ${open ? "top-1.5 -rotate-45" : "top-3"}`} />
+    </span>
   );
 }
 
@@ -146,13 +232,6 @@ function Footer() {
           <p>Based in Indonesia</p>
           <p>© Tirta {year}</p>
         </div>
-        <nav aria-label="More" className="foot-more">
-          {OTHER.map((link) => (
-            <Link key={link.href} href={link.href}>
-              {link.label}
-            </Link>
-          ))}
-        </nav>
       </div>
     </footer>
   );
