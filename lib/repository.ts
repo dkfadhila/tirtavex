@@ -872,7 +872,8 @@ export async function previewX(url: string) {
     const fetched = await provider.fetchPost(safe);
     return { xUrl: safe, ...fetched, title: suggestTitle(fetched.text) };
   } catch (error) {
-    throw new HttpError(error instanceof Error ? error.message : "Preview failed", 502);
+    console.error("[x] preview failed", error instanceof Error ? error.message : error);
+    throw new HttpError("Could not read that post", 502);
   }
 }
 

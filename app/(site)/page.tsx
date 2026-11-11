@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { HomeView } from "@/components/home-view";
 import { getContent } from "@/lib/content";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Page() {
   const content = await getContent();

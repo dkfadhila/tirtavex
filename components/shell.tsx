@@ -111,7 +111,8 @@ function Footer() {
     return () => window.clearInterval(timer);
   }, [content.agent.lastHeartbeatAt]);
   const x = safeXUrl(content.settings.xUrl);
-  const stale = stream !== "live";
+  const synced = content.agent.lastHeartbeatAt;
+  const stale = stream === "reconnecting";
   return (
     <footer className="section border-t border-line bg-mist">
       <div className="wrap">
@@ -146,10 +147,14 @@ function Footer() {
           </div>
         </div>
         <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-sm">
-          <p className="inline-flex items-center gap-2">
-            <span className={stale ? "stale-dot" : "live-dot"} />
-            {stale ? "Reconnecting" : `Agent synced ${ago}`}
-          </p>
+          {synced ? (
+            <p className="inline-flex items-center gap-2">
+              <span className={stale ? "stale-dot" : "live-dot"} />
+              {stale ? "Reconnecting" : `Agent synced ${ago}`}
+            </p>
+          ) : (
+            <p className="text-ink-muted">Waiting for the agent</p>
+          )}
           <p className="flex flex-wrap gap-4">
             <Link href="/work">Work</Link>
             <Link href="/pulse">Numbers</Link>

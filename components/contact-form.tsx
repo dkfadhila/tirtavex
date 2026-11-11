@@ -47,14 +47,16 @@ export function BriefForm({ budgets }: { budgets: string[] }) {
         <span>Project</span>
         <input name="project" required placeholder="Launch film or protocol" />
       </label>
-      <label className="field">
-        <span>Budget range</span>
-        <select name="budget" defaultValue={budgets[0] ?? ""}>
-          {budgets.map((option) => (
-            <option key={option}>{option}</option>
-          ))}
-        </select>
-      </label>
+      {budgets.length ? (
+        <label className="field">
+          <span>Budget range</span>
+          <select name="budget" defaultValue={budgets[0]}>
+            {budgets.map((option) => (
+              <option key={option}>{option}</option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <label className="field">
         <span>Link</span>
         <input name="link" type="url" placeholder="https://" />

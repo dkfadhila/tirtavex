@@ -40,6 +40,7 @@ import {
   workItems,
 } from "./schema";
 import type { AdminSnapshot, SiteContent, Submission } from "./types";
+import { isExampleHost, isPlaceholderEmail, isPlaceholderStatusUrl } from "./safe-url";
 import { visibleText } from "./visible";
 
 const PANELS = ["/media/work-1.webp", "/media/work-2.webp", "/media/work-3.webp", "/media/work-4.webp", "/media/work-5.webp", "/media/work-6.webp"];
@@ -67,34 +68,58 @@ function byOrder<T extends { sortOrder: number }>(rows: T[]) {
   return [...rows].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-export function toPublic(content: SiteContent): SiteContent {
+export function toPublic(content: SiteContent, options?: { sample?: boolean }): SiteContent {
   const cleaned = cleanValue(content) as SiteContent;
   const visible = <T extends { hidden: boolean; sortOrder: number }>(rows: T[]) =>
     byOrder(rows.filter((row) => !row.hidden));
   const settings = cleaned.settings;
   settings.marquee = settings.marquee.filter(Boolean);
   settings.budgetOptions = settings.budgetOptions.filter(Boolean);
-  settings.socials = settings.socials.filter((item) => item.label && item.url);
+  settings.socials = settings.socials.filter((item) => item.label && item.url && !isExampleHost(item.url));
+  if (isPlaceholderEmail(settings.email)) settings.email = "";
+  const sample = options?.sample || !databaseUrl();
+  const stats = sample
+    ? { impressionsAll: 0, impressions30d: 0, likes: 0, posts: 0, followers: 0, bestPostId: "", updatedAt: cleaned.stats.updatedAt }
+    : cleaned.stats;
+  const agent = sample ? { lastHeartbeatAt: null, message: "" } : cleaned.agent;
   return {
     ...cleaned,
     settings,
-    work: byOrder(cleaned.work.filter((item) => item.status === "live" && item.title)).map((item, index) => ({
+    stats,
+    agent,
+    work: byOrder(
+      cleaned.work.filter((item) => item.status === "live" && item.title && !isPlaceholderStatusUrl(item.xUrl)),
+    ).map((item, index) => ({
       ...item,
       thumb: { ...item.thumb, src: item.thumb.src || PANELS[index % PANELS.length] },
     })),
     collabs: visible(cleaned.collabs).filter((item) => item.name),
     programs: visible(cleaned.programs).filter((item) => item.name),
     ambassadors: visible(cleaned.ambassadors).filter((item) => item.project),
-    projects: visible(cleaned.projects).filter((item) => item.name).map((item, index) => ({
+    projects: visible(cleaned.projects)
+      .filter((item) => item.name)
+      .map((item, index) => ({
+        ...item,
+        cover: item.cover || PANELS[index % PANELS.length],
+        xUrl: isPlaceholderStatusUrl(item.xUrl) ? "" : item.xUrl,
+        websiteUrl: isExampleHost(item.websiteUrl) ? "" : item.websiteUrl,
+        reviewQuote: item.reviewAuthor ? item.reviewQuote : "",
+        reviewStat: item.reviewAuthor ? item.reviewStat : "",
+        reviewStatLabel: item.reviewAuthor ? item.reviewStatLabel : "",
+        outcome: /impression|views/i.test(item.outcome) ? "" : item.outcome,
+      })),
+    contests: visible(cleaned.contests).filter((item) => item.name).map((item) => ({
       ...item,
-      cover: item.cover || PANELS[index % PANELS.length],
+      xUrl: isPlaceholderStatusUrl(item.xUrl) ? "" : item.xUrl,
     })),
-    contests: visible(cleaned.contests).filter((item) => item.name),
-    testimonials: visible(cleaned.testimonials).filter((item) => item.quote),
+    testimonials: visible(cleaned.testimonials).filter((item) => item.quote && item.name),
     process: visible(cleaned.process).filter((item) => item.title),
     tools: visible(cleaned.tools).filter((item) => item.name),
-    articles: visible(cleaned.articles).filter((item) => item.title),
-    links: visible(cleaned.links).filter((item) => item.label),
+    articles: visible(cleaned.articles).filter((item) => item.title).map((item) => ({
+      ...item,
+      url: isExampleHost(item.url) ? "" : item.url,
+    })),
+    links: visible(cleaned.links).filter((item) => item.label && !isExampleHost(item.url)),
   };
 }
 
@@ -151,9 +176,9 @@ export const getContent = cache(async (): Promise<SiteContent> => {
     const loaded = await loadDatabaseContent();
     if (loaded) return toPublic(loaded);
   } catch (error) {
-    console.error("[content] database unavailable, using seed", error instanceof Error ? error.message : "unknown");
+    console.error("[content] database unavailable, using sample layout", error instanceof Error ? error.message : "unknown");
   }
-  return toPublic(buildSeed());
+  return toPublic(buildSeed(), { sample: true });
 });
 
 export async function listSubmissions(): Promise<Submission[]> {
@@ -187,10 +212,11 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
     }
     return { source: "db", writable: true, warning: "", content: loaded, submissions: submissionRows };
   } catch (error) {
+    console.error("[admin] database read failed", error instanceof Error ? error.message.replace(/postgres(?:ql)?:\/\/\S+/gi, "[database]") : "error");
     return {
       source: "seed",
       writable: false,
-      warning: `Database could not be read (${error instanceof Error ? error.message : "error"}). Showing placeholders.`,
+      warning: "Database could not be read. Showing the sample layout.",
       content: buildSeed(),
       submissions: [],
     };

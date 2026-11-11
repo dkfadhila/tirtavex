@@ -17,8 +17,9 @@ export function WorkIndex() {
         <p className="mx-auto mt-4 max-w-md text-sm tracking-[0.12em] text-ink-muted uppercase">Every frame opens the original post on X.</p>
       </header>
       <div className="grid gap-3 px-3 pb-3 md:grid-cols-2">
-        {work.map((item) => (
-          <WorkCard key={item.id} item={item} />
+        {work.length === 0 ? <p className="px-6 py-16 text-center text-ink-muted">No posts yet. New work shows up here after it is added from X.</p> : null}
+        {work.map((item, index) => (
+          <WorkCard key={item.id} item={item} priority={index < 2} />
         ))}
       </div>
     </article>
@@ -40,6 +41,9 @@ export function PulsePage() {
       <p className="text-center text-[12px] tracking-[0.28em] text-emerald-700 uppercase">Live pulse</p>
       <h1 className="display mt-4 text-center text-[clamp(56px,8vw,120px)]">The numbers.</h1>
       {settings.pulseLede ? <p className="mx-auto mt-4 max-w-lg text-center text-ink-muted">{settings.pulseLede}</p> : null}
+      {cells.every(([, value]) => value === 0) ? (
+        <p className="mx-auto mt-16 max-w-lg text-center text-lg text-ink-muted">No live totals yet. Counts appear after the agent syncs.</p>
+      ) : (
       <div className="mx-auto mt-20 grid max-w-5xl gap-16 md:grid-cols-2">
         {cells.map(([label, value]) => (
           <div key={label}>
@@ -50,6 +54,7 @@ export function PulsePage() {
           </div>
         ))}
       </div>
+      )}
       {best ? (
         <p className="mx-auto mt-16 max-w-xl text-center text-lg">
           Best post right now: {best.title}
@@ -66,6 +71,7 @@ export function ProgramsPage() {
     <article className="bg-white px-6 pt-32 pb-24 md:px-12">
       <p className="text-[12px] tracking-[0.28em] text-emerald-700 uppercase">Programs and seats</p>
       <h1 className="display mt-4 max-w-4xl text-[clamp(56px,8vw,120px)]">The long work.</h1>
+      {programs.length === 0 && ambassadors.length === 0 ? <p className="mt-10 text-ink-muted">No programs or ambassador seats yet.</p> : null}
       <div className="mt-20 grid gap-20">
         {programs.map((item) => (
           <section key={item.id} className="grid gap-6 border-t border-line pt-10 md:grid-cols-12">
@@ -130,6 +136,7 @@ export function ContestsPage() {
     <article className="bg-white px-6 pt-32 pb-24">
       <p className="text-center text-[12px] tracking-[0.28em] text-emerald-700 uppercase">AI contests</p>
       <h1 className="display mt-4 text-center text-[clamp(56px,8vw,120px)]">Placements.</h1>
+      {contests.length === 0 ? <p className="mt-10 text-center text-ink-muted">No contest entries yet.</p> : null}
       <div className="mx-auto mt-16 grid max-w-5xl gap-16">
         {contests.map((item) => {
           const href = safeXUrl(item.xUrl);

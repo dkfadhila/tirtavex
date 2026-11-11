@@ -18,7 +18,29 @@ export async function run(task: () => Promise<unknown>, headers?: HeadersInit) {
   }
 }
 
-export async function requireAdmin() {
+export function rejectBadOrigin(request: Request) {
+  const origin = request.headers.get("origin");
+  if (!origin) return null;
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  try {
+    if (!host || new URL(origin).host !== host) return json({ error: "Forbidden" }, 403);
+  } catch {
+    return json({ error: "Forbidden" }, 403);
+  }
+  return null;
+}
+
+export function rejectUnlessJson(request: Request) {
+  const type = request.headers.get("content-type") || "";
+  if (!type.toLowerCase().includes("application/json")) return json({ error: "Unsupported media type" }, 415);
+  return null;
+}
+
+export async function requireAdmin(request?: Request) {
+  if (request) {
+    const origin = rejectBadOrigin(request);
+    if (origin) return origin;
+  }
   const secret = process.env.ADMIN_SESSION_SECRET;
   const jar = await cookies();
   const token = jar.get("tvx_session")?.value;
@@ -28,12 +50,17 @@ export async function requireAdmin() {
   return null;
 }
 
-export function requireBearer(request: Request, envName: "AGENT_API_KEY" | "CRON_SECRET", missing: string) {
+export function requireBearer(request: Request, envName: "AGENT_API_KEY" | "CRON_SECRET") {
   const expected = process.env[envName];
-  if (!expected) return json({ error: missing }, 503);
+  if (!expected) {
+    console.error(`[api] ${envName} is not configured`);
+    return json({ error: "Unavailable" }, 503);
+  }
   const header = request.headers.get("authorization") ?? "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-  if (!token || !secretEqual(token, expected)) return json({ error: "Unauthorized" }, 401);
+  if (!token || token === "undefined" || token === "null" || !secretEqual(token, expected)) {
+    return json({ error: "Unauthorized" }, 401);
+  }
   return null;
 }
 

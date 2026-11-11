@@ -11,10 +11,10 @@ import { Still } from "./still";
 import { Magnetic } from "./ui";
 
 const TILES = [
-  { src: "/media/tile-1.webp", alt: "Camera and emerald glass", className: "left-[3%] top-[14%] w-[22vw] max-w-[180px]" },
-  { src: "/media/tile-2.webp", alt: "Emerald crystal still", className: "left-[2%] bottom-[16%] hidden w-[18vw] max-w-[150px] md:block" },
-  { src: "/media/tile-3.webp", alt: "Desk and a wave of light", className: "right-[3%] top-[12%] w-[22vw] max-w-[180px]" },
-  { src: "/media/tile-4.webp", alt: "Green drink in daylight", className: "right-[4%] top-[48%] hidden w-[18vw] max-w-[150px] md:block" },
+  { src: "/media/tile-1.webp", alt: "Camera and emerald glass", className: "left-[3%] top-[18%] hidden w-[16vw] max-w-[140px] sm:block md:top-[14%]" },
+  { src: "/media/tile-2.webp", alt: "Emerald crystal still", className: "left-[2%] bottom-[16%] hidden w-[14vw] max-w-[130px] md:block" },
+  { src: "/media/tile-3.webp", alt: "Desk and a wave of light", className: "right-[3%] top-[18%] hidden w-[16vw] max-w-[140px] sm:block md:top-[12%]" },
+  { src: "/media/tile-4.webp", alt: "Green drink in daylight", className: "right-[4%] top-[48%] hidden w-[14vw] max-w-[130px] md:block" },
 ];
 
 const SERVICES = [
@@ -82,7 +82,7 @@ function Hero() {
         </div>
         </div>
       </div>
-      <p className="absolute bottom-6 left-6 z-10 text-[11px] tracking-[0.22em] text-forest uppercase">Visual stories</p>
+      <p className="absolute bottom-6 left-6 z-10 rounded-pill bg-white/80 px-2 py-1 text-[11px] tracking-[0.22em] text-forest uppercase">Visual stories</p>
     </section>
   );
 }
@@ -191,11 +191,11 @@ function ProjectPanel({ project }: { project: Project }) {
           <h3 className="display mt-2 text-5xl md:text-7xl">{project.name}</h3>
         </div>
         <div className="flex gap-3 text-sm">
-          <Link className="rounded-pill bg-white px-4 py-2 text-forest" href={`/projects/${project.slug}`}>
+          <Link className="rounded-pill bg-white px-4 py-2 text-forest" href={`/projects/${project.slug}`} aria-label={`${project.name} case study`}>
             Case
           </Link>
           {x ? (
-            <a className="rounded-pill border border-white/70 px-4 py-2" href={x} target="_blank" rel="noopener noreferrer" data-cursor="View on X">
+            <a className="rounded-pill border border-white/70 px-4 py-2" href={x} target="_blank" rel="noopener noreferrer" data-cursor="View on X" aria-label={`${project.name} on X`}>
               On X
             </a>
           ) : null}
@@ -207,6 +207,7 @@ function ProjectPanel({ project }: { project: Project }) {
 
 function Reviews() {
   const quotes = useSite().content.testimonials;
+  if (!quotes.length) return null;
   return (
     <section className="bg-white">
       {quotes.map((item, index) => {
@@ -327,15 +328,15 @@ export function CopyEmail({ email }: { email: string }) {
   );
 }
 
-export function WorkCard({ item }: { item: WorkItem }) {
+export function WorkCard({ item, priority = false }: { item: WorkItem; priority?: boolean }) {
   const href = safeXUrl(item.xUrl);
   const body = (
     <article className="group relative aspect-[16/10] overflow-hidden">
-      <Still src={item.thumb.src} alt={item.title} sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
+      <Still src={item.thumb.src} alt={item.title} sizes="(max-width: 768px) 100vw, 50vw" priority={priority} className="object-cover transition duration-700 group-hover:scale-105" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-10">
         <p className="text-[12px] tracking-[0.2em] uppercase">{item.category.replace("-", " ")}</p>
-        <h3 className="display mt-2 text-5xl md:text-6xl">{item.title}</h3>
+        <h2 className="display mt-2 text-5xl md:text-6xl">{item.title}</h2>
         {item.note ? <p className="mt-3 max-w-lg text-sm">{item.note}</p> : null}
       </div>
     </article>

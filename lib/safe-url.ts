@@ -35,6 +35,26 @@ export function xStatusId(input: string | null | undefined): string | null {
   return match?.[1] ?? null;
 }
 
+export function isPlaceholderStatusUrl(input: string | null | undefined): boolean {
+  const id = input?.match(/\/status\/(\d+)/)?.[1];
+  return Boolean(id && /^10{8,}/.test(id));
+}
+
+export function isExampleHost(input: string | null | undefined): boolean {
+  if (!input) return false;
+  try {
+    const host = new URL(input).hostname.toLowerCase().replace(/^www\./, "");
+    return host === "example.com" || host.endsWith(".example.com") || host === "example.org" || host.endsWith(".example");
+  } catch {
+    return false;
+  }
+}
+
+export function isPlaceholderEmail(input: string | null | undefined): boolean {
+  if (!input) return false;
+  return /@(?:example\.(?:com|org|net)|tirtavex\.example)$/i.test(input.trim());
+}
+
 export function safeColor(input: string | null | undefined, fallback = "#10B981"): string {
   if (!input) return fallback;
   const value = input.trim();

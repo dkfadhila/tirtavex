@@ -1,5 +1,9 @@
 const COOKIE = "tvx_session";
-const MAX_AGE = 60 * 60 * 24 * 7;
+const MAX_AGE = 60 * 60 * 24;
+
+function sessionVersion() {
+  return process.env.ADMIN_SESSION_VERSION || "1";
+}
 
 export function sessionCookieName() {
   return COOKIE;
@@ -44,7 +48,7 @@ async function hmac(secret: string, payload: string): Promise<string> {
 
 export async function signSession(secret: string, now = Date.now()): Promise<string> {
   const payload = bytesToBase64Url(
-    new TextEncoder().encode(JSON.stringify({ exp: now + MAX_AGE * 1000, v: 1 })),
+    new TextEncoder().encode(JSON.stringify({ exp: now + MAX_AGE * 1000, v: sessionVersion() })),
   );
   const signature = await hmac(secret, payload);
   return `${payload}.${signature}`;
@@ -57,8 +61,8 @@ export async function verifySession(token: string | undefined, secret: string | 
   const expected = await hmac(secret, payload);
   if (!constantEqual(signature, expected)) return false;
   try {
-    const json = JSON.parse(new TextDecoder().decode(base64UrlToBytes(payload))) as { exp?: number };
-    return typeof json.exp === "number" && json.exp > now;
+    const json = JSON.parse(new TextDecoder().decode(base64UrlToBytes(payload))) as { exp?: number; v?: string };
+    return typeof json.exp === "number" && json.exp > now && json.v === sessionVersion();
   } catch {
     return false;
   }

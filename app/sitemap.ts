@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getContent } from "@/lib/content";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const content = await getContent();
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://tirtavex.vercel.app";

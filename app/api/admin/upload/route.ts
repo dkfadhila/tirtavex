@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 const ALLOWED = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/avif"]);
 
 export async function POST(request: Request) {
-  const denied = await requireAdmin();
+  const denied = await requireAdmin(request);
   if (denied) return denied;
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     return json({ error: "Blob storage is not configured. Paste an image URL instead." }, 400);

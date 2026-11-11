@@ -12,10 +12,13 @@ npm run dev
 npm run build
 npm run lint
 npm run typecheck
-npm run db:migrate   # needs DATABASE_URL
-npm run db:seed      # replaces content with {{placeholder}} copy
-npm run db:setup     # migrate + seed
+npm test
+npm run db:migrate   # apply SQL; safe to re-run. Also runs on server boot when DATABASE_URL is set.
+npm run db:seed      # load the sample library. Unpublished {{tokens}} stay hidden on the public site.
+npm run db:setup     # migrate + seed. Run once against a fresh Neon database.
 ```
+
+The public site does not treat the sample library as live proof. Counts stay at zero, the agent heartbeat stays quiet, placeholder brands stay hidden, and example.com links are dropped until real records replace them.
 
 ## Environment
 

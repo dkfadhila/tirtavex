@@ -7,8 +7,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const content = await getContent();
   const article = content.articles.find((item) => item.slug === slug);
-  if (!article) return { title: "Journal" };
-  return { title: article.title, description: article.excerpt };
+  if (!article) return { title: "Journal", alternates: { canonical: `/journal/${slug}` } };
+  return { title: article.title, description: article.excerpt, alternates: { canonical: `/journal/${slug}` } };
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {

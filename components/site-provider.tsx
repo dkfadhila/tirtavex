@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { applyLiveEvent, LIVE_EVENTS } from "@/lib/live";
 import type { SiteContent } from "@/lib/types";
 
 type StreamState = "live" | "reconnecting" | "polling";
@@ -24,61 +23,42 @@ export function SiteProvider({ initial, children }: { initial: SiteContent; chil
   }
 
   useEffect(() => {
-    let source: EventSource | null = null;
-    let poll: number | undefined;
-    let closed = false;
-
-    const startPoll = () => {
-      if (poll) return;
-      setStream("polling");
-      poll = window.setInterval(async () => {
-        try {
-          const response = await fetch("/api/portfolio", { cache: "no-store" });
-          if (response.ok) setContent((await response.json()) as SiteContent);
-        } catch {
-          setStream("reconnecting");
-        }
-      }, 30_000);
+    let timer: number | undefined;
+    let delay = 60_000;
+    let stopped = false;
+    const schedule = () => {
+      timer = window.setTimeout(() => void tick(), delay);
     };
-
-    const connect = () => {
-      source = new EventSource("/api/stream");
-      source.onopen = () => setStream("live");
-      source.onerror = () => {
-        window.setTimeout(() => {
-          if (closed || source?.readyState !== EventSource.CLOSED) return;
-          setStream("reconnecting");
-          startPoll();
-        }, 1500);
-      };
-      for (const name of LIVE_EVENTS) {
-        source.addEventListener(name, (event) => {
-          if (name === "content.refresh") {
-            void fetch("/api/portfolio", { cache: "no-store" })
-              .then((response) => (response.ok ? response.json() : null))
-              .then((data) => {
-                if (data) setContent(data as SiteContent);
-              })
-              .catch(() => undefined);
-            return;
-          }
-          const message = event as MessageEvent;
-          try {
-            const data = JSON.parse(message.data) as unknown;
-            setContent((current) => applyLiveEvent(current, name, data));
-          } catch {
-            /* ignore malformed events */
-          }
-        });
+    const tick = async () => {
+      if (stopped) return;
+      if (document.visibilityState === "hidden") {
+        schedule();
+        return;
       }
+      try {
+        const response = await fetch("/api/portfolio", { cache: "no-store" });
+        if (!response.ok) throw new Error("portfolio unavailable");
+        setContent((await response.json()) as SiteContent);
+        setStream("polling");
+        delay = 60_000;
+      } catch {
+        setStream("reconnecting");
+        delay = Math.min(delay * 2, 5 * 60_000);
+      }
+      schedule();
     };
-
-    connect();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      delay = 60_000;
+      window.clearTimeout(timer);
+      void tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    schedule();
     return () => {
-      closed = true;
-      source?.close();
-      if (poll) window.clearInterval(poll);
-      void closed;
+      stopped = true;
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 

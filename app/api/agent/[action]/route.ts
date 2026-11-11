@@ -8,13 +8,16 @@ export const dynamic = "force-dynamic";
 const actions = new Set(["items", "articles", "metrics", "deleted", "heartbeat", "stats"]);
 
 export async function POST(request: Request, context: { params: Promise<{ action: string }> }) {
-  const denied = requireBearer(request, "AGENT_API_KEY", "AGENT_API_KEY is not configured");
+  const allowed = await rateLimit(`agent:${clientIp(request)}`, 60, 60_000).catch(() => false);
+  if (!allowed) return json({ error: "Too many requests" }, 429);
+  const denied = requireBearer(request, "AGENT_API_KEY");
   if (denied) return denied;
   const { action } = await context.params;
   if (!actions.has(action)) return json({ error: "Unknown agent action" }, 404);
-  const allowed = await rateLimit(`agent:${clientIp(request)}`, 120, 60_000).catch(() => true);
-  if (!allowed) return json({ error: "Too many requests" }, 429);
-  if (!databaseUrl()) return json({ error: "DATABASE_URL is not configured" }, 503);
+  if (!databaseUrl()) {
+    console.error("[agent] DATABASE_URL is not configured");
+    return json({ error: "Unavailable" }, 503);
+  }
   const body = await request.json().catch(() => null);
   return run(async () => {
     if (action === "items") return addWorkByX(body);

@@ -8,7 +8,7 @@ import type {
 
 const TERMS_BODY = `## 1. Who this covers
 
-These terms cover the public portfolio of Tirta (@TirtaVEX), published by {{legal_entity}} (“we”). By using the site you agree to them. Words in {{braces}} are placeholders the owner replaces in the admin.
+These terms cover the public portfolio of Tirta (@TirtaVEX). By using the site you agree to them.
 
 ## 2. The work you see
 
@@ -44,7 +44,7 @@ We do not ask visitors to connect a wallet, and we do not sell personal informat
 
 ## 3. How long briefs stay
 
-Briefs stay in the database until the owner deletes them. Write to {{privacy_email}} if you want one removed.
+Briefs stay in the database until the owner deletes them. Ask via the contact page if you want one removed.
 
 ## 4. Cookies
 
@@ -56,7 +56,7 @@ The site may be hosted on Vercel, with Postgres (Neon or similar) and optional V
 
 ## 6. Contact
 
-Privacy questions go to {{privacy_email}}. We may update this policy; the date below is the stored edit time.
+Privacy questions go through the contact page. We may update this policy; the date below is the stored edit time.
 `;
 
 function metrics(now: string, impressions: number, likes: number, reposts: number, replies: number, bookmarks = 0, quotes = 0) {
@@ -92,8 +92,7 @@ export function buildSeed(now = new Date()): SiteContent {
     heroEyebrow: "AI video × Web3",
     heroTitle: "Tirta",
     heroHeadline: "AI video and Web3 stories that people actually watch.",
-    heroLede:
-      "Every post. Every number. Always current. The living portfolio of {{full_name}} — thumbnails here, the film on X.",
+    heroLede: "Every post. Every number. Always current. Thumbnails here, the film on X.",
     heroPrimaryLabel: "See the work",
     heroSecondaryLabel: "Collab with me",
     introLeftKicker: "Visual stories",
@@ -105,13 +104,13 @@ export function buildSeed(now = new Date()): SiteContent {
     introRightBody:
       "Protocols and brands get a director who ships AI video with a paper trail: impressions, likes, and the people who stayed to the last frame.",
     marquee: ["AI video", "Web3", "Motion", "Campaigns", "Contests", "Collabs", "Short form", "Launch films"],
-    bio: "Tirta (@TirtaVEX) directs AI video for Web3 teams that need films people finish. Based in {{city}}. {{sixty_word_bio}}",
+    bio: "Tirta (@TirtaVEX) directs AI video for Web3 teams that need films people finish.",
     bioLong:
-      "Tirta works where a protocol launch needs a picture people remember. The practice is small on purpose: one director, a short tool list, and an agent that keeps the numbers honest.\n\nCampaigns for {{brand_name}} and {{protocol_name}} are placeholders until the real partners are pasted into the admin. The shape of the work is not a placeholder — short films, threads, contest entries, and ambassador posts, each one clickable back to X.\n\nIf you are hiring for a content partner program or an ambassador seat, the sections below are the track record. If a line still says {{like_this}}, it is waiting on Tirta, not on a redesign.",
-    email: "hello@example.com",
-    phone: "+1-000-000-0000",
-    location: "{{city}}, {{country}}",
-    availability: "Booking {{season}}",
+      "Tirta works where a protocol launch needs a picture people remember. The practice is small on purpose: one director, a short tool list, and an agent that keeps the numbers honest.\n\nThe films stay on X. This site keeps the thumbnail and, once the agent is connected, the public counts.",
+    email: "",
+    phone: "",
+    location: "",
+    availability: "",
     xHandle: "TirtaVEX",
     xUrl: "https://x.com/TirtaVEX",
     footerBlurb: "AI video and Web3 stories, kept in sync with the posts themselves.",
@@ -120,14 +119,10 @@ export function buildSeed(now = new Date()): SiteContent {
     metaTitle: "Tirta · AI video and Web3",
     metaDescription:
       "Living portfolio of Tirta (@TirtaVEX). AI video, Web3 campaigns, collabs, programs, and contests — every card opens the original post.",
-    pressNote: "Short bio, handle, and live totals for {{full_name}}. Final portraits ship separately.",
-    pulseLede: "Seeded totals ({{replace_via_agent}}) roll when the agent writes new metrics.",
-    budgetOptions: ["{{budget_low}}", "{{budget_mid}}", "{{budget_high}}", "Not sure yet"],
-    socials: [
-      { label: "X", url: "https://x.com/TirtaVEX" },
-      { label: "{{farcaster}}", url: "https://example.com/farcaster" },
-      { label: "{{lens}}", url: "https://example.com/lens" },
-    ],
+    pressNote: "Short bio and handle for Tirta. Final portraits ship separately.",
+    pulseLede: "",
+    budgetOptions: ["Not sure yet"],
+    socials: [{ label: "X", url: "https://x.com/TirtaVEX" }],
   };
 
   const items: WorkItem[] = [
@@ -281,7 +276,7 @@ The cut has to survive on X. I write the first line of the post before I open a 
 
 ### Generate wide, edit narrow
 
-{{tool_1}} explores. {{tool_2}} assembles. I keep one gesture, one light, one claim. Everything else is a deleted take.
+The generator explores. The edit assembles. I keep one gesture, one light, one claim. Everything else is a deleted take.
 
 ### Publish where the number is real
 
@@ -398,15 +393,15 @@ One hero film, three cutdowns, and a still that can live without type. The case 
   return {
     settings,
     stats: {
-      impressionsAll: 12840000,
-      impressions30d: 2460000,
-      likes: 103500,
-      posts: items.length,
-      followers: 48200,
-      bestPostId: "work_08",
+      impressionsAll: 0,
+      impressions30d: 0,
+      likes: 0,
+      posts: 0,
+      followers: 0,
+      bestPostId: "",
       updatedAt: iso,
     },
-    agent: { lastHeartbeatAt: iso, message: "Seed heartbeat. {{agent_name}} has not checked in yet." },
+    agent: { lastHeartbeatAt: null, message: "" },
     work: items,
     collabs: [
       {
@@ -840,7 +835,7 @@ One hero film, three cutdowns, and a still that can live without type. The case 
     ],
     process: [
       { id: "step_01", kicker: "Discovery", title: "Idea", body: "Read the product until one sentence is worth a film. If it isn’t, we don’t generate yet.", hidden: false, sortOrder: 0 },
-      { id: "step_02", kicker: "Direction", title: "Generate", body: "Wide exploration in {{tool_1}}. Keep the takes that obey the sentence.", hidden: false, sortOrder: 1 },
+      { id: "step_02", kicker: "Direction", title: "Generate", body: "Explore widely, then keep the takes that obey the sentence.", hidden: false, sortOrder: 1 },
       { id: "step_03", kicker: "Production", title: "Edit", body: "Cut for a thumb stopping on a phone. Sound, type, and length get decided here.", hidden: false, sortOrder: 2 },
       { id: "step_04", kicker: "Delivery", title: "Publish", body: "The post goes live on X. The agent mirrors the thumbnail and the numbers back here.", hidden: false, sortOrder: 3 },
     ],

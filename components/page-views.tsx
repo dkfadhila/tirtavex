@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { formatDate, placementLabel } from "@/lib/format";
+import { compactNumber, formatDate, placementLabel } from "@/lib/format";
 import { safeHttpUrl, safeXUrl } from "@/lib/safe-url";
 import type { Article, Project } from "@/lib/types";
 import { useSite } from "./site-provider";
@@ -144,9 +144,9 @@ export function AboutView() {
   const { settings, stats, tools, contests, programs } = useSite().content;
   const wins = contests.filter((item) => item.placement === "winner").length;
   const figures = [
-    stats.impressionsAll ? [`${Math.round(stats.impressionsAll / 1_000_000)}M`, "Impressions mirrored"] : null,
-    stats.followers ? [String(stats.followers), "Followers on X"] : null,
-    [String(programs.length), "Programs"],
+    stats.impressionsAll ? [compactNumber(stats.impressionsAll), "Impressions mirrored"] : null,
+    stats.followers ? [compactNumber(stats.followers), "Followers on X"] : null,
+    programs.length ? [String(programs.length), "Programs"] : null,
     wins ? [String(wins), "Wins"] : null,
   ].filter((row): row is [string, string] => row !== null);
   return (
@@ -329,7 +329,7 @@ export function ContactView() {
           <p className="eyebrow">Contact</p>
           <h1 className="display text-[clamp(56px,8vw,110px)]">{settings.contactHeadline}</h1>
           <p className="mt-4 max-w-md text-lg muted">{settings.contactLede}</p>
-          <div className="relative mt-10 h-40">
+          <div className="relative mt-10 hidden h-40 md:block">
             <div className="absolute top-0 left-0 h-40 w-40 rounded-full bg-emerald-500/30 blur-2xl" />
           </div>
         </div>
@@ -411,7 +411,7 @@ export function LegalView({ slug }: { slug: "terms" | "privacy" }) {
 export function NotFoundView() {
   return (
     <article className="wrap flex min-h-[80vh] flex-col justify-center py-28">
-      <p className="display text-[clamp(96px,22vw,280px)] leading-none text-stroke">404</p>
+      <h1 className="display text-[clamp(96px,22vw,280px)] leading-none text-stroke">Page not found</h1>
       <p className="mt-4 max-w-lg text-xl">This page drifted off the timeline. The work is still on the home reel.</p>
       <div className="mt-6 overflow-hidden">
         <p className="display whitespace-nowrap text-3xl text-emerald-700">lost frame · lost frame · lost frame · lost frame ·</p>
