@@ -31,7 +31,7 @@ export function Hero() {
           {cutout ? <HeroRings reduce={Boolean(reduce)} /> : null}
           <HeroMeteors reduce={Boolean(reduce)} />
           {cutout ? (
-            <Image src="/media/hero-cut.webp" alt={settings.heroImageAlt || "Tirta"} fill priority unoptimized className="ed-hero-plate ed-hero-cut" sizes="100vw" />
+            <Image src="/media/hero-cut.webp" alt={settings.heroImageAlt || "Tirta"} fill priority className="ed-hero-plate ed-hero-cut" sizes="100vw" />
           ) : null}
         </motion.div>
         <div className="ed-hero-shade" />

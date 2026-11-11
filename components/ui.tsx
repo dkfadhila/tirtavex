@@ -21,13 +21,19 @@ export function Reveal({
   duration?: number;
 }) {
   const reduce = useReducedMotion();
+  const [forced, setForced] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setForced(true), 1400);
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <motion.div
       className={className}
       data-reveal
       initial={reduce ? false : { opacity: 0.001, y }}
+      animate={forced ? { opacity: 1, y: 0 } : undefined}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: true, amount: 0.05 }}
       transition={reduce ? { duration: 0.01 } : { type: "spring", bounce, duration, delay }}
     >
       {children}

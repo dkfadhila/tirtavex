@@ -235,6 +235,11 @@ function Footer() {
               {link.label}
             </Link>
           ))}
+          {OTHER.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          ))}
         </nav>
         <div>
           <p className="foot-kicker">About</p>
