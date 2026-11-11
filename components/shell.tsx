@@ -1,10 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
 import { uiSpring } from "@/lib/motion";
+import { safeXUrl } from "@/lib/safe-url";
+import { stills } from "@/lib/stills";
+import { useSite } from "./site-provider";
 
 const NAV = [
   { href: "/about", label: "About" },
@@ -201,31 +205,49 @@ function MenuGlyph({ open }: { open: boolean }) {
 }
 
 function Footer() {
+  const { settings } = useSite().content;
   const year = new Date().getFullYear();
+  const strip = [...stills().gallery, ...stills().panels].slice(0, 8);
+  const x = safeXUrl(settings.xUrl);
   return (
     <footer className="ed-foot">
-      <div className="ed-wrap">
-        <div className="ed-head" style={{ marginBottom: "1.25rem" }}>
-          <p className="wordmark" style={{ fontSize: 36, margin: 0 }}>
-            Tirtavex
-          </p>
-          <p className="ed-note">AI video · Indonesia</p>
+      <div className="foot-strip">
+        {strip.map((src) => (
+          <div key={src} className="foot-cell">
+            <Image src={src} alt="" fill sizes="14vw" className="object-cover" />
+          </div>
+        ))}
+      </div>
+      <div className="foot-lock">
+        <p className="t-eyebrow">Creative</p>
+        <p className="t-display">Tirtavex</p>
+        <p className="t-eyebrow foot-open">Open DMs</p>
+        <p className="t-body foot-copy">{settings.contactLede}</p>
+      </div>
+      <div className="foot-cols">
+        <div>
+          <p className="t-eyebrow">Get in touch</p>
+          {settings.email ? <a href={`mailto:${settings.email}`}>{settings.email}</a> : null}
+          {x ? (
+            <a href={x} target="_blank" rel="noopener noreferrer">
+              DM @{settings.xHandle} on X
+            </a>
+          ) : null}
         </div>
-        <nav className="ed-foot-links" aria-label="Footer">
+        <nav aria-label="Footer">
+          <p className="t-eyebrow">Navigation</p>
           {NAV.map((link) => (
             <Link key={link.href} href={link.href}>
               {link.label}
             </Link>
           ))}
-          {OTHER.map((link) => (
-            <Link key={link.href} href={link.href}>
-              {link.label}
-            </Link>
-          ))}
         </nav>
-        <p className="ed-note" style={{ marginTop: "1.5rem" }}>
-          © Tirta {year}
-        </p>
+        <div>
+          <p className="t-eyebrow">About</p>
+          <p>AI video creator</p>
+          <p>Based in Indonesia</p>
+          <p>© Tirta {year}</p>
+        </div>
       </div>
     </footer>
   );

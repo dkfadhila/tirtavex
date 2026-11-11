@@ -150,7 +150,7 @@ export function buildSeed(now = new Date()): SiteContent {
     heroImage: "/media/hero.webp",
     aboutImage: "/media/about.webp",
     heroImageAlt: "Tirta in a white and green jacket and sunglasses, against a blue sky",
-    aboutImageAlt: "Portrait of Tirta in glasses and a white jacket with green embroidery",
+    aboutImageAlt: "Tirta looking up at a ring of light in a dark cosmic scene",
     budgetOptions: ["Not sure yet"],
     socials: [
       { label: "X", url: "https://x.com/tirtavex" },

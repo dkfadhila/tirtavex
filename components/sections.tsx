@@ -29,6 +29,7 @@ export function Hero() {
         <motion.div className="absolute inset-0" style={reduce ? undefined : { y: imageY }}>
           <Image src={settings.heroImage || "/media/hero.webp"} alt="" fill priority className="ed-hero-plate" sizes="100vw" />
           {cutout ? <HeroRings reduce={Boolean(reduce)} /> : null}
+          <HeroMeteors reduce={Boolean(reduce)} />
           {cutout ? (
             <Image src="/media/hero-cut.webp" alt={settings.heroImageAlt || "Tirta"} fill priority unoptimized className="ed-hero-plate ed-hero-cut" sizes="100vw" />
           ) : null}
@@ -46,7 +47,7 @@ export function Hero() {
           </p>
         </motion.div>
       </section>
-      <NameTicker items={settings.marquee.length ? settings.marquee : settings.genres} />
+      <LogoStrip />
     </>
   );
 }
@@ -379,17 +380,54 @@ function TitleBlock({
   );
 }
 
-function NameTicker({ items }: { items: string[] }) {
-  const loop = [...items, ...items];
+const LOGO_STRIP = [
+  { name: "Placeholder 01", path: "M8 4h8l4 8-4 8H8l-4-8z" },
+  { name: "Placeholder 02", path: "M12 3l3 6 6 .8-4.5 4.2 1.2 6.5L12 17.5 6.3 20.5 7.5 14 3 9.8 9 9z" },
+  { name: "Placeholder 03", path: "M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" },
+  { name: "Placeholder 04", path: "M5 7h14v3H5zm0 7h10v3H5z" },
+  { name: "Placeholder 05", path: "M12 3l8 5v8l-8 5-8-5V8z" },
+];
+
+function LogoStrip() {
+  const loop = [...LOGO_STRIP, ...LOGO_STRIP];
   return (
-    <div className="h-ticker overflow-hidden border-y border-[color:var(--tv-line)]" style={{ maskImage: "linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)" }}>
-      <div className="h-track gap-10 py-4" style={{ animationDuration: "32s" }}>
+    <div className="logo-strip" aria-label="Placeholder logos">
+      <div className="h-track logo-track" style={{ animationDuration: "28s" }}>
         {loop.map((item, index) => (
-          <span key={`${item}-${index}`} className="t-eyebrow px-2 !text-[color:var(--tv-ink)]">
-            {item}
+          <span key={`${item.name}-${index}`} className="logo-item">
+            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden>
+              <path d={item.path} fill="none" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+            <span>{item.name}</span>
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+function HeroMeteors({ reduce }: { reduce: boolean }) {
+  if (reduce) return null;
+  const drops = [
+    { side: "left", x: "6%", delay: 0, duration: 3.4 },
+    { side: "left", x: "14%", delay: 1.2, duration: 2.7 },
+    { side: "left", x: "22%", delay: 2.1, duration: 3.8 },
+    { side: "right", x: "6%", delay: 0.5, duration: 3.1 },
+    { side: "right", x: "15%", delay: 1.7, duration: 2.5 },
+    { side: "right", x: "24%", delay: 2.6, duration: 3.6 },
+  ];
+  return (
+    <div className="ed-meteors" aria-hidden>
+      {drops.map((drop, index) => (
+        <motion.span
+          key={index}
+          className="ed-meteor"
+          style={{ [drop.side]: drop.x }}
+          initial={{ y: "-20%", opacity: 0 }}
+          animate={{ y: ["-20%", "120%"], opacity: [0, 1, 0] }}
+          transition={{ duration: drop.duration, delay: drop.delay, repeat: Infinity, ease: "linear" }}
+        />
+      ))}
     </div>
   );
 }
