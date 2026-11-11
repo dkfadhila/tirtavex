@@ -185,6 +185,33 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
 
 export function StatsSection({ full = false }: { full?: boolean }) {
   const { settings, stats } = useSite().content;
+  const [live, setLive] = useState<Record<string, { followers: number; videos: number }>>({});
+
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const response = await fetch("/api/stats", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = (await response.json()) as { platforms?: { platform: string; followers: number; videos: number }[] };
+        if (!alive || !Array.isArray(payload.platforms)) return;
+        const next: Record<string, { followers: number; videos: number }> = {};
+        for (const row of payload.platforms) {
+          if (row.platform === "x") next[row.platform] = { followers: row.followers, videos: row.videos };
+        }
+        setLive(next);
+      } catch {
+        /* keep static numbers */
+      }
+    };
+    load();
+    const timer = setInterval(load, 300000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
   const platforms = stats.platforms.filter((row) => row.platform !== "overall");
   const placeholder = platforms.length > 0 ? platforms.every((row) => row.placeholder) : stats.placeholder;
   return (
@@ -195,6 +222,7 @@ export function StatsSection({ full = false }: { full?: boolean }) {
         <div className="ed-platforms">
           {platforms.map((row) => {
             const profile = safeHttpUrl(row.url);
+            const feed = live[row.platform];
             return (
               <article key={row.platform} className="ed-platform">
                 <header className="ed-platform-head">
@@ -209,8 +237,8 @@ export function StatsSection({ full = false }: { full?: boolean }) {
                 </header>
                 <div className="ed-platform-metrics">
                   <Stat value={row.impressions} label="Impressions" placeholder={row.placeholder} />
-                  <Stat value={row.followers} label="Followers" placeholder={row.placeholder} />
-                  <Stat value={row.videos} label="Videos published" placeholder={row.placeholder} />
+                  <Stat value={feed ? feed.followers : row.followers} label="Followers" placeholder={row.placeholder} />
+                  <Stat value={feed ? feed.videos : row.videos} label={row.platform === "x" ? "Posts" : "Videos published"} placeholder={row.placeholder} />
                 </div>
               </article>
             );
