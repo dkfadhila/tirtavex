@@ -116,7 +116,7 @@ export function toPublic(content: SiteContent, options?: { sample?: boolean }): 
   settings.budgetOptions = settings.budgetOptions.filter(Boolean);
   settings.socials = settings.socials.filter((item) => item.label && item.url && !isExampleHost(item.url));
   if (isPlaceholderEmail(settings.email)) settings.email = "";
-  const sample = options?.sample || !databaseUrl();
+  const sample = Boolean(options?.sample);
   const stats = sample ? sampleStats(cleaned.stats) : cleaned.stats;
   const agent = sample ? { lastHeartbeatAt: null, message: "" } : cleaned.agent;
   return {
