@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
-import { uiSpring } from "@/lib/motion";
 import { safeXUrl } from "@/lib/safe-url";
 import { useSite } from "./site-provider";
 
@@ -57,7 +56,15 @@ function Nav() {
   const reduce = useReducedMotion();
   const navRef = useRef<HTMLDivElement>(null);
   const [openPath, setOpenPath] = useState<string | null>(null);
+  const [solid, setSolid] = useState(false);
   const open = openPath === pathname;
+
+  useEffect(() => {
+    const tick = () => setSolid(window.scrollY > 24);
+    tick();
+    window.addEventListener("scroll", tick, { passive: true });
+    return () => window.removeEventListener("scroll", tick);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -76,23 +83,30 @@ function Nav() {
   }, [open]);
 
   return (
-    <header className="ed-nav-wrap">
-      <motion.nav
-        ref={navRef}
-        aria-label="Primary"
-        className="ed-nav"
-        initial={reduce ? false : { opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={reduce ? { duration: 0.01 } : uiSpring}
-      >
-        <div className="ed-nav-row">
+    <header ref={navRef} className={`ed-bar${solid ? " is-solid" : ""}${open ? " is-open" : ""}${pathname === "/" && !solid ? " on-hero" : ""}`}>
+      <div className="ed-bar-inner">
+        <Link href="/" className="ed-bar-brand" aria-label="Tirtavex, home">
+          <span className="ed-sig" aria-hidden="true">
+            {[5, 11, 8, 13, 9, 6].map((len, i) => (
+              <span key={i} className="ed-sig-line" style={{ width: `${len}px`, animationDelay: `${i * 0.18}s` }} />
+            ))}
+          </span>
+          <span className="wordmark ed-bar-title">Tirtavex</span>
+        </Link>
+
+        <nav className="ed-bar-links" aria-label="Primary">
+          {NAV.map((link) => (
+            <Link key={link.href} href={link.href} aria-current={pathname === link.href ? "page" : undefined} onClick={() => setOpenPath(null)}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="ed-bar-utils">
           <ThemeToggle />
-          <Link href="/" className="wordmark ed-nav-title">
-            Tirtavex
-          </Link>
           <button
             type="button"
-            className="ed-nav-btn"
+            className="ed-bar-toggle"
             aria-expanded={open}
             aria-controls="site-menu"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -101,42 +115,38 @@ function Nav() {
             <MenuGlyph open={open} />
           </button>
         </div>
-        <AnimatePresence initial={false}>
-          {open ? (
-            <motion.div
-              id="site-menu"
-              key="menu"
-              initial={reduce ? false : { opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={reduce ? { duration: 0.01 } : { duration: 0.45, ease: [0.66, 0.01, 0.42, 0.97] }}
-              style={{ overflow: "hidden" }}
-            >
-              <ul className="ed-menu">
-                {NAV.map((link, index) => (
-                  <motion.li
-                    key={link.href}
-                    initial={reduce ? false : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", duration: 0.4, bounce: 0, delay: reduce ? 0 : index * 0.04 }}
-                  >
-                    <Link href={link.href} aria-current={pathname === link.href ? "page" : undefined} onClick={() => setOpenPath(null)}>
-                      {link.label}
-                    </Link>
-                  </motion.li>
-                ))}
-              </ul>
-              <div className="ed-menu-more">
-                {OTHER.map((link) => (
-                  <Link key={link.href} href={link.href} onClick={() => setOpenPath(null)}>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {open ? (
+          <motion.div
+            id="site-menu"
+            key="menu"
+            className="ed-sheet"
+            initial={reduce ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={reduce ? { duration: 0.01 } : { duration: 0.28, ease: [0.44, 0, 0.56, 1] }}
+          >
+            <ul className="ed-sheet-list">
+              {NAV.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} aria-current={pathname === link.href ? "page" : undefined} onClick={() => setOpenPath(null)}>
                     {link.label}
                   </Link>
-                ))}
-              </div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </motion.nav>
+                </li>
+              ))}
+            </ul>
+            <div className="ed-sheet-more">
+              {OTHER.map((link) => (
+                <Link key={link.href} href={link.href} onClick={() => setOpenPath(null)}>
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </header>
   );
 }
@@ -160,7 +170,7 @@ function ThemeToggle() {
   return (
     <button
       type="button"
-      className="ed-nav-logo"
+      className="ed-bar-theme"
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
       aria-pressed={dark}
       onClick={toggle}
@@ -194,10 +204,10 @@ function SunIcon() {
 
 function MenuGlyph({ open }: { open: boolean }) {
   return (
-    <span className="relative block h-3 w-4" aria-hidden>
-      <span className={`absolute left-0 h-0.5 w-4 bg-white transition ${open ? "top-1.5 rotate-45" : "top-0"}`} />
-      <span className={`absolute top-1.5 left-0 h-0.5 w-4 bg-white transition ${open ? "opacity-0" : ""}`} />
-      <span className={`absolute left-0 h-0.5 w-4 bg-white transition ${open ? "top-1.5 -rotate-45" : "top-3"}`} />
+    <span className="ed-glyph" aria-hidden>
+      <span className={`ed-glyph-line${open ? " is-a" : ""}`} />
+      <span className={`ed-glyph-line${open ? " is-b" : ""}`} />
+      <span className={`ed-glyph-line${open ? " is-c" : ""}`} />
     </span>
   );
 }
