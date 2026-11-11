@@ -454,17 +454,21 @@ html[data-theme="dark"] .ed-bar.on-hero.is-solid { color: #f4f1ea; }
 .ed-bar-title { font-size: 19px; line-height: 1; letter-spacing: -0.01em; opacity: 0.9; }
 .ed-bar-brand:hover .ed-bar-title { opacity: 1; }
 
-/* micro spectrum inside the title lockup */
-.ed-sig { display: flex; flex-direction: column; justify-content: center; gap: 2px; height: 18px; width: 14px; }
-.ed-sig-line {
-  display: block; height: 1px; border-radius: 1px;
-  background: currentColor; opacity: 0.42;
-  transform-origin: left center;
-  animation: edSig 3.4s ease-in-out infinite;
+/* horizontal hairline spectrum, right-anchored inside the bar */
+.ed-spec {
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+  gap: 2px; height: 26px; margin-left: 6px; pointer-events: none;
 }
-@keyframes edSig {
-  0%, 100% { transform: scaleX(0.42); opacity: 0.28; }
-  50% { transform: scaleX(1); opacity: 0.72; }
+.ed-spec-line {
+  display: block; height: 1px; border-radius: 1px;
+  background: currentColor; opacity: 0.4;
+  transform-origin: right center;
+  animation: edSpec 3.6s ease-in-out infinite;
+}
+.ed-spec-line:nth-child(3n) { opacity: 0.62; }
+@keyframes edSpec {
+  0%, 100% { transform: scaleX(0.46); opacity: 0.22; }
+  50% { transform: scaleX(1); opacity: 0.66; }
 }
 
 .ed-bar-links { display: none; align-items: center; gap: 1.4rem; margin-left: auto; }

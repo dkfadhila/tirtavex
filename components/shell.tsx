@@ -86,11 +86,6 @@ function Nav() {
     <header ref={navRef} className={`ed-bar${solid ? " is-solid" : ""}${open ? " is-open" : ""}${pathname === "/" && !solid ? " on-hero" : ""}`}>
       <div className="ed-bar-inner">
         <Link href="/" className="ed-bar-brand" aria-label="Tirtavex, home">
-          <span className="ed-sig" aria-hidden="true">
-            {[5, 11, 8, 13, 9, 6].map((len, i) => (
-              <span key={i} className="ed-sig-line" style={{ width: `${len}px`, animationDelay: `${i * 0.18}s` }} />
-            ))}
-          </span>
           <span className="wordmark ed-bar-title">Tirtavex</span>
         </Link>
 
@@ -114,6 +109,11 @@ function Nav() {
           >
             <MenuGlyph open={open} />
           </button>
+          <span className="ed-spec" aria-hidden="true">
+            {[12, 20, 15, 26, 18, 22, 10].map((len, i) => (
+              <span key={i} className="ed-spec-line" style={{ width: `${len}px`, animationDelay: `${i * 0.16}s` }} />
+            ))}
+          </span>
         </div>
       </div>
 
