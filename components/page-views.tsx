@@ -143,12 +143,13 @@ export function CaseStudy({ project }: { project: Project }) {
 
 export function AboutView() {
   const { settings, stats, tools, contests, programs } = useSite().content;
+  const wins = contests.filter((item) => item.placement === "winner").length;
   const figures = [
-    [stats.impressionsAll ? `${Math.round(stats.impressionsAll / 1_000_000)}M` : "{{n}}", "Impressions mirrored"],
-    [String(stats.followers || "{{followers}}"), "Followers on X"],
+    stats.impressionsAll ? [`${Math.round(stats.impressionsAll / 1_000_000)}M`, "Impressions mirrored"] : null,
+    stats.followers ? [String(stats.followers), "Followers on X"] : null,
     [String(programs.length), "Programs"],
-    [String(contests.filter((item) => item.placement === "winner").length || "{{wins}}"), "Wins"],
-  ];
+    wins ? [String(wins), "Wins"] : null,
+  ].filter((row): row is [string, string] => row !== null);
   return (
     <article className="pt-28">
       <div className="wrap grid gap-8 md:grid-cols-12">

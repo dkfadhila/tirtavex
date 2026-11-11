@@ -41,11 +41,11 @@ export function BriefForm({ budgets }: { budgets: string[] }) {
       </label>
       <label className="field">
         <span>Name</span>
-        <input name="name" required autoComplete="name" placeholder="{{your_name}}" />
+        <input name="name" required autoComplete="name" placeholder="Your name" />
       </label>
       <label className="field">
         <span>Project</span>
-        <input name="project" required placeholder="Launch film for {{protocol}}" />
+        <input name="project" required placeholder="Launch film or protocol" />
       </label>
       <label className="field">
         <span>Budget range</span>
