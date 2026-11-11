@@ -698,10 +698,10 @@ function LegalForm({ content, disabled, onSave }: { content: SiteContent; disabl
 
 function StatsForm({ stats, disabled, onSave }: { stats: SiteContent["stats"]; disabled: boolean; onSave: (data: SiteContent["stats"]) => void }) {
   const [draft, setDraft] = useState(stats);
-  function setPlatform(index: number, key: "engagement" | "likes" | "videos" | "handle" | "label" | "url", value: string) {
+  function setPlatform(index: number, key: "impressions" | "followers" | "videos" | "handle" | "label" | "url", value: string) {
     const platforms = draft.platforms.map((row, i) => {
       if (i !== index) return row;
-      if (key === "engagement" || key === "likes" || key === "videos") return { ...row, [key]: Number(value) || 0 };
+      if (key === "impressions" || key === "followers" || key === "videos") return { ...row, [key]: Number(value) || 0 };
       return { ...row, [key]: value };
     });
     setDraft({ ...draft, platforms });
@@ -715,19 +715,19 @@ function StatsForm({ stats, disabled, onSave }: { stats: SiteContent["stats"]; d
       }}
     >
       <h1 className="font-display text-4xl">Engagement</h1>
-      <p className="text-sm muted">Leave “placeholder” on until the numbers are real. The public site shows a dash instead of a fake total.</p>
+      <p className="text-sm muted">Each platform shows impressions, followers, and videos published. Leave “placeholder” on until the numbers are real. The public site shows a dash instead of a fake total.</p>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={draft.placeholder} onChange={(event) => setDraft({ ...draft, placeholder: event.target.checked, platforms: draft.platforms.map((row) => ({ ...row, placeholder: event.target.checked })) })} />
         These figures are placeholders
       </label>
-      {draft.platforms.map((row, index) => (
+      {draft.platforms.map((row, index) => row.platform === "overall" ? null : (
         <fieldset key={row.platform} className="grid gap-2 rounded-card bg-white p-4">
           <legend className="px-1 text-sm">{row.label || row.platform}</legend>
           <label className="field"><span>Label</span><input value={row.label} onChange={(event) => setPlatform(index, "label", event.target.value)} /></label>
           <label className="field"><span>Handle</span><input value={row.handle} onChange={(event) => setPlatform(index, "handle", event.target.value)} /></label>
           <label className="field"><span>Profile URL</span><input value={row.url} onChange={(event) => setPlatform(index, "url", event.target.value)} /></label>
-          <label className="field"><span>Total engagement</span><input type="number" value={row.engagement} onChange={(event) => setPlatform(index, "engagement", event.target.value)} /></label>
-          <label className="field"><span>Likes</span><input type="number" value={row.likes} onChange={(event) => setPlatform(index, "likes", event.target.value)} /></label>
+          <label className="field"><span>Impressions</span><input type="number" value={row.impressions} onChange={(event) => setPlatform(index, "impressions", event.target.value)} /></label>
+          <label className="field"><span>Followers</span><input type="number" value={row.followers} onChange={(event) => setPlatform(index, "followers", event.target.value)} /></label>
           <label className="field"><span>Videos published</span><input type="number" value={row.videos} onChange={(event) => setPlatform(index, "videos", event.target.value)} /></label>
         </fieldset>
       ))}
