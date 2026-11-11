@@ -22,31 +22,12 @@ export function Hero() {
   return (
     <>
       <section className="ed-hero" aria-label="Intro">
-        <div className="ed-stage">
-          <HeroRings reduce={Boolean(reduce)} />
-          {cutout ? (
-            <motion.div
-              initial={reduce ? false : { opacity: 0, y: 36 }}
-              animate={reduce ? { opacity: 1 } : { opacity: 1, y: [0, -12, 0] }}
-              transition={
-                reduce
-                  ? { duration: 0.01 }
-                  : { opacity: { duration: 0.7 }, y: { duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 0.45 } }
-              }
-            >
-              <Image
-                src="/media/hero-cut.webp"
-                alt={settings.heroImageAlt || "Tirta"}
-                width={950}
-                height={1011}
-                priority
-                className="ed-cutout"
-              />
-            </motion.div>
-          ) : (
-            <Portrait src={settings.heroImage} alt={settings.heroImageAlt || "Tirta"} priority hero />
-          )}
-        </div>
+        <Image src={settings.heroImage || "/media/hero.webp"} alt="" fill priority className="ed-hero-plate" sizes="100vw" />
+        {cutout ? <HeroRings reduce={Boolean(reduce)} /> : null}
+        {cutout ? (
+          <Image src="/media/hero-cut.webp" alt={settings.heroImageAlt || "Tirta"} fill priority unoptimized className="ed-hero-plate ed-hero-cut" sizes="100vw" />
+        ) : null}
+        <div className="ed-hero-shade" />
         <div className="ed-hero-copy">
           <motion.p className="ed-kicker" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
             {settings.heroEyebrow || "TirtaVEX"}
@@ -412,14 +393,14 @@ function Words({ text }: { text: string }) {
 }
 
 function HeroRings({ reduce }: { reduce: boolean }) {
-  const sizes = [240, 360, 500, 660];
+  const sizes = [34, 50, 68, 88];
   return (
     <div className="ed-rings" aria-hidden>
       {sizes.map((size, index) => (
         <motion.span
           key={size}
           className={index % 2 ? "ed-ring dashed" : "ed-ring"}
-          style={{ width: size, height: size, left: "50%", top: "50%", marginLeft: -size / 2, marginTop: -size / 2 }}
+          style={{ width: `${size}vmin`, height: `${size}vmin`, marginLeft: `${-size / 2}vmin`, marginTop: `${-size / 2}vmin` }}
           animate={reduce ? undefined : { rotate: index % 2 ? -360 : 360 }}
           transition={{ duration: 18 + index * 8, repeat: Infinity, ease: "linear" }}
         />
