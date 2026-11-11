@@ -83,12 +83,19 @@ function Nav() {
   }, [open]);
 
   return (
-    <>
-    <header ref={navRef} className={`ed-bar${solid ? " is-solid" : ""}${pathname === "/" && !solid ? " on-hero" : ""}`}>
+    <header ref={navRef} className={`ed-bar${solid ? " is-solid" : ""}${open ? " is-open" : ""}${pathname === "/" && !solid ? " on-hero" : ""}`}>
       <div className="ed-bar-inner">
         <Link href="/" className="ed-bar-brand" aria-label="Tirtavex, home">
           <span className="wordmark ed-bar-title">Tirtavex</span>
         </Link>
+
+        <nav className="ed-bar-links" aria-label="Primary">
+          {NAV.map((link) => (
+            <Link key={link.href} href={link.href} aria-current={pathname === link.href ? "page" : undefined} onClick={() => setOpenPath(null)}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
 
         <div className="ed-bar-utils">
           <ThemeToggle />
@@ -102,6 +109,11 @@ function Nav() {
           >
             <MenuGlyph open={open} />
           </button>
+          <span className="ed-spec" aria-hidden="true">
+            {[12, 20, 15, 26, 18, 22, 10].map((len, i) => (
+              <span key={i} className="ed-spec-line" style={{ width: `${len}px`, animationDelay: `${i * 0.16}s` }} />
+            ))}
+          </span>
         </div>
       </div>
 
@@ -136,27 +148,6 @@ function Nav() {
         ) : null}
       </AnimatePresence>
     </header>
-
-    <motion.nav
-      className={`ed-rail${pathname === "/" && !solid ? " on-hero" : ""}`}
-      aria-label="Primary"
-      initial={reduce ? false : { opacity: 0, x: 12 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={reduce ? { duration: 0.01 } : { duration: 0.5, ease: [0.33, 1, 0.68, 1] }}
-    >
-      {NAV.map((link, i) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className="ed-rail-link"
-          aria-current={pathname === link.href ? "page" : undefined}
-        >
-          <span className="ed-rail-label">{link.label}</span>
-          <span className="ed-rail-tick" style={{ width: `${[16, 30, 22, 40, 26, 34, 20][i % 7]}px`, animationDelay: `${i * 0.22}s` }} aria-hidden="true" />
-        </Link>
-      ))}
-    </motion.nav>
-    </>
   );
 }
 
