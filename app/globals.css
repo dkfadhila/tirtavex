@@ -503,11 +503,11 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
   font-family: var(--tv-font-display);
   font-style: italic;
   font-weight: 400;
-  font-size: clamp(52px, 7.2vw, 112px);
+  font-size: clamp(31px, 4.3vw, 67px);
   line-height: 0.9;
   letter-spacing: -0.03em;
 }
-.logo-item svg { flex: none; width: 0.72em; height: 0.72em; color: #047857; }
+.logo-item img { flex: none; width: 0.72em; height: 0.72em; object-fit: contain; }
 .ed-marquee { overflow: hidden; border-top: 1px solid var(--tv-line); border-bottom: 1px solid var(--tv-line); }
 .ed-marquee-track { display: flex; width: max-content; gap: 2.5rem; padding: 0.85rem 0; }
 .ed-marquee-track span { font-family: var(--tv-font-display); font-style: italic; font-size: 22px; white-space: nowrap; }
@@ -580,8 +580,13 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .foot-side.left { left: max(4vw, 20px); }
 .foot-side.right { right: max(4vw, 20px); }
 .foot-cols { display: grid; gap: 2rem; width: 100%; padding: 2.5rem max(4vw, 24px) 1.5rem; }
-@media (min-width: 800px) { .foot-cols { grid-template-columns: 1fr 1fr 1fr; } }
+@media (min-width: 800px) {
+  .foot-cols { grid-template-columns: 1fr 1fr 1fr; align-items: start; }
+  .foot-cols > nav { text-align: center; }
+  .foot-cols > div:last-child { text-align: right; }
+}
 .foot-cols p, .foot-cols a { display: block; margin-top: 0.45rem; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: var(--tv-ink-60); }
+.foot-cols nav a { display: inline-block; margin: 0.45rem 0.4rem 0; }
 .foot-copy { margin: 1.5rem auto 0; max-width: 280px; }
 .ed-foot-links { display: flex; flex-wrap: wrap; gap: 0.7rem 1.1rem; }
 .ed-foot-links a { text-decoration: none; font-size: 14px; }
@@ -591,6 +596,7 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
   .ed-nav, .ed-nav.is-open { width: calc(100vw - 20px); }
   .ed-nav-row { padding-left: 16px; }
   .ed-hero-copy { width: 100%; padding-inline: 1.15rem; }
+  .foot-side, .foot-open { position: static; }
   .ed-wrap { width: min(1180px, calc(100% - 32px)); }
   .ed-head { align-items: flex-start; flex-direction: column; }
 }

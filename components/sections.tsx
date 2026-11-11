@@ -381,11 +381,11 @@ function TitleBlock({
 }
 
 const LOGO_STRIP = [
-  { name: "Seedance", path: "M8 6l10 6-10 6z" },
-  { name: "Grok", path: "M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z" },
-  { name: "ElevenLabs", path: "M5 10v4M9 7v10M13 4v16M17 8v8M21 11v2" },
-  { name: "Remotion", path: "M8 8l-4 4 4 4M16 8l4 4-4 4" },
-  { name: "Canva", path: "M4 6h16v12H4zM4 10h16" },
+  { name: "Seedance", src: "/logos/bytedance.svg" },
+  { name: "Grok", src: "/logos/grok.png" },
+  { name: "ElevenLabs", src: "/logos/elevenlabs.svg" },
+  { name: "Remotion", src: "/logos/remotion.svg" },
+  { name: "Canva", src: "/logos/canva.svg" },
 ];
 
 function LogoStrip() {
@@ -396,13 +396,13 @@ function LogoStrip() {
       <motion.div
         className="logo-track"
         animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 70, repeat: Infinity, ease: "linear" }}
       >
         {loop.map((item, index) => (
           <span key={`${item.name}-${index}`} className="logo-item">
-            <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden>
-              <path d={item.path} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-            </svg>
+            {/* Brand marks are static files, not optimized photos. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.src} alt="" />
             <span>{item.name}</span>
           </span>
         ))}
