@@ -4,6 +4,22 @@ Living portfolio for Tirta (@TirtaVEX). Content is stored in Postgres and edited
 
 Production: [tirtavex.vercel.app](https://tirtavex.vercel.app). Pushes to `main` deploy on Vercel.
 
+## Agent checkpoints
+
+Read the newest file in `checkpoints/` before you change the site. It is the handoff from the last agent.
+
+When your pull request merges into `main`, add the next checkpoint before you stop. One merged PR, one new file. Do not edit or delete older checkpoints.
+
+Name it `checkpoints/NNN-short-slug.md`. `NNN` is the pull request number (`007-platform-metrics.md`). Put this in the same PR when you still can. If the PR already merged, open a follow-up that only adds the checkpoint.
+
+Each file should say:
+
+- PR link and merge commit
+- What changed on the public site
+- Decisions a later agent must keep
+- What is still a placeholder
+- How you checked it
+
 ## Scripts
 
 ```bash
