@@ -11,8 +11,6 @@ export async function POST(request: Request) {
   if (origin) return origin;
   const type = rejectUnlessJson(request);
   if (type) return type;
-  const allowed = await rateLimit(`login:${clientIp(request)}`, 8, 15 * 60 * 1000).catch(() => false);
-  if (!allowed) return json({ error: "Too many attempts. Wait a few minutes." }, 429);
   const password = process.env.ADMIN_PASSWORD;
   const secret = process.env.ADMIN_SESSION_SECRET;
   if (!password || !secret || secret.length < 16) {
