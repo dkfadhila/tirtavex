@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { animate, motion, useInView, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { animate, motion, useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { presets, spring, stairs, textFx } from "@/lib/motion";
 import { fullNumber, laneLabel, partnerRoleLabel, placementLabel } from "@/lib/format";
 import { isPlaceholderEmail, safeHttpUrl, safeXUrl } from "@/lib/safe-url";
 import type { Ambassador, Contest, Settings, Tool, WorkItem } from "@/lib/types";
@@ -19,32 +20,34 @@ export function Hero() {
   const reduce = useReducedMotion();
   const title = settings.heroTitle || "Tirta";
   const cutout = !settings.heroImage || settings.heroImage === "/media/hero.webp";
+  const { scrollY } = useScroll();
+  const imageY = useTransform(scrollY, [0, 800], [0, 56]);
+  const titleY = useTransform(scrollY, [0, 800], [0, 40]);
   return (
     <>
       <section className="ed-hero" aria-label="Intro">
-        <Image src={settings.heroImage || "/media/hero.webp"} alt="" fill priority className="ed-hero-plate" sizes="100vw" />
-        {cutout ? <HeroRings reduce={Boolean(reduce)} /> : null}
-        {cutout ? (
-          <Image src="/media/hero-cut.webp" alt={settings.heroImageAlt || "Tirta"} fill priority unoptimized className="ed-hero-plate ed-hero-cut" sizes="100vw" />
-        ) : null}
+        <motion.div className="absolute inset-0" style={reduce ? undefined : { y: imageY }}>
+          <Image src={settings.heroImage || "/media/hero.webp"} alt="" fill priority className="ed-hero-plate" sizes="100vw" />
+          {cutout ? <HeroRings reduce={Boolean(reduce)} /> : null}
+          {cutout ? (
+            <Image src="/media/hero-cut.webp" alt={settings.heroImageAlt || "Tirta"} fill priority unoptimized className="ed-hero-plate ed-hero-cut" sizes="100vw" />
+          ) : null}
+        </motion.div>
         <div className="ed-hero-shade" />
-        <div className="ed-hero-copy">
-          <motion.p className="ed-kicker" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-            {settings.heroEyebrow || "TirtaVEX"}
-          </motion.p>
-          <h1>
-            <Words text={title} />
-          </h1>
-          <motion.p className="ed-hero-sub" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduce ? 0 : 0.28, duration: 0.55 }}>
-            TirtaVEX
-          </motion.p>
-          <motion.p className="ed-hero-tag" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduce ? 0 : 0.4, duration: 0.55 }}>
-            {settings.heroTagline || settings.heroLede}
-          </motion.p>
-        </div>
-        <p className="ed-watermark">@tirtaVEX</p>
+        <motion.div className="ed-hero-copy" style={reduce ? undefined : { y: titleY }}>
+          <p className="t-eyebrow !text-white">
+            <Split text={settings.heroEyebrow || "TirtaVEX"} mode="char" hero />
+          </p>
+          <motion.h1 className="t-hero mt-3 text-white" initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={spring(0.8, 0.2, 0.2)}>
+            {title}
+          </motion.h1>
+          <p className="t-body mx-auto mt-4 max-w-[320px] !text-white">
+            <Split text={settings.heroTagline || settings.heroLede} mode="word" />
+          </p>
+        </motion.div>
+        <p className="t-meta absolute right-6 bottom-6 z-10 text-white">@tirtaVEX</p>
       </section>
-      <Marquee items={settings.marquee.length ? settings.marquee : settings.genres} />
+      <NameTicker items={settings.marquee.length ? settings.marquee : settings.genres} />
     </>
   );
 }
@@ -55,25 +58,22 @@ export function AboutSection({ full = false }: { full?: boolean }) {
   const skills = tools.filter((item) => item.kind === "skill");
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="about">
+      <TitleBlock eyebrow={settings.aboutEyebrow || "Indonesia"} title={settings.aboutTitle || "About"} suffix="The story" copy="" href={full ? undefined : "/about"} more="Full story" as={full ? "h1" : "h2"} />
       <div className="ed-wrap ed-split">
         <div>
-          <SectionHead
-            kicker={settings.aboutEyebrow || "About"}
-            title={settings.aboutTitle || "About"}
-            href={full ? undefined : "/about"}
-            more="Full story"
-            heading={full ? "h1" : "h2"}
-          />
-          <div className="ed-prose">
+          <h3 className="t-statement">
+            <span className="text-[color:var(--tv-accent-deep)]">I’m Tirta.</span> An AI video creator from Indonesia, with years behind the camera and a web3 storytelling background.
+          </h3>
+          <div className="ed-prose mt-8">
             {paragraphs.map((paragraph) => (
               <p key={paragraph.slice(0, 32)}>{paragraph}</p>
             ))}
           </div>
           <ul className="ed-genres" aria-label="Genres">
             {settings.genres.map((genre, index) => (
-              <Rise key={genre} delay={index * 0.04} as="li">
+              <motion.li key={genre} {...stairs(index)}>
                 {genre}
-              </Rise>
+              </motion.li>
             ))}
           </ul>
           {full ? (
@@ -84,9 +84,9 @@ export function AboutSection({ full = false }: { full?: boolean }) {
             </ul>
           ) : null}
         </div>
-        <Rise className="ed-frame" delay={0.12}>
+        <motion.div className="ed-frame" {...presets.fadeUp40}>
           <Portrait src={settings.aboutImage || "/media/about.webp"} alt={settings.aboutImageAlt || "Portrait of Tirta"} width={1400} height={1400} />
-        </Rise>
+        </motion.div>
       </div>
     </section>
   );
@@ -100,14 +100,7 @@ export function WorkSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="work">
       <div className="ed-wrap">
-        <SectionHead
-          kicker="Selected"
-          title={settings.workTitle || "The Cut"}
-          lede={settings.workLede}
-          href={full ? undefined : "/work"}
-          more="All films"
-          heading={full ? "h1" : "h2"}
-        />
+        <TitleBlock eyebrow="Featured" title={settings.workTitle || "The Cut"} suffix="Live on X" copy={settings.workLede} href={full ? undefined : "/work"} more="All films" as={full ? "h1" : "h2"} />
         <div className="ed-tabs" role="tablist" aria-label="Work categories">
           {LANES.map((item) => (
             <button key={item.id} type="button" role="tab" className="ed-tab" aria-selected={lane === item.id} onClick={() => setLane(item.id)}>
@@ -118,9 +111,9 @@ export function WorkSection({ full = false }: { full?: boolean }) {
         </div>
         <div className="ed-grid two">
           {shown.map((item, index) => (
-            <Rise key={item.id} delay={index * 0.06}>
+            <motion.div key={item.id} {...stairs(index)}>
               <WorkCard item={item} />
-            </Rise>
+            </motion.div>
           ))}
         </div>
         {shown.length === 0 ? <p className="ed-note">No {laneLabel(lane).toLowerCase()} pieces yet.</p> : null}
@@ -135,19 +128,12 @@ export function CampaignSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="campaigns">
       <div className="ed-wrap">
-        <SectionHead
-          kicker="Submissions"
-          title={settings.campaignsTitle || "Campaigns & Quests"}
-          lede={settings.campaignsLede}
-          href={full ? undefined : "/campaigns"}
-          more="All entries"
-          heading={full ? "h1" : "h2"}
-        />
+        <TitleBlock eyebrow="Submissions" title="Campaigns" suffix="Quests" copy={settings.campaignsLede} href={full ? undefined : "/campaigns"} more="All entries" as={full ? "h1" : "h2"} />
         <div>
           {shown.map((item, index) => (
-            <Rise key={item.id} delay={index * 0.05}>
+            <motion.div key={item.id} {...stairs(index)}>
               <CampaignRow item={item} />
-            </Rise>
+            </motion.div>
           ))}
         </div>
         {shown.length === 0 ? <p className="ed-note">No campaigns yet.</p> : null}
@@ -162,19 +148,34 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="partners">
       <div className="ed-wrap">
-        <SectionHead
-          kicker="With"
-          title={settings.partnersTitle || "Partners"}
-          lede={settings.partnersLede}
-          href={full ? undefined : "/partners"}
-          more="All partners"
-          heading={full ? "h1" : "h2"}
-        />
+        <div className="px-2 text-center">
+          <Split text="Partners" mode="char" className="t-eyebrow" />
+          <h2 className="t-statement mx-auto mt-8 max-w-[18ch]">
+            <span className="text-[color:var(--tv-accent-deep)]">Ambassador seats.</span> Creator partners and collaborations, labeled until the real projects are in.
+          </h2>
+          <p className="t-body mx-auto mt-10 max-w-[340px]">{settings.partnersLede}</p>
+          {shown.length ? (
+            <div className="h-ticker mx-auto mt-12 max-w-[720px] overflow-hidden" style={{ maskImage: "linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)" }}>
+              <div className="h-track gap-10" style={{ animationDuration: "36s" }}>
+                {[...shown, ...shown].map((item, index) => (
+                  <span key={`${item.id}-${index}`} className="t-eyebrow px-4 !text-[color:var(--tv-ink)] opacity-70">
+                    {item.project}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {full ? null : (
+            <Link className="t-meta mt-8 inline-block text-[color:var(--tv-accent-deep)]" href="/partners">
+              All partners
+            </Link>
+          )}
+        </div>
         <div className="ed-grid three">
           {shown.map((item, index) => (
-            <Rise key={item.id} delay={index * 0.08}>
+            <motion.div key={item.id} {...stairs(index)}>
               <PartnerCard item={item} />
-            </Rise>
+            </motion.div>
           ))}
         </div>
         {shown.length === 0 ? <p className="ed-note">No partners yet.</p> : null}
@@ -194,14 +195,7 @@ export function StatsSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="stats">
       <div className="ed-wrap">
-        <SectionHead
-          kicker="Numbers"
-          title={settings.statsTitle || "Engagement"}
-          lede={settings.statsLede}
-          href={full ? undefined : "/stats"}
-          more="By platform"
-          heading={full ? "h1" : "h2"}
-        />
+        <TitleBlock eyebrow="Numbers" title={settings.statsTitle || "Engagement"} suffix="By platform" copy={settings.statsLede} href={full ? undefined : "/stats"} more="By platform" as={full ? "h1" : "h2"} />
         {placeholder ? <p className="ed-ph">Placeholder</p> : null}
         <div className="ed-stats" style={{ marginTop: "1.5rem" }}>
           <Stat value={engagement} label="Total engagement" placeholder={placeholder} />
@@ -244,29 +238,22 @@ export function SkillsSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="skills">
       <div className="ed-wrap">
-        <SectionHead
-          kicker="Practice"
-          title={settings.skillsTitle || "Skills & tools"}
-          lede={settings.skillsLede}
-          href={full ? undefined : "/skills"}
-          more="Full list"
-          heading={full ? "h1" : "h2"}
-        />
+        <TitleBlock eyebrow="Practice" title="Skills" suffix="And tools" copy={settings.skillsLede} href={full ? undefined : "/skills"} more="Full list" as={full ? "h1" : "h2"} />
         <div className="ed-two">
           <div>
             <p className="ed-kicker">Skills</p>
             {shownSkills.map((item, index) => (
-              <Rise key={item.id} delay={index * 0.05}>
+              <motion.div key={item.id} {...stairs(index)}>
                 <SkillRow item={item} full={full} />
-              </Rise>
+              </motion.div>
             ))}
           </div>
           <div>
             <p className="ed-kicker">Tools</p>
             {shownTools.map((item, index) => (
-              <Rise key={item.id} delay={index * 0.05}>
+              <motion.div key={item.id} {...stairs(index)}>
                 <SkillRow item={item} full={full} />
-              </Rise>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -281,14 +268,7 @@ export function ContactSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="contact">
       <div className="ed-wrap">
-        <SectionHead
-          kicker="Hello"
-          title={settings.contactTitle || "Contact"}
-          lede={full ? settings.contactLede : undefined}
-          href={full ? undefined : "/contact"}
-          more="Contact"
-          heading={full ? "h1" : "h2"}
-        />
+        <TitleBlock eyebrow="Creative" title="Tirtavex" suffix="Open DMs" copy={settings.contactLede} as={full ? "h1" : "h2"} />
         <div className="ed-contact">
           {links.map((item, index) => (
             <motion.a
@@ -312,83 +292,101 @@ export function ContactSection({ full = false }: { full?: boolean }) {
   );
 }
 
-function SectionHead({
-  kicker,
+function Split({
+  text,
+  className,
+  mode = "word",
+  hero = false,
+  start,
+}: {
+  text: string;
+  className?: string;
+  mode?: "word" | "char";
+  hero?: boolean;
+  start?: number;
+}) {
+  const reduce = useReducedMotion();
+  const fx = hero ? textFx.charRiseHero : mode === "char" ? textFx.charRise : textFx.wordRise;
+  const parts = mode === "char" || hero ? Array.from(text) : text.split(" ");
+  if (reduce) return <span className={className}>{text}</span>;
+  return (
+    <span className={className}>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden>
+        {parts.map((part, index) => (
+          <motion.span
+            key={`${part}-${index}`}
+            className="inline-block"
+            initial={fx.from}
+            whileInView={hero ? undefined : { opacity: 1, y: 0 }}
+            animate={hero ? { opacity: 1, y: 0 } : undefined}
+            viewport={{ once: true, amount: 0 }}
+            transition={{ ...fx.transition, delay: (start ?? fx.startDelay) + index * fx.stagger }}
+          >
+            {part === " " ? "\u00A0" : part}
+            {mode === "word" && !hero && index < parts.length - 1 ? "\u00A0" : ""}
+          </motion.span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+function TitleBlock({
+  eyebrow,
   title,
-  lede,
+  suffix,
+  copy,
   href,
   more,
-  heading,
+  as = "h2",
 }: {
-  kicker: string;
+  eyebrow: string;
   title: string;
-  lede?: string;
+  suffix?: string;
+  copy?: string;
   href?: string;
   more?: string;
-  heading: "h1" | "h2";
+  as?: "h1" | "h2";
 }) {
-  const Title = heading;
+  const Title = as;
   return (
-    <Rise className="ed-head">
-      <div>
-        <p className="ed-kicker">{kicker}</p>
-        <Title className="ed-title">{title}</Title>
-        {lede ? <p className="ed-lede">{lede}</p> : null}
+    <div className="relative px-4 py-8 text-center">
+      <div className="relative mx-auto inline-block max-w-full">
+        <Split text={eyebrow} mode="char" className="t-eyebrow absolute -top-8 left-0" />
+        <Title className="t-display text-[color:var(--tv-ink)]">
+          <motion.span className="inline-block" {...presets.fadeUp40}>
+            {title}
+          </motion.span>
+        </Title>
+        {suffix ? <Split text={suffix} mode="char" start={0.3} className="t-eyebrow absolute right-0 -bottom-8" /> : null}
       </div>
+      {copy ? (
+        <motion.p className="t-body mx-auto mt-16 max-w-[340px]" {...presets.fadeUp20}>
+          {copy}
+        </motion.p>
+      ) : null}
       {href && more ? (
-        <Link className="ed-more" href={href}>
+        <Link className="t-meta mt-6 inline-block text-[color:var(--tv-accent-deep)]" href={href}>
           {more}
         </Link>
       ) : null}
-    </Rise>
+    </div>
   );
 }
 
-function Rise({
-  children,
-  delay = 0,
-  className,
-  as = "div",
-}: {
-  children: ReactNode;
-  delay?: number;
-  className?: string;
-  as?: "div" | "li";
-}) {
-  const reduce = useReducedMotion();
-  const Tag = as === "li" ? motion.li : motion.div;
+function NameTicker({ items }: { items: string[] }) {
+  const loop = [...items, ...items];
   return (
-    <Tag
-      className={className}
-      initial={reduce ? false : { opacity: 0, y: 26 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.28 }}
-      transition={reduce ? { duration: 0.01 } : { type: "spring", duration: 0.7, bounce: 0.16, delay }}
-    >
-      {children}
-    </Tag>
-  );
-}
-
-function Words({ text }: { text: string }) {
-  const reduce = useReducedMotion();
-  const words = text.split(" ");
-  if (reduce) return <>{text}</>;
-  return (
-    <>
-      {words.map((word, index) => (
-        <motion.span
-          key={`${word}-${index}`}
-          style={{ display: "inline-block" }}
-          initial={{ opacity: 0.001, y: 36 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", duration: 0.7, bounce: 0.2, delay: 0.08 + index * 0.07 }}
-        >
-          {word}
-          {index < words.length - 1 ? "\u00A0" : ""}
-        </motion.span>
-      ))}
-    </>
+    <div className="h-ticker overflow-hidden border-y border-[color:var(--tv-line)]" style={{ maskImage: "linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)" }}>
+      <div className="h-track gap-10 py-4" style={{ animationDuration: "32s" }}>
+        {loop.map((item, index) => (
+          <span key={`${item}-${index}`} className="t-eyebrow px-2 !text-[color:var(--tv-ink)]">
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -405,21 +403,6 @@ function HeroRings({ reduce }: { reduce: boolean }) {
           transition={{ duration: 18 + index * 8, repeat: Infinity, ease: "linear" }}
         />
       ))}
-    </div>
-  );
-}
-
-function Marquee({ items }: { items: string[] }) {
-  const reduce = useReducedMotion();
-  const line = [...items, ...items, ...items, ...items];
-  if (reduce) return <p className="ed-marquee-static">{items.join("  ·  ")}</p>;
-  return (
-    <div className="ed-marquee">
-      <motion.div className="ed-marquee-track" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 32, repeat: Infinity, ease: "linear" }}>
-        {line.map((item, index) => (
-          <span key={`${item}-${index}`}>{item}</span>
-        ))}
-      </motion.div>
     </div>
   );
 }

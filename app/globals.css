@@ -446,10 +446,10 @@ html.intro-seen .hero-curtain { display: none; }
 .ed-ring.dashed { border-style: dashed; border-color: rgba(16, 185, 129, 0.95); }
 .ed-ring::after { content: ""; position: absolute; top: -5px; left: 50%; width: 9px; height: 9px; margin-left: -4px; border-radius: 99px; background: #10b981; }
 .ed-hero-shade { position: absolute; inset: auto 0 0; z-index: 3; height: 46%; background: linear-gradient(180deg, rgba(12, 16, 20, 0) 0%, rgba(12, 16, 20, 0.45) 100%); pointer-events: none; }
-.ed-hero-copy { position: relative; z-index: 4; display: flex; min-height: 100svh; flex-direction: column; justify-content: flex-end; width: min(40rem, 92%); padding: 8rem 6vw 3.2rem; }
+.ed-hero-copy { position: relative; z-index: 4; display: flex; min-height: 100svh; flex-direction: column; align-items: center; justify-content: flex-end; width: 100%; padding: 8rem 1.5rem 4.5rem; text-align: center; }
 .ed-kicker { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #047857; font-weight: 600; }
 .ed-hero .ed-kicker { color: rgba(255, 255, 255, 0.82); }
-.ed-hero h1 { font-size: clamp(72px, 12vw, 148px); line-height: 0.84; font-weight: 400; font-style: italic; margin: 0; letter-spacing: -0.04em; color: white; }
+.ed-hero h1 { margin: 0; color: white; }
 .ed-hero-sub { margin: 0.15rem 0 0; font-family: var(--tv-font-display); font-style: italic; font-size: clamp(28px, 4vw, 48px); letter-spacing: -0.03em; }
 .ed-hero-tag { max-width: 22ch; margin: 0.85rem 0 0; font-size: clamp(16px, 2vw, 20px); line-height: 1.4; color: rgba(255, 255, 255, 0.9); }
 .ed-watermark { position: absolute; right: 1.25rem; bottom: 1.15rem; z-index: 4; font-family: var(--tv-font-display); font-style: italic; font-size: clamp(16px, 2vw, 26px); color: rgba(255, 255, 255, 0.72); }
