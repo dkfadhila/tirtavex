@@ -140,7 +140,7 @@ export function buildSeed(now = new Date()): SiteContent {
     partnersTitle: "Partners",
     partnersLede: "Ambassador seats, creator partners, and collaborations. Project names here are placeholders, not real brands.",
     statsTitle: "Engagement",
-    statsLede: "Impressions, followers, and videos published on X, TikTok, and Instagram. Every figure below is a placeholder.",
+    statsLede: "Impressions, followers, and posts on X, TikTok, and Instagram. X counts are pulled live every 15 minutes; TikTok and Instagram are updated by hand.",
     skillsTitle: "Skills & tools",
     skillsLede: "The craft is separate from the software. Skills come from the camera. Tools are the current kit.",
     contactTitle: "Contact",
