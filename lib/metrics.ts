@@ -6,6 +6,9 @@ export type FetchedPost = {
   authorName: string;
   authorHandle: string;
   thumbSrc: string | null;
+  videoUrl: string | null;
+  thumbWidth: number | null;
+  thumbHeight: number | null;
   durationSec: number | null;
   postedAt: string | null;
   metrics: {
@@ -39,24 +42,66 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
 }
 
-function thumbFrom(tweet: Record<string, unknown>): { src: string | null; durationSec: number | null } {
+function pickMp4(formats: unknown): string | null {
+  if (!Array.isArray(formats)) return null;
+  const mp4s = formats
+    .map(asRecord)
+    .filter((f): f is Record<string, unknown> => Boolean(f && f.container === "mp4" && typeof f.url === "string"));
+  if (!mp4s.length) return null;
+  mp4s.sort((a, b) => num(b.bitrate) - num(a.bitrate));
+  return String(mp4s[0].url);
+}
+
+function mediaFrom(tweet: Record<string, unknown>): {
+  src: string | null;
+  videoUrl: string | null;
+  width: number | null;
+  height: number | null;
+  durationSec: number | null;
+} {
   const media = asRecord(tweet.media);
+  const videos = Array.isArray(media?.videos) ? media.videos : [];
+  const firstVid = asRecord(videos[0]);
+  if (firstVid) {
+    const src = [firstVid.thumbnail_url, firstVid.url].find((item) => typeof item === "string") as string | undefined;
+    const videoUrl = pickMp4(firstVid.formats) ?? (typeof firstVid.url === "string" ? firstVid.url : null);
+    return {
+      src: src ?? null,
+      videoUrl,
+      width: num(firstVid.width) || null,
+      height: num(firstVid.height) || null,
+      durationSec: durationOf(firstVid.duration ?? firstVid.duration_millis),
+    };
+  }
   const all = Array.isArray(media?.all) ? media.all : [];
   const first = asRecord(all[0]);
   if (first) {
     const src = [first.thumbnail_url, first.preview_url, first.url].find((item) => typeof item === "string") as
       | string
       | undefined;
-    return { src: src ?? null, durationSec: durationOf(first.duration ?? first.duration_millis) };
+    const videoUrl = pickMp4(first.formats) ?? (first.type === "video" && typeof first.url === "string" ? first.url : null);
+    return {
+      src: src ?? null,
+      videoUrl,
+      width: num(first.width) || null,
+      height: num(first.height) || null,
+      durationSec: durationOf(first.duration ?? first.duration_millis),
+    };
   }
   const extended = Array.isArray(tweet.media_extended) ? tweet.media_extended : [];
   const ext = asRecord(extended[0]);
   if (ext) {
     const src = [ext.thumbnail_url, ext.url].find((item) => typeof item === "string") as string | undefined;
-    return { src: src ?? null, durationSec: durationOf(ext.duration_millis ?? ext.duration) };
+    return {
+      src: src ?? null,
+      videoUrl: ext.type === "video" && typeof ext.url === "string" ? ext.url : null,
+      width: num(ext.width) || null,
+      height: num(ext.height) || null,
+      durationSec: durationOf(ext.duration_millis ?? ext.duration),
+    };
   }
   const urls = Array.isArray(tweet.mediaURLs) ? tweet.mediaURLs.find((item) => typeof item === "string") : null;
-  return { src: typeof urls === "string" ? urls : null, durationSec: null };
+  return { src: typeof urls === "string" ? urls : null, videoUrl: null, width: null, height: null, durationSec: null };
 }
 
 function postedAtOf(tweet: Record<string, unknown>): string | null {
@@ -74,13 +119,16 @@ function postedAtOf(tweet: Record<string, unknown>): string | null {
 
 export function mapTweet(tweet: Record<string, unknown>): FetchedPost {
   const author = asRecord(tweet.author);
-  const thumb = thumbFrom(tweet);
+  const media = mediaFrom(tweet);
   return {
     text: cleanText(tweet.text ?? tweet.raw_text ?? "", 2000),
     authorName: cleanText(author?.name ?? tweet.user_name ?? "", 80),
     authorHandle: cleanText(author?.screen_name ?? tweet.user_screen_name ?? "", 40).replace(/^@/, ""),
-    thumbSrc: thumb.src,
-    durationSec: thumb.durationSec,
+    thumbSrc: media.src,
+    videoUrl: media.videoUrl,
+    thumbWidth: media.width,
+    thumbHeight: media.height,
+    durationSec: media.durationSec,
     postedAt: postedAtOf(tweet),
     metrics: {
       impressions: num(tweet.views ?? tweet.impressions ?? tweet.view_count),
@@ -114,6 +162,9 @@ async function fromOEmbed(xUrl: string): Promise<FetchedPost> {
     authorName: cleanText(json.author_name ?? "", 80),
     authorHandle: "",
     thumbSrc: null,
+    videoUrl: null,
+    thumbWidth: null,
+    thumbHeight: null,
     durationSec: null,
     postedAt: null,
     metrics: { impressions: 0, likes: 0, reposts: 0, replies: 0, bookmarks: 0, quotes: 0 },

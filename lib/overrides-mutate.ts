@@ -65,8 +65,13 @@ export async function mutateOverrides(body: unknown) {
       item.addedAt = new Date().toISOString();
       item.postedAt = item.postedAt || new Date().toISOString();
       item.status = item.status || "live";
+      list.unshift(item);
+      list.forEach((entry, index) => {
+        entry.sortOrder = index;
+      });
+    } else {
+      list.push(item);
     }
-    list.push(item);
   } else if (op === "update") {
     const id = typeof raw.id === "string" ? raw.id : "";
     const index = list.findIndex((entry) => String(entry.id) === id);
