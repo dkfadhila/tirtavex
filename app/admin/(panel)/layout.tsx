@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { AdminApp } from "@/components/admin-app";
+import { AdminApp } from "@/components/admin-app-v2";
 import { getAdminSnapshot } from "@/lib/content";
 import { verifySession } from "@/lib/session";
 
