@@ -487,23 +487,12 @@ function WorkCard({ item }: { item: WorkItem }) {
   const [playing, setPlaying] = useState(false);
   return (
     <article className="ed-card">
-      <div className="ed-media">
+      <div className={mediaClass(item.thumb)}>
         {playing && video ? (
           <video controls autoPlay playsInline preload="none" poster={item.thumb.src || undefined} src={video} />
         ) : video ? (
-          <button
-            type="button"
-            className="ed-media-play"
-            aria-label={`Play ${item.title}`}
-            onClick={() => setPlaying(true)}
-          >
+          <button type="button" className="ed-media-play" aria-label={`Play ${item.title}`} onClick={() => setPlaying(true)}>
             {item.thumb.src ? <StillImage src={item.thumb.src} alt={item.title} sizes="(min-width: 800px) 50vw, 100vw" fill /> : null}
-            <span className="ed-play-pill" aria-hidden>
-              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              Play
-            </span>
           </button>
         ) : item.thumb.src ? (
           <StillImage src={item.thumb.src} alt={item.title} sizes="(min-width: 800px) 50vw, 100vw" fill />
@@ -534,6 +523,11 @@ function WorkCard({ item }: { item: WorkItem }) {
   );
 }
 
+function mediaClass(...thumbs: ({ w?: number; h?: number } | undefined | string)[]) {
+  const vertical = thumbs.some((thumb) => typeof thumb === "object" && thumb !== null && Boolean(thumb.h && thumb.w && thumb.h > thumb.w));
+  return vertical ? "ed-media is-vertical" : "ed-media";
+}
+
 function CampaignCard({ item, linkedWork }: { item: Contest; linkedWork?: WorkItem }) {
   const href = safeHttpUrl(item.link) || safeXUrl(item.xUrl);
   const thumb = safeMediaUrl(item.thumb) || linkedWork?.thumb.src || "";
@@ -542,7 +536,7 @@ function CampaignCard({ item, linkedWork }: { item: Contest; linkedWork?: WorkIt
   const result = item.result || placementLabel(item.placement);
   return (
     <article className="ed-card">
-      <div className="ed-media">
+      <div className={mediaClass(item.thumb, linkedWork?.thumb)}>
         {playing && video ? (
           <video controls autoPlay playsInline preload="none" poster={thumb || undefined} src={video} />
         ) : video ? (
@@ -553,12 +547,6 @@ function CampaignCard({ item, linkedWork }: { item: Contest; linkedWork?: WorkIt
             onClick={() => setPlaying(true)}
           >
             {thumb ? <StillImage src={thumb} alt={item.name} sizes="(min-width: 800px) 50vw, 100vw" fill /> : null}
-            <span className="ed-play-pill" aria-hidden>
-              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              Play
-            </span>
           </button>
         ) : thumb ? (
           <StillImage src={thumb} alt={item.name} sizes="(min-width: 800px) 50vw, 100vw" fill />
@@ -714,7 +702,16 @@ function StillImage({
     return (
       // Remote posters are not rewritten by the image optimizer.
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={alt} width={width} height={height} className={className} />
+      <img
+        src={src}
+        alt={alt}
+        width={fill ? undefined : width}
+        height={fill ? undefined : height}
+        loading={priority ? "eager" : "lazy"}
+        className={className}
+        sizes={sizes}
+        style={fill ? { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%" } : undefined}
+      />
     );
   }
   if (fill) {
