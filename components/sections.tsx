@@ -91,10 +91,84 @@ export function AboutSection({ full = false }: { full?: boolean }) {
   );
 }
 
+type ModalClip = {
+  title: string;
+  date: string;
+  caption: string;
+  videoUrl: string;
+  poster: string;
+  xUrl: string;
+  kicker: string;
+  stats: string;
+  tags: string[];
+  vertical?: boolean;
+};
+
+function formatClipDate(raw: string) {
+  if (!raw) return "";
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function VideoModal({ clip, onClose }: { clip: ModalClip | null; onClose: () => void }) {
+  useEffect(() => {
+    if (!clip) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [clip, onClose]);
+
+  if (!clip) return null;
+  return (
+    <div className="ed-modal-backdrop" role="dialog" aria-modal="true" aria-label={clip.title} onClick={onClose}>
+      <div className={clip.vertical ? "ed-modal is-vertical" : "ed-modal"} onClick={(event) => event.stopPropagation()}>
+        <button type="button" className="ed-modal-close" aria-label="Close video" onClick={onClose}>
+          ✕
+        </button>
+        <div className="ed-modal-media">
+          <video controls autoPlay playsInline preload="metadata" poster={clip.poster || undefined} src={clip.videoUrl} />
+        </div>
+        <div className="ed-modal-body">
+          <div className="ed-modal-meta">
+            <span>{clip.kicker}</span>
+            {clip.date ? <span>{clip.date}</span> : null}
+          </div>
+          <h3 className="ed-modal-title">{clip.title}</h3>
+          {clip.caption ? <p className="ed-modal-caption">{clip.caption}</p> : null}
+          {clip.tags.length ? (
+            <ul className="ed-tags">
+              {clip.tags.map((tag) => (
+                <li key={tag}>{tag}</li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="ed-modal-foot">
+            {clip.stats ? <span className="ed-modal-stats">{clip.stats}</span> : null}
+            {clip.xUrl ? (
+              <a className="ed-link" href={clip.xUrl} target="_blank" rel="noopener noreferrer">
+                View on X ↗
+              </a>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function WorkSection({ full = false }: { full?: boolean }) {
   const { settings, work } = useSite().content;
   const [lane, setLane] = useState<(typeof LANES)[number]["id"]>("generation");
   const [sort, setSort] = useState<"newest" | "impressions">("newest");
+  const [active, setActive] = useState<ModalClip | null>(null);
   const matched = work
     .filter((item) => item.lane === lane)
     .sort((a, b) =>
@@ -127,12 +201,13 @@ export function WorkSection({ full = false }: { full?: boolean }) {
         <div className="ed-grid two">
           {shown.map((item, index) => (
             <motion.div key={item.id} {...stairs(index)}>
-              <WorkCard item={item} />
+              <WorkCard item={item} onPlay={setActive} />
             </motion.div>
           ))}
         </div>
         {shown.length === 0 ? <p className="ed-note">No {laneLabel(lane).toLowerCase()} pieces yet.</p> : null}
       </div>
+      <VideoModal clip={active} onClose={() => setActive(null)} />
     </section>
   );
 }
@@ -140,6 +215,7 @@ export function WorkSection({ full = false }: { full?: boolean }) {
 export function CampaignSection({ full = false }: { full?: boolean }) {
   const { settings, contests, work } = useSite().content;
   const [sort, setSort] = useState<"newest" | "order">("newest");
+  const [active, setActive] = useState<ModalClip | null>(null);
   const sorted = [...contests].sort((a, b) => {
     if (sort === "newest") {
       const ta = Date.parse(a.date) || a.year * 10000;
@@ -167,12 +243,13 @@ export function CampaignSection({ full = false }: { full?: boolean }) {
         <div className="ed-grid two">
           {shown.map((item, index) => (
             <motion.div key={item.id} {...stairs(index)}>
-              <CampaignCard item={item} linkedWork={workById.get(item.entryPostId)} />
+              <CampaignCard item={item} linkedWork={workById.get(item.entryPostId)} onPlay={setActive} />
             </motion.div>
           ))}
         </div>
         {shown.length === 0 ? <p className="ed-note">No campaigns yet.</p> : null}
       </div>
+      <VideoModal clip={active} onClose={() => setActive(null)} />
     </section>
   );
 }
@@ -480,17 +557,29 @@ function TabLine() {
   return <motion.span layoutId="work-tab" className="ed-tab-line" transition={{ type: "spring", stiffness: 420, damping: 34 }} />;
 }
 
-function WorkCard({ item }: { item: WorkItem }) {
+function WorkCard({ item, onPlay }: { item: WorkItem; onPlay: (clip: ModalClip) => void }) {
   const x = safeXUrl(item.xUrl);
   const video = safeHttpUrl(item.videoUrl);
-  const [playing, setPlaying] = useState(false);
+  const open = () => {
+    if (!video) return;
+    onPlay({
+      title: item.title,
+      date: formatClipDate(item.postedAt),
+      caption: item.note,
+      videoUrl: video,
+      poster: item.thumb.src || "",
+      xUrl: x || "",
+      kicker: laneLabel(item.lane),
+      stats: `${compactNumber(item.metrics.impressions)} impressions · ${compactNumber(item.metrics.likes)} likes`,
+      tags: item.tags,
+      vertical: Boolean(item.thumb.h && item.thumb.w && item.thumb.h > item.thumb.w),
+    });
+  };
   return (
     <article className="ed-card">
       <div className={mediaClass(item.thumb)}>
-        {playing && video ? (
-          <video controls autoPlay playsInline preload="none" poster={item.thumb.src || undefined} src={video} />
-        ) : video ? (
-          <button type="button" className="ed-media-play" aria-label={`Play ${item.title}`} onClick={() => setPlaying(true)}>
+        {video ? (
+          <button type="button" className="ed-media-play" aria-label={`Play ${item.title}`} onClick={open}>
             {item.thumb.src ? <StillImage src={item.thumb.src} alt={item.title} sizes="(min-width: 800px) 50vw, 100vw" fill /> : null}
           </button>
         ) : item.thumb.src ? (
@@ -498,12 +587,10 @@ function WorkCard({ item }: { item: WorkItem }) {
         ) : (
           <span>{laneLabel(item.lane)}</span>
         )}
-        {!playing ? (
-          <div className="ed-media-stats" aria-label="Post metrics">
-            <span>{compactNumber(item.metrics.impressions)} impressions</span>
-            <span>{compactNumber(item.metrics.likes)} likes</span>
-          </div>
-        ) : null}
+        <div className="ed-media-stats" aria-label="Post metrics">
+          <span>{compactNumber(item.metrics.impressions)} impressions</span>
+          <span>{compactNumber(item.metrics.likes)} likes</span>
+        </div>
       </div>
       <p className="ed-kicker">{laneLabel(item.lane)}</p>
       <h3>{item.title}</h3>
@@ -527,24 +614,31 @@ function mediaClass(...thumbs: ({ w?: number; h?: number } | undefined | string)
   return vertical ? "ed-media is-vertical" : "ed-media";
 }
 
-function CampaignCard({ item, linkedWork }: { item: Contest; linkedWork?: WorkItem }) {
+function CampaignCard({ item, linkedWork, onPlay }: { item: Contest; linkedWork?: WorkItem; onPlay: (clip: ModalClip) => void }) {
   const href = safeHttpUrl(item.link) || safeXUrl(item.xUrl);
   const thumb = safeMediaUrl(item.thumb) || linkedWork?.thumb.src || "";
   const video = safeHttpUrl(linkedWork?.videoUrl);
-  const [playing, setPlaying] = useState(false);
   const result = item.result || placementLabel(item.placement);
+  const open = () => {
+    if (!video) return;
+    onPlay({
+      title: item.name,
+      date: formatClipDate(item.date),
+      caption: linkedWork?.note || "",
+      videoUrl: video,
+      poster: thumb,
+      xUrl: href || "",
+      kicker: item.organizer || "Campaign",
+      stats: result || "",
+      tags: linkedWork?.tags || [],
+      vertical: Boolean(linkedWork?.thumb.h && linkedWork?.thumb.w && linkedWork.thumb.h > linkedWork.thumb.w),
+    });
+  };
   return (
     <article className="ed-card">
       <div className={mediaClass(item.thumb, linkedWork?.thumb)}>
-        {playing && video ? (
-          <video controls autoPlay playsInline preload="none" poster={thumb || undefined} src={video} />
-        ) : video ? (
-          <button
-            type="button"
-            className="ed-media-play"
-            aria-label={`Play ${item.name}`}
-            onClick={() => setPlaying(true)}
-          >
+        {video ? (
+          <button type="button" className="ed-media-play" aria-label={`Play ${item.name}`} onClick={open}>
             {thumb ? <StillImage src={thumb} alt={item.name} sizes="(min-width: 800px) 50vw, 100vw" fill /> : null}
           </button>
         ) : thumb ? (
@@ -552,7 +646,7 @@ function CampaignCard({ item, linkedWork }: { item: Contest; linkedWork?: WorkIt
         ) : (
           <span>{item.organizer || "Campaign"}</span>
         )}
-        {!playing && result ? (
+        {result ? (
           <div className="ed-media-stats">
             <span>{result}</span>
           </div>

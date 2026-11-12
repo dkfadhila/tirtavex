@@ -617,6 +617,54 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .ed-media img, .ed-media video { width: 100%; height: 100%; object-fit: cover; object-position: center 50%; }
 .ed-media.is-vertical img, .ed-media.is-vertical video { object-position: center 50%; }
 .ed-media-play { position: relative; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; display: block; }
+.ed-modal-backdrop {
+  position: fixed; inset: 0; z-index: 75;
+  display: grid; place-items: center; padding: 1.25rem;
+  background: rgba(10, 14, 18, 0.72); backdrop-filter: blur(10px);
+}
+.ed-modal {
+  position: relative;
+  width: min(980px, 100%); max-height: calc(100vh - 2.5rem);
+  display: grid; grid-template-columns: 1fr; overflow: hidden;
+  background: var(--tv-bg); color: var(--tv-ink);
+  border: 1px solid var(--tv-line-strong);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45);
+}
+@media (min-width: 820px) {
+  .ed-modal { grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr); }
+  .ed-modal.is-vertical { width: min(760px, 100%); grid-template-columns: minmax(260px, 340px) minmax(280px, 1fr); }
+}
+.ed-modal-close {
+  position: absolute; top: 0.75rem; right: 0.75rem; z-index: 3;
+  width: 34px; height: 34px; border-radius: 999px;
+  border: 1px solid var(--tv-line-strong);
+  background: color-mix(in srgb, var(--tv-bg) 88%, transparent); color: var(--tv-ink);
+  display: grid; place-items: center; cursor: pointer; font-size: 14px;
+}
+.ed-modal-close:hover { border-color: var(--tv-accent); color: var(--tv-accent); }
+.ed-modal-media {
+  background: #080a0c; display: grid; place-items: center;
+  min-height: 240px; max-height: 76vh;
+}
+.ed-modal-media video { width: 100%; height: 100%; max-height: 76vh; object-fit: contain; display: block; }
+.ed-modal-body {
+  padding: 1.75rem 1.5rem 1.5rem;
+  display: flex; flex-direction: column; gap: 0.9rem;
+  overflow-y: auto; max-height: 76vh;
+}
+.ed-modal-meta {
+  display: flex; flex-wrap: wrap; gap: 0.45rem 0.9rem; padding-right: 2.25rem;
+  font-family: var(--tv-font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--tv-accent-deep);
+}
+.ed-modal-title { margin: 0; font-size: clamp(26px, 2.6vw, 34px); line-height: 1.06; }
+.ed-modal-caption { margin: 0; color: var(--tv-ink); opacity: 0.88; font-size: 15px; line-height: 1.55; white-space: pre-line; }
+.ed-modal .ed-tags li { color: var(--tv-ink); opacity: 0.82; }
+.ed-modal-foot {
+  margin-top: auto; padding-top: 0.9rem; border-top: 1px solid var(--tv-line);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;
+}
+.ed-modal-stats { font-family: var(--tv-font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tv-ink); opacity: 0.74; }
 .ed-media-stats {
   position: absolute; left: 0.65rem; bottom: 0.65rem; z-index: 2;
   display: inline-flex; gap: 0.65rem; align-items: center;
