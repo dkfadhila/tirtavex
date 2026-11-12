@@ -318,6 +318,30 @@
           "h": 768,
           "durationSec": 177
         }
+      },
+      {
+        "title": "Admin Save Test 2",
+        "xUrl": "https://x.com/tirtaVEX/status/2120219611107152272",
+        "lane": "generation",
+        "category": "ai-video",
+        "tags": [
+          "t"
+        ],
+        "status": "live",
+        "thumb": {
+          "src": "https://pbs.twimg.com/amplify_video_thumb/2120218474647855104/img/N7G5pxVj-L3CFPml.jpg",
+          "w": 2560,
+          "h": 1440
+        },
+        "metrics": {
+          "impressions": 5,
+          "likes": 1
+        },
+        "id": "work_mwdccb4omoo8",
+        "sortOrder": 8,
+        "hidden": false,
+        "addedAt": "2026-11-12T09:23:54.840Z",
+        "postedAt": "2026-11-12T09:23:54.840Z"
       }
     ]
   }
