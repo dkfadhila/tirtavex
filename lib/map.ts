@@ -243,7 +243,7 @@ export function mapTool(row: typeof tools.$inferSelect): Tool {
     id: row.id,
     name: row.name,
     group: row.groupName,
-    kind: row.kind === "skill" ? "skill" : "tool",
+    kind: row.kind === "skill" ? "skill" : row.kind === "ai" ? "ai" : "tool",
     icon: row.icon ?? "",
     note: row.note ?? "",
     hidden: row.hidden,

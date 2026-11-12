@@ -592,6 +592,17 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .ed-genres li { border: 1px solid var(--tv-line-strong); border-radius: 999px; padding: 0.35rem 0.75rem; font-size: 13px; }
 .ed-frame { border: 1px solid #161616; background: #fbfaf7; padding: 12px; }
 .ed-frame img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: center 30%; display: block; }
+.ed-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; margin-bottom: 1.25rem; }
+.ed-controls .ed-tabs { margin-bottom: 0; }
+.ed-controls-end { justify-content: flex-end; }
+.ed-sorts { display: inline-flex; gap: 0.35rem; align-items: center; }
+.ed-sort {
+  border: 1px solid var(--tv-line-strong); background: transparent; color: var(--tv-ink-60);
+  padding: 0.36rem 0.72rem; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--tv-font-mono); cursor: pointer;
+  transition: color 0.2s var(--tv-ease), border-color 0.2s var(--tv-ease), background 0.2s var(--tv-ease);
+}
+.ed-sort[aria-pressed="true"] { border-color: var(--tv-accent); background: rgba(16, 185, 129, 0.12); color: var(--tv-ink); }
 .ed-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
 .ed-tab { position: relative; border: 0; background: transparent; padding: 0.55rem 0.2rem; margin-right: 1rem; font: inherit; font-size: 15px; color: var(--tv-ink-muted); cursor: pointer; }
 .ed-tab[aria-selected="true"] { color: var(--tv-ink); }
@@ -604,6 +615,26 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .ed-media { position: relative; background: #ece7df; aspect-ratio: 16/10; display: grid; place-items: center; overflow: hidden; color: #047857; }
 .ed-hero-media { position: absolute; inset: 0; }
 .ed-media img, .ed-media video { width: 100%; height: 100%; object-fit: cover; }
+.ed-media-play { position: relative; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; display: block; }
+.ed-play-pill {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.9rem; border-radius: 999px;
+  background: rgba(10, 14, 18, 0.72); color: #fff; border: 1px solid rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(8px); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--tv-font-mono);
+  transition: transform 0.2s var(--tv-ease), background 0.2s var(--tv-ease);
+}
+.ed-media-play:hover .ed-play-pill { transform: translate(-50%, -50%) scale(1.06); background: rgba(16, 185, 129, 0.92); border-color: #10b981; }
+.ed-media-stats {
+  position: absolute; left: 0.65rem; bottom: 0.65rem; z-index: 2;
+  display: inline-flex; gap: 0.65rem; align-items: center;
+  padding: 0.3rem 0.6rem;
+  background: rgba(10, 14, 18, 0.72); color: #f4f1ea;
+  border: 1px solid rgba(255, 255, 255, 0.18); backdrop-filter: blur(8px);
+  font-family: var(--tv-font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  pointer-events: none;
+}
 .ed-ph { display: inline-flex; align-items: center; width: fit-content; border: 1px solid #047857; color: #047857; border-radius: 999px; padding: 0.12rem 0.45rem; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; }
 .ed-ph-center { display: flex; width: fit-content; margin: 0 auto 0.5rem; }
 .ed-measure { max-width: min(100%, 34ch); text-wrap: balance; }
@@ -634,6 +665,8 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .ed-platform-metrics { display: grid; gap: 1.15rem; }
 .ed-two { display: grid; gap: 2.5rem; }
 @media (min-width: 860px) { .ed-two { grid-template-columns: 1fr 1fr; gap: 3rem; } }
+.ed-three { display: grid; gap: 2.5rem; }
+@media (min-width: 960px) { .ed-three { grid-template-columns: repeat(3, 1fr); gap: 2.25rem; } }
 .ed-skill { display: grid; grid-template-columns: 42px 1fr; gap: 0.75rem; align-items: start; padding: 0.85rem 0; border-top: 1px solid var(--tv-line); }
 .ed-skill h3 { margin: 0; font-size: 22px; }
 .ed-skill p { margin: 0.2rem 0 0; color: var(--tv-ink-60); font-size: 14px; line-height: 1.45; }

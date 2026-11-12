@@ -176,8 +176,8 @@ export type Tool = {
   id: string;
   name: string;
   group: string;
-  /** Skills and tools are edited in one collection and rendered apart. */
-  kind: "skill" | "tool";
+  /** Skills, software/tools, and AI models/assistants are edited in one collection and rendered apart. */
+  kind: "skill" | "tool" | "ai";
   /** Icon key (camera, type, audio…) or an https logo URL. */
   icon: string;
   note: string;

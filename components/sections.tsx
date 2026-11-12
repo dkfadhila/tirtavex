@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { presets, spring, stairs, textFx } from "@/lib/motion";
-import { fullNumber, laneLabel, partnerRoleLabel, placementLabel } from "@/lib/format";
+import { compactNumber, fullNumber, laneLabel, partnerRoleLabel, placementLabel } from "@/lib/format";
 import { isPlaceholderEmail, safeHttpUrl, safeMediaUrl, safeXUrl } from "@/lib/safe-url";
 import type { Ambassador, Contest, Settings, Tool, WorkItem } from "@/lib/types";
 import { useSite } from "./site-provider";
@@ -94,19 +94,35 @@ export function AboutSection({ full = false }: { full?: boolean }) {
 export function WorkSection({ full = false }: { full?: boolean }) {
   const { settings, work } = useSite().content;
   const [lane, setLane] = useState<(typeof LANES)[number]["id"]>("generation");
-  const matched = work.filter((item) => item.lane === lane);
+  const [sort, setSort] = useState<"newest" | "impressions">("newest");
+  const matched = work
+    .filter((item) => item.lane === lane)
+    .sort((a, b) =>
+      sort === "impressions"
+        ? b.metrics.impressions - a.metrics.impressions
+        : new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
+    );
   const shown = full ? matched : matched.slice(0, 4);
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="work">
       <div className="ed-wrap">
         <TitleBlock eyebrow="Featured" title={settings.workTitle || "The Cut"} suffix="Live on X" copy={settings.workLede} href={full ? undefined : "/work"} more="All films" as={full ? "h1" : "h2"} />
-        <div className="ed-tabs" role="tablist" aria-label="Work categories">
-          {LANES.map((item) => (
-            <button key={item.id} type="button" role="tab" className="ed-tab" aria-selected={lane === item.id} onClick={() => setLane(item.id)}>
-              {item.label}
-              {lane === item.id ? <TabLine /> : null}
-            </button>
-          ))}
+        <div className="ed-controls">
+          <div className="ed-tabs" role="tablist" aria-label="Work categories">
+            {LANES.map((item) => (
+              <button key={item.id} type="button" role="tab" className="ed-tab" aria-selected={lane === item.id} onClick={() => setLane(item.id)}>
+                {item.label}
+                {lane === item.id ? <TabLine /> : null}
+              </button>
+            ))}
+          </div>
+          <div className="ed-sorts" role="group" aria-label="Sort work">
+            {(["newest", "impressions"] as const).map((mode) => (
+              <button key={mode} type="button" className="ed-sort" aria-pressed={sort === mode} onClick={() => setSort(mode)}>
+                {mode === "newest" ? "Newest" : "Top impressions"}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="ed-grid two">
           {shown.map((item, index) => (
@@ -122,16 +138,36 @@ export function WorkSection({ full = false }: { full?: boolean }) {
 }
 
 export function CampaignSection({ full = false }: { full?: boolean }) {
-  const { settings, contests } = useSite().content;
-  const shown = full ? contests : contests.slice(0, 3);
+  const { settings, contests, work } = useSite().content;
+  const [sort, setSort] = useState<"newest" | "order">("newest");
+  const sorted = [...contests].sort((a, b) => {
+    if (sort === "newest") {
+      const ta = Date.parse(a.date) || a.year * 10000;
+      const tb = Date.parse(b.date) || b.year * 10000;
+      return tb - ta || a.sortOrder - b.sortOrder;
+    }
+    return a.sortOrder - b.sortOrder;
+  });
+  const shown = full ? sorted : sorted.slice(0, 4);
+  const workById = new Map(work.map((w) => [w.id, w]));
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="campaigns">
       <div className="ed-wrap">
-        <TitleBlock eyebrow="Submissions" title="Campaigns" suffix="Quests" copy={settings.campaignsLede} href={full ? undefined : "/campaigns"} more="All entries" as={full ? "h1" : "h2"} />
-        <div>
+        <TitleBlock eyebrow="Submissions" title="Campaigns" suffix="Gallery" copy={settings.campaignsLede} href={full ? undefined : "/campaigns"} more="All entries" as={full ? "h1" : "h2"} />
+        <div className="ed-controls ed-controls-end">
+          <div className="ed-sorts" role="group" aria-label="Filter campaigns">
+            <button type="button" className="ed-sort" aria-pressed={sort === "newest"} onClick={() => setSort("newest")}>
+              Newest
+            </button>
+            <button type="button" className="ed-sort" aria-pressed={sort === "order"} onClick={() => setSort("order")}>
+              Featured order
+            </button>
+          </div>
+        </div>
+        <div className="ed-grid two">
           {shown.map((item, index) => (
             <motion.div key={item.id} {...stairs(index)}>
-              <CampaignRow item={item} />
+              <CampaignCard item={item} linkedWork={workById.get(item.entryPostId)} />
             </motion.div>
           ))}
         </div>
@@ -150,7 +186,7 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
         <TitleBlock
           eyebrow="Partners"
           title={settings.partnersTitle || "Partners"}
-          suffix="Creator Partners"
+          suffix="Ambassador & Creator"
           copy={settings.partnersLede}
           href={full ? undefined : "/partners"}
           more="All partners"
@@ -238,13 +274,15 @@ export function SkillsSection({ full = false }: { full?: boolean }) {
   const { settings, tools } = useSite().content;
   const skills = tools.filter((item) => item.kind === "skill");
   const stack = tools.filter((item) => item.kind === "tool");
+  const ai = tools.filter((item) => item.kind === "ai");
   const shownSkills = full ? skills : skills.slice(0, 4);
   const shownTools = full ? stack : stack.slice(0, 4);
+  const shownAi = full ? ai : ai.slice(0, 4);
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="skills">
       <div className="ed-wrap">
-        <TitleBlock eyebrow="Practice" title="Skills" suffix="And tools" copy={settings.skillsLede} href={full ? undefined : "/skills"} more="Full list" as={full ? "h1" : "h2"} />
-        <div className="ed-two">
+        <TitleBlock eyebrow="Practice" title="Skills" suffix="Tools & AI" copy={settings.skillsLede} href={full ? undefined : "/skills"} more="Full list" as={full ? "h1" : "h2"} />
+        <div className="ed-three">
           <div>
             <p className="ed-kicker">Skills</p>
             {shownSkills.map((item, index) => (
@@ -256,6 +294,14 @@ export function SkillsSection({ full = false }: { full?: boolean }) {
           <div>
             <p className="ed-kicker">Tools</p>
             {shownTools.map((item, index) => (
+              <motion.div key={item.id} {...stairs(index)}>
+                <SkillRow item={item} full={full} />
+              </motion.div>
+            ))}
+          </div>
+          <div>
+            <p className="ed-kicker">AI</p>
+            {shownAi.map((item, index) => (
               <motion.div key={item.id} {...stairs(index)}>
                 <SkillRow item={item} full={full} />
               </motion.div>
@@ -438,12 +484,38 @@ function TabLine() {
 function WorkCard({ item }: { item: WorkItem }) {
   const x = safeXUrl(item.xUrl);
   const video = safeHttpUrl(item.videoUrl);
+  const [playing, setPlaying] = useState(false);
   return (
     <article className="ed-card">
       <div className="ed-media">
-        {video ? <video controls playsInline preload="metadata" poster={item.thumb.src || undefined} src={video} /> : null}
-        {!video && item.thumb.src ? <StillImage src={item.thumb.src} alt="" sizes="(min-width: 800px) 50vw, 100vw" fill /> : null}
-        {!video && !item.thumb.src ? <span>{laneLabel(item.lane)}</span> : null}
+        {playing && video ? (
+          <video controls autoPlay playsInline preload="none" poster={item.thumb.src || undefined} src={video} />
+        ) : video ? (
+          <button
+            type="button"
+            className="ed-media-play"
+            aria-label={`Play ${item.title}`}
+            onClick={() => setPlaying(true)}
+          >
+            {item.thumb.src ? <StillImage src={item.thumb.src} alt={item.title} sizes="(min-width: 800px) 50vw, 100vw" fill /> : null}
+            <span className="ed-play-pill" aria-hidden>
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Play
+            </span>
+          </button>
+        ) : item.thumb.src ? (
+          <StillImage src={item.thumb.src} alt={item.title} sizes="(min-width: 800px) 50vw, 100vw" fill />
+        ) : (
+          <span>{laneLabel(item.lane)}</span>
+        )}
+        {!playing ? (
+          <div className="ed-media-stats" aria-label="Post metrics">
+            <span>{compactNumber(item.metrics.impressions)} impressions</span>
+            <span>{compactNumber(item.metrics.likes)} likes</span>
+          </div>
+        ) : null}
       </div>
       <p className="ed-kicker">{laneLabel(item.lane)}</p>
       <h3>{item.title}</h3>
@@ -455,34 +527,59 @@ function WorkCard({ item }: { item: WorkItem }) {
       </ul>
       {x ? (
         <a className="ed-link" href={x} target="_blank" rel="noopener noreferrer">
-          View on X
+          View on X ↗
         </a>
       ) : null}
     </article>
   );
 }
 
-function CampaignRow({ item }: { item: Contest }) {
+function CampaignCard({ item, linkedWork }: { item: Contest; linkedWork?: WorkItem }) {
   const href = safeHttpUrl(item.link) || safeXUrl(item.xUrl);
+  const thumb = safeMediaUrl(item.thumb) || linkedWork?.thumb.src || "";
+  const video = safeHttpUrl(linkedWork?.videoUrl);
+  const [playing, setPlaying] = useState(false);
   const result = item.result || placementLabel(item.placement);
   return (
-    <article className="ed-row">
-      <div>
-        <h3>{item.name}</h3>
-      </div>
-      <p>{item.organizer}</p>
-      <p>{item.date}</p>
-      <p>
-        {result || "Result not recorded"}
-        {href ? (
-          <>
-            {" "}
-            <a className="ed-link" href={href} target="_blank" rel="noopener noreferrer">
-              Open
-            </a>
-          </>
+    <article className="ed-card">
+      <div className="ed-media">
+        {playing && video ? (
+          <video controls autoPlay playsInline preload="none" poster={thumb || undefined} src={video} />
+        ) : video ? (
+          <button
+            type="button"
+            className="ed-media-play"
+            aria-label={`Play ${item.name}`}
+            onClick={() => setPlaying(true)}
+          >
+            {thumb ? <StillImage src={thumb} alt={item.name} sizes="(min-width: 800px) 50vw, 100vw" fill /> : null}
+            <span className="ed-play-pill" aria-hidden>
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Play
+            </span>
+          </button>
+        ) : thumb ? (
+          <StillImage src={thumb} alt={item.name} sizes="(min-width: 800px) 50vw, 100vw" fill />
+        ) : (
+          <span>{item.organizer || "Campaign"}</span>
+        )}
+        {!playing && result ? (
+          <div className="ed-media-stats">
+            <span>{result}</span>
+          </div>
         ) : null}
+      </div>
+      <p className="ed-kicker">
+        {[item.organizer, item.date].filter(Boolean).join(" · ")}
       </p>
+      <h3>{item.name}</h3>
+      {href ? (
+        <a className="ed-link" href={href} target="_blank" rel="noopener noreferrer">
+          View entry ↗
+        </a>
+      ) : null}
     </article>
   );
 }

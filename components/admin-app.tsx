@@ -175,7 +175,7 @@ const FIELDS: Record<string, Field[]> = {
   ],
   tools: [
     { key: "name", label: "Name", type: "text" },
-    { key: "kind", label: "Kind", type: "select", options: ["skill", "tool"], optionLabels: { skill: "Skill", tool: "Tool" } },
+    { key: "kind", label: "Kind", type: "select", options: ["skill", "tool", "ai"], optionLabels: { skill: "Skill", tool: "Tool", ai: "AI" } },
     { key: "group", label: "Group", type: "text" },
     { key: "icon", label: "Icon key or logo URL", type: "text" },
     { key: "note", label: "Note", type: "textarea" },

@@ -396,7 +396,7 @@ function parseTool(input: unknown, existing?: Tool): Tool {
     id: existing?.id ?? nid("tool"),
     name,
     group: cleanText(raw.group ?? existing?.group ?? "", 40),
-    kind: choice(raw.kind ?? existing?.kind, ["skill", "tool"] as const, "tool"),
+    kind: choice(raw.kind ?? existing?.kind, ["skill", "tool", "ai"] as const, "tool"),
     icon: cleanText(raw.icon ?? existing?.icon ?? "", 200),
     note: cleanText(raw.note ?? existing?.note ?? "", 240),
     hidden: Boolean(raw.hidden ?? existing?.hidden ?? false),
@@ -718,7 +718,7 @@ async function updateTool(id: string, data: unknown) {
   const db = dbOrThrow();
   const rows = await db.select().from(tools).where(eq(tools.id, id)).limit(1);
   if (!rows[0]) throw new HttpError("Not found", 404);
-  const item = parseTool(data, { id, name: rows[0].name, group: rows[0].groupName, kind: rows[0].kind === "skill" ? "skill" : "tool", icon: rows[0].icon ?? "", note: rows[0].note ?? "", hidden: rows[0].hidden, sortOrder: rows[0].sortOrder });
+  const item = parseTool(data, { id, name: rows[0].name, group: rows[0].groupName, kind: rows[0].kind === "skill" ? "skill" : rows[0].kind === "ai" ? "ai" : "tool", icon: rows[0].icon ?? "", note: rows[0].note ?? "", hidden: rows[0].hidden, sortOrder: rows[0].sortOrder });
   await db.update(tools).set({ name: item.name, groupName: item.group, kind: item.kind, icon: item.icon, note: item.note, hidden: item.hidden }).where(eq(tools.id, id));
   await emit("content.refresh", { type: "tools" });
   return item;
