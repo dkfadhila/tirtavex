@@ -1046,8 +1046,8 @@ One hero film, three cutdowns, and a still that can live without type. The case 
       { id: "ai_01", name: "ChatGPT", group: "Ideation & Script", kind: "ai", icon: "spark", note: "Concept stress-testing, angles, and narrative structure.", hidden: false, sortOrder: 12 },
       { id: "ai_02", name: "Claude", group: "Direction & Code", kind: "ai", icon: "code", note: "Long-form story arcs, agent workflows, and Remotion/HyperFrames builds.", hidden: false, sortOrder: 13 },
       { id: "ai_03", name: "Grok", group: "X Research & Assets", kind: "ai", icon: "spark", note: "Real-time trend reads, Grok Imagine stills, and bot pipelines.", hidden: false, sortOrder: 14 },
-      { id: "ai_04", name: "Seedance 2.5 & Omni 1.2", group: "AI Video Gen", kind: "ai", icon: "play", note: "Primary generative video models for cinematic shots and 4K passes.", hidden: false, sortOrder: 15 },
-      { id: "ai_05", name: "Seedream 5.5 & BACH", group: "Visual & Continuity", kind: "ai", icon: "image", note: "Face-locked keyframes and production-grade character continuity.", hidden: false, sortOrder: 16 },
+      { id: "ai_04", name: "Video Gen", group: "SD 2.5, Kling 4.0, MiniMax H3, Omni 1.2, Wan 3.0, Flux 3", kind: "ai", icon: "play", note: "SD 2.5, Kling 4.0, MiniMax H3, Omni 1.2, Wan 3.0, and Flux 3.", hidden: false, sortOrder: 15 },
+      { id: "ai_05", name: "Image Gen", group: "GPT Sunburst Sunflare 2.6, Seedream 5.5, Midjourney V8.2, Nano Banana 2.1", kind: "ai", icon: "image", note: "GPT Sunburst Sunflare 2.6, Seedream 5.5, Midjourney V8.2, and Nano Banana 2.1.", hidden: false, sortOrder: 16 },
     ],
     articles,
     links: [

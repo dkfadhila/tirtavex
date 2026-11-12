@@ -275,9 +275,9 @@ export function SkillsSection({ full = false }: { full?: boolean }) {
   const skills = tools.filter((item) => item.kind === "skill");
   const stack = tools.filter((item) => item.kind === "tool");
   const ai = tools.filter((item) => item.kind === "ai");
-  const shownSkills = full ? skills : skills.slice(0, 4);
-  const shownTools = full ? stack : stack.slice(0, 4);
-  const shownAi = full ? ai : ai.slice(0, 4);
+  const shownSkills = full ? skills : skills.slice(0, 5);
+  const shownTools = full ? stack : stack.slice(0, 5);
+  const shownAi = full ? ai : ai.slice(0, 5);
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="skills">
       <div className="ed-wrap">
