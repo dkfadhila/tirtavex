@@ -338,7 +338,7 @@ export type Submission = {
 };
 
 export type AdminSnapshot = {
-  source: "db" | "seed";
+  source: "db" | "seed" | "github";
   writable: boolean;
   warning: string;
   content: SiteContent;

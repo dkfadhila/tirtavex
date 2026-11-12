@@ -20,6 +20,7 @@ import {
   mergeSettings,
 } from "./map";
 import { buildSeed, emptyContent } from "./seed-data";
+import { applyOverrides, overridesEnabled, readOverrides } from "./overrides";
 import {
   agentState,
   ambassadors,
@@ -211,7 +212,12 @@ export const getContent = cache(async (): Promise<SiteContent> => {
   } catch (error) {
     console.error("[content] database unavailable, using sample layout", error instanceof Error ? error.message : "unknown");
   }
-  return toPublic(buildSeed());
+  const base = toPublic(buildSeed());
+  try {
+    return applyOverrides(base, await readOverrides());
+  } catch {
+    return base;
+  }
 });
 
 export async function listSubmissions(): Promise<Submission[]> {
@@ -223,10 +229,14 @@ export async function listSubmissions(): Promise<Submission[]> {
 
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   if (!databaseUrl()) {
+    if (overridesEnabled()) {
+      const content = applyOverrides(buildSeed(), await readOverrides({ fresh: true }));
+      return { source: "github", writable: true, warning: "", content, submissions: [] };
+    }
     return {
       source: "seed",
       writable: false,
-      warning: "DATABASE_URL is not set. This is the read-only seed portfolio. Connect Postgres to edit.",
+      warning: "Editing is off until storage is connected.",
       content: buildSeed(),
       submissions: [],
     };
