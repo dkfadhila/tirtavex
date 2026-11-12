@@ -73,11 +73,11 @@ function sampleStats(stats: Stats): Stats {
 }
 
 function publicWork(item: WorkItem, index: number): WorkItem {
-  const standIn = item.placeholder || isPlaceholderStatusUrl(item.xUrl);
+  const standIn = isPlaceholderStatusUrl(item.xUrl);
   return {
     ...item,
-    placeholder: standIn,
-    xUrl: isPlaceholderStatusUrl(item.xUrl) ? "" : item.xUrl,
+    placeholder: false,
+    xUrl: standIn ? "" : item.xUrl,
     videoUrl: isExampleHost(item.videoUrl) ? "" : item.videoUrl,
     metrics: standIn ? { ...ZERO_METRICS, updatedAt: item.metrics.updatedAt } : item.metrics,
     thumb: { ...item.thumb, src: standIn ? item.thumb.src : item.thumb.src || PANELS[index % PANELS.length] },
@@ -226,7 +226,7 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
     return {
       source: "seed",
       writable: false,
-      warning: "DATABASE_URL is not set. This is the read-only placeholder portfolio. Connect Postgres to edit.",
+      warning: "DATABASE_URL is not set. This is the read-only seed portfolio. Connect Postgres to edit.",
       content: buildSeed(),
       submissions: [],
     };

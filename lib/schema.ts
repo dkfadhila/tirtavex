@@ -98,6 +98,7 @@ export const programs = pgTable("programs", {
 export const ambassadors = pgTable("ambassadors", {
   id: text("id").primaryKey(),
   project: text("project").notNull(),
+  url: text("url").notNull().default(""),
   title: text("title").notNull().default(""),
   region: text("region").notNull().default(""),
   startLabel: text("start_label").notNull().default(""),

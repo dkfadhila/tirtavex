@@ -17,7 +17,6 @@ export async function GET() {
           ? {
               ...row,
               followers: live.followers,
-              videos: live.posts,
               likes: live.likes,
               placeholder: false,
             }

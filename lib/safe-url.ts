@@ -14,6 +14,14 @@ export function safeHttpUrl(input: string | null | undefined): string | null {
   }
 }
 
+export function safeMediaUrl(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.includes("..")) return trimmed;
+  return safeHttpUrl(trimmed);
+}
+
 export function safeXUrl(input: string | null | undefined): string | null {
   const http = safeHttpUrl(input);
   if (!http) return null;

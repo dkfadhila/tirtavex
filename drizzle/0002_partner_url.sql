@@ -1,0 +1,1 @@
+ALTER TABLE ambassadors ADD COLUMN IF NOT EXISTS url text NOT NULL DEFAULT '';

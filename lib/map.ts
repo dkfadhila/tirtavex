@@ -144,6 +144,7 @@ export function mapAmbassador(row: typeof ambassadors.$inferSelect): Ambassador 
   return {
     id: row.id,
     project: row.project,
+    url: row.url ?? "",
     title: row.title,
     region: row.region,
     start: row.startLabel,

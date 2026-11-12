@@ -130,6 +130,7 @@ const FIELDS: Record<string, Field[]> = {
   ],
   ambassadors: [
     { key: "project", label: "Project name", type: "text" },
+    { key: "url", label: "X / website URL", type: "text" },
     { key: "roleType", label: "Role", type: "select", options: ["ambassador", "creator-partner", "collaboration-partner"], optionLabels: { ambassador: "Ambassador", "creator-partner": "Creator Partner", "collaboration-partner": "Collaboration Partner" } },
     { key: "summary", label: "Short description", type: "textarea" },
     { key: "logo", label: "Project logo URL", type: "image" },

@@ -85,6 +85,7 @@ export type Program = {
 export type Ambassador = {
   id: string;
   project: string;
+  url: string;
   title: string;
   region: string;
   start: string;

@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isExampleHost, isPlaceholderEmail, isPlaceholderStatusUrl, safeHttpUrl, safeXUrl } from "./safe-url";
+import { isExampleHost, isPlaceholderEmail, isPlaceholderStatusUrl, safeHttpUrl, safeMediaUrl, safeXUrl } from "./safe-url";
 
 test("allows only http(s) links and x.com posts", () => {
   assert.equal(safeHttpUrl("javascript:alert(1)"), null);
   assert.equal(safeHttpUrl("https://example.com/press"), "https://example.com/press");
+  assert.equal(safeMediaUrl("/media/partners/az8.png"), "/media/partners/az8.png");
+  assert.equal(safeMediaUrl("//evil.com/x.png"), null);
+  assert.equal(safeMediaUrl("/../etc/passwd"), null);
   assert.equal(safeXUrl("https://twitter.com/TirtaVEX/status/20"), "https://x.com/TirtaVEX/status/20");
   assert.equal(safeXUrl("https://evil.com/status/20"), null);
 });

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { presets, spring, stairs, textFx } from "@/lib/motion";
 import { fullNumber, laneLabel, partnerRoleLabel, placementLabel } from "@/lib/format";
-import { isPlaceholderEmail, safeHttpUrl, safeXUrl } from "@/lib/safe-url";
+import { isPlaceholderEmail, safeHttpUrl, safeMediaUrl, safeXUrl } from "@/lib/safe-url";
 import type { Ambassador, Contest, Settings, Tool, WorkItem } from "@/lib/types";
 import { useSite } from "./site-provider";
 
@@ -143,34 +143,20 @@ export function CampaignSection({ full = false }: { full?: boolean }) {
 
 export function PartnerSection({ full = false }: { full?: boolean }) {
   const { settings, ambassadors } = useSite().content;
-  const shown = full ? ambassadors : ambassadors.slice(0, 3);
+  const shown = full ? ambassadors : ambassadors.slice(0, 4);
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="partners">
       <div className="ed-wrap">
-        <div className="px-2 text-center">
-          <Split text="Partners" mode="char" className="t-eyebrow" />
-          <h2 className="t-statement ed-measure mx-auto mt-8">
-            <span className="text-[color:var(--tv-accent-deep)]">Ambassador seats.</span> Creator partners and collaborations, labeled until the real projects are in.
-          </h2>
-          <p className="t-body mx-auto mt-10 max-w-[340px]">{settings.partnersLede}</p>
-          {shown.length ? (
-            <div className="h-ticker mx-auto mt-12 max-w-[720px] overflow-hidden" style={{ maskImage: "linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)" }}>
-              <div className="h-track gap-10" style={{ animationDuration: "36s" }}>
-                {[...shown, ...shown].map((item, index) => (
-                  <span key={`${item.id}-${index}`} className="t-eyebrow px-4 !text-[color:var(--tv-ink)] opacity-70">
-                    {item.project}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {full ? null : (
-            <Link className="t-meta mt-8 inline-block text-[color:var(--tv-accent-deep)]" href="/partners">
-              All partners
-            </Link>
-          )}
-        </div>
-        <div className="ed-grid three">
+        <TitleBlock
+          eyebrow="Partners"
+          title={settings.partnersTitle || "Partners"}
+          suffix="Creator Partners"
+          copy={settings.partnersLede}
+          href={full ? undefined : "/partners"}
+          more="All partners"
+          as={full ? "h1" : "h2"}
+        />
+        <div className="ed-grid two mt-10">
           {shown.map((item, index) => (
             <motion.div key={item.id} {...stairs(index)}>
               <PartnerCard item={item} />
@@ -185,7 +171,7 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
 
 export function StatsSection({ full = false }: { full?: boolean }) {
   const { settings, stats } = useSite().content;
-  const [live, setLive] = useState<Record<string, { followers: number; videos: number }>>({});
+  const [live, setLive] = useState<Record<string, { followers: number }>>({});
 
   useEffect(() => {
     let alive = true;
@@ -193,11 +179,11 @@ export function StatsSection({ full = false }: { full?: boolean }) {
       try {
         const response = await fetch("/api/stats", { cache: "no-store" });
         if (!response.ok) return;
-        const payload = (await response.json()) as { platforms?: { platform: string; followers: number; videos: number }[] };
+        const payload = (await response.json()) as { platforms?: { platform: string; followers: number }[] };
         if (!alive || !Array.isArray(payload.platforms)) return;
-        const next: Record<string, { followers: number; videos: number }> = {};
+        const next: Record<string, { followers: number }> = {};
         for (const row of payload.platforms) {
-          if (row.platform === "x") next[row.platform] = { followers: row.followers, videos: row.videos };
+          if (row.platform === "x") next[row.platform] = { followers: row.followers };
         }
         setLive(next);
       } catch {
@@ -213,12 +199,11 @@ export function StatsSection({ full = false }: { full?: boolean }) {
   }, []);
 
   const platforms = stats.platforms.filter((row) => row.platform !== "overall");
-  const placeholder = platforms.length > 0 ? platforms.every((row) => row.placeholder) : stats.placeholder;
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="stats">
       <div className="ed-wrap">
         <TitleBlock eyebrow="Numbers" title={settings.statsTitle || "Engagement"} suffix="By platform" copy={settings.statsLede} as={full ? "h1" : "h2"} />
-        {placeholder ? <p className="ed-ph ed-ph-center">Placeholder</p> : null}
+        <p className="ed-stats-updated">Updated 12 November 2026 · UTC</p>
         <div className="ed-platforms">
           {platforms.map((row) => {
             const profile = safeHttpUrl(row.url);
@@ -236,9 +221,9 @@ export function StatsSection({ full = false }: { full?: boolean }) {
                   {row.handle ? <span>@{row.handle.replace(/^@/, "")}</span> : null}
                 </header>
                 <div className="ed-platform-metrics">
-                  <Stat value={row.impressions} label="Impressions" placeholder={row.placeholder} />
-                  <Stat value={feed ? feed.followers : row.followers} label="Followers" placeholder={row.placeholder} />
-                  <Stat value={feed ? feed.videos : row.videos} label={row.platform === "x" ? "Posts" : "Videos published"} placeholder={row.placeholder} />
+                  <Stat value={row.impressions} label={row.platform === "x" ? "Impressions (Last 3 months)" : "Impressions"} />
+                  <Stat value={feed ? feed.followers : row.followers} label="Followers" />
+                  <Stat value={row.videos} label="Video published" />
                 </div>
               </article>
             );
@@ -385,7 +370,7 @@ function TitleBlock({
             {title}
           </motion.span>
         </Title>
-        {suffix ? <Split text={suffix} mode="char" start={0.3} className="t-eyebrow absolute right-0 -bottom-8" /> : null}
+        {suffix ? <Split text={suffix} mode="word" start={0.2} className="t-eyebrow absolute right-0 -bottom-8" /> : null}
       </div>
       {copy ? (
         <motion.p className="t-body mx-auto mt-16 max-w-[340px]" {...presets.fadeUp20}>
@@ -451,19 +436,18 @@ function TabLine() {
 }
 
 function WorkCard({ item }: { item: WorkItem }) {
-  const x = item.placeholder ? null : safeXUrl(item.xUrl);
+  const x = safeXUrl(item.xUrl);
   const video = safeHttpUrl(item.videoUrl);
   return (
     <article className="ed-card">
       <div className="ed-media">
         {video ? <video controls playsInline preload="metadata" poster={item.thumb.src || undefined} src={video} /> : null}
         {!video && item.thumb.src ? <StillImage src={item.thumb.src} alt="" sizes="(min-width: 800px) 50vw, 100vw" fill /> : null}
-        {!video && !item.thumb.src ? <span>{item.placeholder ? "Placeholder" : laneLabel(item.lane)}</span> : null}
+        {!video && !item.thumb.src ? <span>{laneLabel(item.lane)}</span> : null}
       </div>
       <p className="ed-kicker">{laneLabel(item.lane)}</p>
       <h3>{item.title}</h3>
-      {item.placeholder ? <span className="ed-ph">Placeholder</span> : null}
-      {item.note && !item.placeholder ? <p>{item.note}</p> : null}
+      {item.note ? <p>{item.note}</p> : null}
       <ul className="ed-tags">
         {item.tags.map((tag) => (
           <li key={tag}>{tag}</li>
@@ -485,7 +469,6 @@ function CampaignRow({ item }: { item: Contest }) {
     <article className="ed-row">
       <div>
         <h3>{item.name}</h3>
-        {item.placeholder ? <span className="ed-ph">Placeholder</span> : null}
       </div>
       <p>{item.organizer}</p>
       <p>{item.date}</p>
@@ -505,16 +488,33 @@ function CampaignRow({ item }: { item: Contest }) {
 }
 
 function PartnerCard({ item }: { item: Ambassador }) {
-  const logo = safeHttpUrl(item.logo);
+  const logo = safeMediaUrl(item.logo);
+  const href = safeHttpUrl(item.url);
   return (
     <article className="ed-partner">
-      <div className="ed-logo">
-        {logo ? <StillImage src={logo} alt="" sizes="64px" width={64} height={64} /> : <span>Ph</span>}
+      <div className="ed-partner-top">
+        <div className="ed-logo">
+          {logo ? <StillImage src={logo} alt={`${item.project} logo`} sizes="64px" width={64} height={64} /> : <span>{item.project.slice(0, 2)}</span>}
+        </div>
+        <div className="ed-partner-meta">
+          <p className="ed-kicker">{partnerRoleLabel(item.roleType)}</p>
+          <h3 className="ed-partner-name">
+            {href ? (
+              <a href={href} target="_blank" rel="noopener noreferrer">
+                {item.project}
+              </a>
+            ) : (
+              item.project
+            )}
+          </h3>
+        </div>
       </div>
-      <p className="ed-kicker">{partnerRoleLabel(item.roleType)}</p>
-      <h3>{item.project}</h3>
-      {item.placeholder ? <span className="ed-ph">Placeholder</span> : null}
-      {item.summary ? <p>{item.summary}</p> : null}
+      {item.summary ? <p className="ed-partner-copy">{item.summary}</p> : null}
+      {href ? (
+        <a className="ed-link ed-partner-cta" href={href} target="_blank" rel="noopener noreferrer">
+          Visit on X ↗
+        </a>
+      ) : null}
     </article>
   );
 }
@@ -533,30 +533,30 @@ function SkillRow({ item, full }: { item: Tool; full: boolean }) {
   );
 }
 
-function Stat({ value, label, placeholder }: { value: number; label: string; placeholder: boolean }) {
+function Stat({ value, label }: { value: number; label: string; placeholder?: boolean }) {
   return (
     <div>
-      <CountUp value={value} placeholder={placeholder} />
+      <CountUp value={value} />
       <p className="ed-stat-label">{label}</p>
     </div>
   );
 }
 
-function CountUp({ value, placeholder }: { value: number; placeholder: boolean }) {
+function CountUp({ value }: { value: number }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });
   const [shown, setShown] = useState(0);
-  const display = placeholder ? "—" : reduce || !inView ? (reduce ? fullNumber(value) : "0") : fullNumber(Math.round(shown));
+  const display = reduce || !inView ? (reduce ? fullNumber(value) : "0") : fullNumber(Math.round(shown));
   useEffect(() => {
-    if (placeholder || !inView || reduce) return;
+    if (!inView || reduce) return;
     const controls = animate(0, value, {
       duration: 1.15,
       ease: [0.16, 1, 0.3, 1],
       onUpdate: (latest) => setShown(latest),
     });
     return () => controls.stop();
-  }, [inView, placeholder, reduce, value]);
+  }, [inView, reduce, value]);
   return (
     <span ref={ref} className="ed-num">
       {display}

@@ -277,13 +277,14 @@ function parseAmbassador(input: unknown, existing?: Ambassador): Ambassador {
   return {
     id: existing?.id ?? nid("amb"),
     project,
+    url: safeHttpUrl(typeof raw.url === "string" ? raw.url : existing?.url) ?? "",
     title: cleanText(raw.title ?? existing?.title ?? "", 80),
     region: cleanText(raw.region ?? existing?.region ?? "", 80),
     start: cleanText(raw.start ?? existing?.start ?? "", 40),
     status: choice(raw.status ?? existing?.status, ["active", "past"] as const, "active"),
     duties: cleanLines(raw.duties ?? existing?.duties ?? [], 12),
     postIds: cleanLines(raw.postIds ?? existing?.postIds ?? [], 20),
-    logo: safeHttpUrl(typeof raw.logo === "string" ? raw.logo : existing?.logo) ?? "",
+    logo: mediaRef(raw.logo, existing?.logo ?? ""),
     summary: cleanBlock(raw.summary ?? existing?.summary ?? "", 400),
     roleType: choice(raw.roleType ?? existing?.roleType, PARTNER_ROLES, "ambassador"),
     placeholder: Boolean(raw.placeholder ?? existing?.placeholder ?? false),
@@ -619,7 +620,7 @@ async function updateProgram(id: string, data: unknown) {
 async function insertAmbassador(item: Ambassador) {
   const db = dbOrThrow();
   item.sortOrder = await nextOrder(await db.select({ sortOrder: ambassadors.sortOrder }).from(ambassadors));
-  await db.insert(ambassadors).values({ id: item.id, project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden, sortOrder: item.sortOrder });
+  await db.insert(ambassadors).values({ id: item.id, project: item.project, url: item.url, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden, sortOrder: item.sortOrder });
   await emit("content.refresh", { type: "ambassadors" });
   return item;
 }
@@ -627,9 +628,9 @@ async function updateAmbassador(id: string, data: unknown) {
   const db = dbOrThrow();
   const rows = await db.select().from(ambassadors).where(eq(ambassadors.id, id)).limit(1);
   if (!rows[0]) throw new HttpError("Not found", 404);
-  const current: Ambassador = { id, project: rows[0].project, title: rows[0].title, region: rows[0].region, start: rows[0].startLabel, status: rows[0].status as Ambassador["status"], duties: rows[0].duties ?? [], postIds: rows[0].postIds ?? [], logo: rows[0].logo ?? "", summary: rows[0].summary ?? "", roleType: choice(rows[0].roleType, PARTNER_ROLES, "ambassador"), placeholder: Boolean(rows[0].placeholder), hidden: rows[0].hidden, sortOrder: rows[0].sortOrder };
+  const current: Ambassador = { id, project: rows[0].project, url: rows[0].url ?? "", title: rows[0].title, region: rows[0].region, start: rows[0].startLabel, status: rows[0].status as Ambassador["status"], duties: rows[0].duties ?? [], postIds: rows[0].postIds ?? [], logo: rows[0].logo ?? "", summary: rows[0].summary ?? "", roleType: choice(rows[0].roleType, PARTNER_ROLES, "ambassador"), placeholder: Boolean(rows[0].placeholder), hidden: rows[0].hidden, sortOrder: rows[0].sortOrder };
   const item = parseAmbassador(data, current);
-  await db.update(ambassadors).set({ project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden }).where(eq(ambassadors.id, id));
+  await db.update(ambassadors).set({ project: item.project, url: item.url, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden }).where(eq(ambassadors.id, id));
   await emit("content.refresh", { type: "ambassadors" });
   return item;
 }
@@ -1141,7 +1142,7 @@ export async function replaceWithSeed(content: SiteContent = buildSeed()) {
     await db.insert(programs).values(content.programs.map((item) => ({ id: item.id, name: item.name, role: item.role, startLabel: item.start, endLabel: item.end, status: item.status, highlights: item.highlights, postIds: item.postIds, impressions: item.impressions, likes: item.likes, hidden: item.hidden, sortOrder: item.sortOrder })));
   }
   if (content.ambassadors.length) {
-    await db.insert(ambassadors).values(content.ambassadors.map((item) => ({ id: item.id, project: item.project, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden, sortOrder: item.sortOrder })));
+    await db.insert(ambassadors).values(content.ambassadors.map((item) => ({ id: item.id, project: item.project, url: item.url, title: item.title, region: item.region, startLabel: item.start, status: item.status, duties: item.duties, postIds: item.postIds, logo: item.logo, summary: item.summary, roleType: item.roleType, placeholder: item.placeholder, hidden: item.hidden, sortOrder: item.sortOrder })));
   }
   if (content.projects.length) await db.insert(projects).values(content.projects.map(projectValues));
   if (content.contests.length) {
