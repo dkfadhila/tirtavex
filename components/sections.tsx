@@ -57,7 +57,7 @@ export function AboutSection({ full = false }: { full?: boolean }) {
   const skills = tools.filter((item) => item.kind === "skill");
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="about">
-      <TitleBlock eyebrow={settings.aboutEyebrow || "Indonesia"} title={settings.aboutTitle || "About"} suffix="The story" copy="" href={full ? undefined : "/about"} more="Full story" as={full ? "h1" : "h2"} />
+      <TitleBlock title={settings.aboutTitle || "About"} copy="" href={full ? undefined : "/about"} more="Full story" as={full ? "h1" : "h2"} />
       <div className="ed-wrap ed-split">
         <div>
           <h3 className="t-statement">
@@ -106,7 +106,7 @@ export function WorkSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="work">
       <div className="ed-wrap">
-        <TitleBlock eyebrow="Featured" title={settings.workTitle || "The Cut"} suffix="Live on X" copy={settings.workLede} href={full ? undefined : "/work"} more="All films" as={full ? "h1" : "h2"} />
+        <TitleBlock title={settings.workTitle || "The Cut"} copy={settings.workLede} href={full ? undefined : "/work"} more="All films" as={full ? "h1" : "h2"} />
         <div className="ed-controls">
           <div className="ed-tabs" role="tablist" aria-label="Work categories">
             {LANES.map((item) => (
@@ -153,7 +153,7 @@ export function CampaignSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="campaigns">
       <div className="ed-wrap">
-        <TitleBlock eyebrow="Submissions" title="Campaigns" suffix="Gallery" copy={settings.campaignsLede} href={full ? undefined : "/campaigns"} more="All entries" as={full ? "h1" : "h2"} />
+        <TitleBlock title="Campaigns" suffix="Gallery" copy={settings.campaignsLede} href={full ? undefined : "/campaigns"} more="All entries" as={full ? "h1" : "h2"} />
         <div className="ed-controls ed-controls-end">
           <div className="ed-sorts" role="group" aria-label="Filter campaigns">
             <button type="button" className="ed-sort" aria-pressed={sort === "newest"} onClick={() => setSort("newest")}>
@@ -184,7 +184,6 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
     <section className={full ? "ed-page ed-section" : "ed-section"} id="partners">
       <div className="ed-wrap">
         <TitleBlock
-          eyebrow="Partners"
           title={settings.partnersTitle || "Partners"}
           suffix="Ambassador & Creator"
           copy={settings.partnersLede}
@@ -238,7 +237,7 @@ export function StatsSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="stats">
       <div className="ed-wrap">
-        <TitleBlock eyebrow="Numbers" title={settings.statsTitle || "Engagement"} suffix="By platform" copy={settings.statsLede} as={full ? "h1" : "h2"} />
+        <TitleBlock title={settings.statsTitle || "Engagement"} suffix="By platform" copy={settings.statsLede} as={full ? "h1" : "h2"} />
         <p className="ed-stats-updated">Updated 12 November 2026 · UTC</p>
         <div className="ed-platforms">
           {platforms.map((row) => {
@@ -281,7 +280,7 @@ export function SkillsSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="skills">
       <div className="ed-wrap">
-        <TitleBlock eyebrow="Practice" title="Skills" suffix="Tools & AI" copy={settings.skillsLede} href={full ? undefined : "/skills"} more="Full list" as={full ? "h1" : "h2"} />
+        <TitleBlock title="Skills" suffix="Tools & AI" copy={settings.skillsLede} href={full ? undefined : "/skills"} more="Full list" as={full ? "h1" : "h2"} />
         <div className="ed-three">
           <div>
             <p className="ed-kicker">Skills</p>
@@ -398,7 +397,7 @@ function TitleBlock({
   more,
   as = "h2",
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   suffix?: string;
   copy?: string;
@@ -410,7 +409,7 @@ function TitleBlock({
   return (
     <div className="relative px-4 py-8 text-center">
       <div className="relative mx-auto inline-block max-w-full">
-        <Split text={eyebrow} mode="char" className="t-eyebrow absolute -top-8 left-0" />
+        {eyebrow ? <Split text={eyebrow} mode="char" className="t-eyebrow absolute -top-8 left-0" /> : null}
         <Title className="t-display text-[color:var(--tv-ink)]">
           <motion.span className="inline-block" {...presets.fadeUp40}>
             {title}
@@ -419,12 +418,12 @@ function TitleBlock({
         {suffix ? <Split text={suffix} mode="word" start={0.2} className="t-eyebrow absolute right-0 -bottom-8" /> : null}
       </div>
       {copy ? (
-        <motion.p className="t-body mx-auto mt-16 max-w-[340px]" {...presets.fadeUp20}>
+        <motion.p className={`t-body mx-auto max-w-[340px] ${suffix ? "mt-16" : "mt-8"}`} {...presets.fadeUp20}>
           {copy}
         </motion.p>
       ) : null}
       {href && more ? (
-        <Link className="t-meta mt-6 inline-block text-[color:var(--tv-accent-deep)]" href={href}>
+        <Link className={`t-meta inline-block text-[color:var(--tv-accent-deep)] ${!copy && !suffix ? "mt-4" : "mt-6"}`} href={href}>
           {more}
         </Link>
       ) : null}

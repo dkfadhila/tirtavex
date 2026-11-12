@@ -139,7 +139,7 @@ export function buildSeed(now = new Date()): SiteContent {
     statsTitle: "Engagement",
     statsLede: "Impressions, followers, and published videos across X, TikTok, and Instagram.",
     skillsTitle: "Skills, Tools & AI",
-    skillsLede: "Craft skills come first, followed by editing tools and the AI models used for ideas and execution.",
+    skillsLede: "",
     contactTitle: "Contact",
     genres: ["Cinematic", "Speed ramping", "Realistic", "Anime", "UGC ads", "Kinetic typography", "Motion explainers", "Fashion editorial"],
     tiktokUrl: "https://www.tiktok.com/@0xtirta",
