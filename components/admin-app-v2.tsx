@@ -468,21 +468,21 @@ function Tweets({
 
       <div className="rounded-card bg-white p-4">
         <p className="font-semibold">Add a tweet</p>
-        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_180px_160px]">
-          <label className="field">
+        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_220px_auto]">
+          <label className="field md:col-span-1">
             <span>X post URL</span>
             <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://x.com/tirtaVEX/status/…" />
           </label>
           <label className="field">
             <span>Showcase</span>
             <select value={lane} onChange={(event) => setLane(event.target.value)}>
-              <option value="generation">AI video generation</option>
+              <option value="generation">AI video</option>
               <option value="motion">Motion design</option>
             </select>
           </label>
           <div className="flex items-end">
             <button
-              className="btn w-full"
+              className="btn w-full whitespace-nowrap"
               disabled={disabled || working || !url.trim()}
               onClick={async () => {
                 setWorking(true);
@@ -502,7 +502,7 @@ function Tweets({
             <span>Tags (optional)</span>
             <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="Seedance 2.5, 4K" />
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 self-end pb-3 text-sm">
             <input type="checkbox" checked={pinned} onChange={(event) => setPinned(event.target.checked)} /> Pin to top
           </label>
         </div>
@@ -559,21 +559,22 @@ function Tweets({
                 <p className="text-xs muted">
                   {(readPath(item, "tags") as string[] | undefined)?.join(" · ") || "No tags"} · {String(readPath(item, "lane") || "generation")}
                 </p>
-                <div className="flex flex-wrap gap-3 text-sm">
-                  <button disabled={disabled} onClick={() => setEditing(structuredClone(item))}>Edit</button>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1" disabled={disabled} onClick={() => setEditing(structuredClone(item))}>Edit</button>
                   <button
+                    className="rounded-pill border border-[var(--tv-line)] px-3 py-1"
                     disabled={disabled}
                     onClick={() => void onUpdate(String(item.id), { ...item, status: status === "live" ? "hidden" : "live", hidden: status === "live" })}
                   >
                     {status === "live" ? "Hide" : "Show"}
                   </button>
-                  <button disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, pinned: !item.pinned })}>
+                  <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, pinned: !item.pinned })}>
                     {item.pinned ? "Unpin" : "Pin"}
                   </button>
-                  <button disabled={disabled} onClick={() => move(index, -1)}>↑</button>
-                  <button disabled={disabled} onClick={() => move(index, 1)}>↓</button>
+                  <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1" disabled={disabled} onClick={() => move(index, -1)} aria-label="Move up">↑</button>
+                  <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1" disabled={disabled} onClick={() => move(index, 1)} aria-label="Move down">↓</button>
                   <button
-                    className="text-amber"
+                    className="rounded-pill border border-red-200 px-3 py-1 text-red-700"
                     disabled={disabled}
                     onClick={() => {
                       if (confirm(`Delete “${labelOf(item)}” from the site?`)) void onDelete(String(item.id));
@@ -582,7 +583,7 @@ function Tweets({
                     Delete
                   </button>
                   {String(readPath(item, "xUrl") || "").includes("/status/") ? (
-                    <a href={String(readPath(item, "xUrl"))} target="_blank" rel="noopener noreferrer">X ↗</a>
+                    <a className="ml-auto text-xs underline" href={String(readPath(item, "xUrl"))} target="_blank" rel="noopener noreferrer">Open on X ↗</a>
                   ) : null}
                 </div>
               </div>
@@ -690,26 +691,26 @@ function Collection({
               <p className="min-w-0 flex-1 font-medium">{labelOf(item)}</p>
               {item.pinned ? <span className="chip">Pinned</span> : null}
               {hidden ? <span className="chip">Hidden</span> : null}
-              <button className="text-sm" disabled={disabled} onClick={() => move(index, -1)} aria-label="Move up">↑</button>
-              <button className="text-sm" disabled={disabled} onClick={() => move(index, 1)} aria-label="Move down">↓</button>
+              <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1 text-sm" disabled={disabled} onClick={() => move(index, -1)} aria-label="Move up">↑</button>
+              <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1 text-sm" disabled={disabled} onClick={() => move(index, 1)} aria-label="Move down">↓</button>
               {"pinned" in item ? (
-                <button className="text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, pinned: !item.pinned })}>
+                <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1 text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, pinned: !item.pinned })}>
                   {item.pinned ? "Unpin" : "Pin"}
                 </button>
               ) : null}
               {"hidden" in item ? (
-                <button className="text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, hidden: !item.hidden })}>
+                <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1 text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, hidden: !item.hidden })}>
                   {item.hidden ? "Show" : "Hide"}
                 </button>
               ) : null}
               {"status" in item && (item.status === "live" || item.status === "hidden") ? (
-                <button className="text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, status: item.status === "live" ? "hidden" : "live" })}>
+                <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1 text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, status: item.status === "live" ? "hidden" : "live" })}>
                   {item.status === "live" ? "Hide" : "Show"}
                 </button>
               ) : null}
-              <button className="text-sm" disabled={disabled} onClick={() => setDraft(structuredClone(item))}>Edit</button>
+              <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1 text-sm" disabled={disabled} onClick={() => setDraft(structuredClone(item))}>Edit</button>
               <button
-                className="text-sm text-amber"
+                className="rounded-pill border border-red-200 px-3 py-1 text-sm text-red-700"
                 disabled={disabled}
                 onClick={() => {
                   if (confirm(`Delete “${labelOf(item)}”?`)) void onDelete(String(item.id));
@@ -855,6 +856,15 @@ function ImageUpload({ onUrl }: { onUrl: (url: string) => void }) {
   );
 }
 
+function prettyKey(key: string) {
+  return key
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\bUrl\b/g, "URL")
+    .replace(/\bLede\b/g, "subtitle")
+    .replace(/\bSeo\b/gi, "SEO")
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
 function SettingsForm({ settings, disabled, onSave }: { settings: Settings; disabled: boolean; onSave: (data: Settings) => void }) {
   const [draft, setDraft] = useState(settings);
   const GROUPS: { title: string; keys: (keyof Settings)[] }[] = [
@@ -880,10 +890,10 @@ function SettingsForm({ settings, disabled, onSave }: { settings: Settings; disa
           <div className="grid gap-3 md:grid-cols-2">
             {group.keys.map((key) => {
               const value = String(draft[key] ?? "");
-              const long = value.length > 80 || key === "bioLong" || key === "metaDescription" || key === "contactLede" || key === "bio";
+              const long = value.length > 56 || key === "bioLong" || key === "metaDescription" || key === "contactLede" || key === "bio" || key.endsWith("Alt");
               return (
                 <label key={key} className={`field ${long ? "md:col-span-2" : ""}`}>
-                  <span>{key}</span>
+                  <span>{prettyKey(key)}</span>
                   {long ? (
                     <textarea value={value} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} />
                   ) : (
