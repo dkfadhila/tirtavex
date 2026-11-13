@@ -27,6 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = process.env.NEXT_PUBLIC_SITE_URL || "https://tirtavex.vercel.app";
   return {
     metadataBase: new URL(site),
+    referrer: "no-referrer",
     title: { default: content.settings.metaTitle, template: `%s · ${content.settings.heroTitle}` },
     description: content.settings.metaDescription,
     openGraph: {

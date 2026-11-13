@@ -120,6 +120,12 @@ function VideoModal({ clip, onClose }: { clip: ModalClip | null; onClose: () => 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
+    // iOS / Safari / Chromium unmuted autoplay policy safety
+    const video = document.querySelector<HTMLVideoElement>(".ed-modal-media video");
+    if (video) {
+      video.muted = true;
+      video.play().catch(() => {});
+    }
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
@@ -134,7 +140,14 @@ function VideoModal({ clip, onClose }: { clip: ModalClip | null; onClose: () => 
           ✕
         </button>
         <div className="ed-modal-media">
-          <video controls autoPlay playsInline preload="metadata" poster={clip.poster || undefined} src={clip.videoUrl} />
+          <video
+            controls
+            autoPlay
+            playsInline
+            preload="metadata"
+            poster={clip.poster || undefined}
+            src={clip.videoUrl}
+          />
         </div>
         <div className="ed-modal-body">
           <div className="ed-modal-meta">
