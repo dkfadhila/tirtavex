@@ -340,11 +340,11 @@ export function AdminApp({ initial }: { initial: AdminSnapshot }) {
             <Tweets
               items={snap.content.work as unknown as Record<string, unknown>[]}
               disabled={disabled}
-              onImport={async (url, lane, tags, pinned) => {
+              onImport={async (payload) => {
                 const response = await fetch("/api/admin/x/import", {
                   method: "POST",
                   headers: { "content-type": "application/json" },
-                  body: JSON.stringify({ xUrl: url, url, lane, tags, pinned }),
+                  body: JSON.stringify(payload),
                 });
                 const json = (await response.json().catch(() => ({}))) as { error?: string; snapshot?: AdminSnapshot };
                 if (!response.ok) {
@@ -353,7 +353,7 @@ export function AdminApp({ initial }: { initial: AdminSnapshot }) {
                 }
                 if (json.snapshot) setSnap(json.snapshot);
                 setError("");
-                setToast("Tweet added");
+                setToast(payload.isCampaign ? "Ditambahkan ke The Cut & Campaigns" : "Tweet ditambahkan ke The Cut");
                 setTimeout(() => setToast(""), 2200);
                 return true;
               }}
@@ -420,6 +420,17 @@ function Overview({ snap, onOpen }: { snap: AdminSnapshot; onOpen: (href: string
   );
 }
 
+type ImportPayload = {
+  url: string;
+  lane: string;
+  tags: string[];
+  pinned: boolean;
+  thumbSrc?: string;
+  isCampaign?: boolean;
+  campaignName?: string;
+  organizer?: string;
+};
+
 function Tweets({
   items,
   disabled,
@@ -431,7 +442,7 @@ function Tweets({
 }: {
   items: Record<string, unknown>[];
   disabled: boolean;
-  onImport: (url: string, lane: string, tags: string[], pinned: boolean) => Promise<boolean>;
+  onImport: (payload: ImportPayload) => Promise<boolean>;
   onCreate: (data: Record<string, unknown>) => Promise<boolean>;
   onUpdate: (id: string, data: Record<string, unknown>) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
@@ -439,9 +450,15 @@ function Tweets({
 }) {
   const [url, setUrl] = useState("");
   const [lane, setLane] = useState("generation");
+  const [customThumb, setCustomThumb] = useState("");
+  const [isCampaign, setIsCampaign] = useState(false);
+  const [campaignName, setCampaignName] = useState("");
+  const [organizer, setOrganizer] = useState("");
   const [tags, setTags] = useState("");
   const [pinned, setPinned] = useState(false);
   const [working, setWorking] = useState(false);
+  const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
+  const [previewError, setPreviewError] = useState("");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
 
@@ -450,6 +467,26 @@ function Tweets({
     const hay = `${labelOf(item)} ${String(readPath(item, "xUrl") || "")} ${(readPath(item, "tags") as string[] | undefined)?.join(" ") || ""}`;
     return hay.toLowerCase().includes(query.toLowerCase());
   });
+
+  async function handlePreview() {
+    if (!url.trim()) return;
+    setWorking(true);
+    setPreviewError("");
+    try {
+      const res = await fetch("/api/admin/x/preview", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) setPreviewError(json.error || "Gagal memuat data X");
+      else setPreview(json);
+    } catch {
+      setPreviewError("Gagal menghubungi server X");
+    } finally {
+      setWorking(false);
+    }
+  }
 
   function move(index: number, direction: -1 | 1) {
     const ids = items.map((item) => String(item.id));
@@ -463,60 +500,180 @@ function Tweets({
     <section className="grid gap-6">
       <div>
         <h1 className="font-display text-4xl">{TITLES.work}</h1>
-        <p className="mt-1 text-sm muted">Paste a post link to add it. Delete removes it from the site. Hide keeps it but stops showing it.</p>
+        <p className="mt-1 text-sm muted">Tambah tweet ke The Cut & Campaigns secara instan, atur urutan, edit metadata, atau sembunyikan.</p>
       </div>
 
-      <div className="rounded-card bg-white p-4">
-        <p className="font-semibold">Add a tweet</p>
-        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_220px_auto]">
-          <label className="field md:col-span-1">
-            <span>X post URL</span>
-            <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://x.com/tirtaVEX/status/…" />
-          </label>
-          <label className="field">
-            <span>Showcase</span>
-            <select value={lane} onChange={(event) => setLane(event.target.value)}>
-              <option value="generation">AI video</option>
-              <option value="motion">Motion design</option>
-            </select>
-          </label>
-          <div className="flex items-end">
+      <div className="rounded-card border border-[var(--tv-line)] bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--tv-line)] pb-3">
+          <div>
+            <p className="text-base font-semibold">Tambah Karya dari X (The Cut & Campaigns)</p>
+            <p className="text-xs muted">Cukup paste link status X — thumbnail, stream video MP4, caption, dan impressions otomatis ketarik.</p>
+          </div>
+          <span className="rounded-pill bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">Auto-enrich fxtwitter</span>
+        </div>
+
+        <div className="mt-4 grid gap-4">
+          <div className="grid gap-3 md:grid-cols-[1fr_200px]">
+            <label className="field">
+              <span className="font-medium">Link Status X (Twitter) *</span>
+              <input
+                value={url}
+                onChange={(event) => {
+                  setUrl(event.target.value);
+                  setPreview(null);
+                }}
+                placeholder="https://x.com/tirtaVEX/status/2120896958500049359"
+              />
+              <span className="text-[11px] muted">Contoh: https://x.com/tirtaVEX/status/2120896958500049359</span>
+            </label>
+            <label className="field">
+              <span className="font-medium">Kategori Showcase</span>
+              <select value={lane} onChange={(event) => setLane(event.target.value)}>
+                <option value="generation">AI video (Generation)</option>
+                <option value="motion">Motion design</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="grid gap-3 rounded-card bg-[var(--tv-mist)] p-3 md:grid-cols-2">
+            <label className="field">
+              <span className="font-medium">Custom Thumbnail / Poster (Opsional)</span>
+              <input
+                value={customThumb}
+                onChange={(event) => setCustomThumb(event.target.value)}
+                placeholder="/media/gacha-reality-break.webp atau URL gambar"
+              />
+              <ImageUpload onUrl={(u) => setCustomThumb(u)} />
+              <span className="text-[11px] muted">Kosongkan jika ingin memakai thumbnail otomatis dari video X.</span>
+            </label>
+
+            {customThumb ? (
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={customThumb} alt="Custom thumbnail" className="h-20 w-32 rounded object-cover shadow-sm" />
+                <button type="button" className="text-xs text-red-600 underline" onClick={() => setCustomThumb("")}>
+                  Hapus custom thumb
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center text-xs text-[var(--tv-ink-muted)]">
+                Poster film khusus (PNG/WebP) bisa di-upload di sini jika tidak mau pakai frame pertama dari video.
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-card border border-emerald-200 bg-emerald-50/50 p-3">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input type="checkbox" checked={isCampaign} onChange={(event) => setIsCampaign(event.target.checked)} />
+              Juga masukkan ke bagian &quot;Campaigns&quot; (Lomba, Fest, Quest, Recast)
+            </label>
+
+            {isCampaign ? (
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label className="field">
+                  <span>Nama Campaign / Judul Karya</span>
+                  <input
+                    value={campaignName}
+                    onChange={(event) => setCampaignName(event.target.value)}
+                    placeholder="GACHA: REALITY BREAK · NEO JAPONISM"
+                  />
+                  <span className="text-[11px] muted">Kosongkan untuk otomatis pakai judul tweet.</span>
+                </label>
+                <label className="field">
+                  <span>Penyelenggara / Organizer</span>
+                  <input
+                    value={organizer}
+                    onChange={(event) => setOrganizer(event.target.value)}
+                    placeholder="AI FUSION FES 2026 WINTER (TapNow)"
+                  />
+                  <span className="text-[11px] muted">Contoh: Renoise AI, AI Fusion Fes, Meteora, Cuddler.</span>
+                </label>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+            <label className="field">
+              <span>Tags (pisahkan koma)</span>
+              <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="AI Fusion Fes, NEO JAPONISM, TapNow, 4K" />
+            </label>
+            <label className="flex items-center gap-2 self-end pb-3 text-sm">
+              <input type="checkbox" checked={pinned} onChange={(event) => setPinned(event.target.checked)} /> Pin ke paling atas
+            </label>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
-              className="btn w-full whitespace-nowrap"
+              type="button"
+              className="btn ghost"
+              disabled={disabled || working || !url.trim()}
+              onClick={handlePreview}
+            >
+              Preview dari X
+            </button>
+            <button
+              type="button"
+              className="btn"
               disabled={disabled || working || !url.trim()}
               onClick={async () => {
                 setWorking(true);
-                const ok = await onImport(url.trim(), lane, tags.split(",").map((tag) => tag.trim()).filter(Boolean), pinned);
+                const ok = await onImport({
+                  url: url.trim(),
+                  lane,
+                  tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+                  pinned,
+                  thumbSrc: customThumb.trim() || undefined,
+                  isCampaign,
+                  campaignName: campaignName.trim() || undefined,
+                  organizer: organizer.trim() || undefined,
+                });
                 setWorking(false);
                 if (ok) {
                   setUrl("");
                   setTags("");
+                  setCustomThumb("");
+                  setIsCampaign(false);
+                  setCampaignName("");
+                  setOrganizer("");
                   setPinned(false);
+                  setPreview(null);
                 }
               }}
             >
-              {working ? "Adding…" : "Add tweet"}
+              {working ? "Memproses…" : "Simpan ke Portfolio"}
             </button>
           </div>
-          <label className="field md:col-span-2">
-            <span>Tags (optional)</span>
-            <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="Seedance 2.5, 4K" />
-          </label>
-          <label className="flex items-center gap-2 self-end pb-3 text-sm">
-            <input type="checkbox" checked={pinned} onChange={(event) => setPinned(event.target.checked)} /> Pin to top
-          </label>
+
+          {previewError ? <p className="text-sm text-red-600">{previewError}</p> : null}
+
+          {preview ? (
+            <div className="mt-2 flex flex-wrap items-start gap-4 rounded-card border border-[var(--tv-line)] bg-[var(--tv-mist)] p-3">
+              {typeof preview.thumbSrc === "string" ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={customThumb || String(preview.thumbSrc)} alt="Preview" className="h-24 w-40 rounded object-cover shadow" />
+              ) : null}
+              <div className="min-w-0 flex-1 text-sm">
+                <p className="font-semibold">{String(preview.title || "Detected Tweet")}</p>
+                <p className="mt-1 text-xs muted line-clamp-2">{String(preview.text || "")}</p>
+                <p className="mt-2 font-mono text-xs text-emerald-800">
+                  {compact(readPath(preview, "metrics.impressions"))} views · {compact(readPath(preview, "metrics.likes"))} likes
+                  {preview.videoUrl ? " · Video MP4 terdeteksi ✓" : " · Tidak ada video"}
+                </p>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <input
           className="min-w-0 flex-1 rounded-pill border border-[var(--tv-line)] bg-white px-4 py-2 text-sm"
-          placeholder="Search tweets"
+          placeholder="Cari tweet di The Cut…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <p className="text-sm muted">{filtered.length} of {items.length}</p>
-        <button className="btn ghost" disabled={disabled} onClick={() => setEditing({})}>Blank entry</button>
+        <p className="text-sm muted">{filtered.length} dari {items.length} karya</p>
+        <button className="btn ghost" disabled={disabled} onClick={() => setEditing({})}>+ Form Manual</button>
       </div>
 
       {editing ? (

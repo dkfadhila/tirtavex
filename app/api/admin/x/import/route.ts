@@ -26,34 +26,64 @@ export async function POST(request: Request) {
     const raw = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
     const url = typeof raw.xUrl === "string" ? raw.xUrl : typeof raw.url === "string" ? raw.url : "";
     const preview = await previewX(url);
-    await mutateOverrides({
+    const customThumb = typeof raw.thumbSrc === "string" && raw.thumbSrc.trim() ? raw.thumbSrc.trim() : null;
+    const isCampaign = Boolean(raw.isCampaign);
+    const category = isCampaign ? "contest" : (typeof raw.category === "string" ? raw.category : "ai-video");
+    const rawTags = Array.isArray(raw.tags) ? raw.tags : [];
+    const tags = isCampaign && !rawTags.includes("Campaign") ? [...rawTags, "Campaign"] : rawTags;
+
+    const workData: Record<string, unknown> = {
+      title: (typeof raw.title === "string" && raw.title.trim()) || preview.title || preview.text.slice(0, 80),
+      xUrl: preview.xUrl,
+      note: (typeof raw.note === "string" && raw.note.trim()) || preview.text.slice(0, 220),
+      lane: raw.lane || "generation",
+      category,
+      tags,
+      pinned: Boolean(raw.pinned),
+      placeholder: false,
+      status: "live",
+      authorName: preview.authorName || "Tirta",
+      authorHandle: preview.authorHandle || "tirtaVEX",
+      thumb: {
+        src: customThumb || preview.thumbSrc || "",
+        blurhash: "",
+        dominant: "#10B981",
+        w: preview.thumbWidth || 1280,
+        h: preview.thumbHeight || 720,
+        durationSec: Math.round(preview.durationSec || 0),
+      },
+      videoUrl: preview.videoUrl || "",
+      metrics: { ...preview.metrics, updatedAt: new Date().toISOString() },
+      postedAt: preview.postedAt || new Date().toISOString(),
+    };
+
+    const workRes = await mutateOverrides({
       op: "create",
       type: "work",
-      data: {
-        title: preview.title || preview.text.slice(0, 80),
-        xUrl: preview.xUrl,
-        note: preview.text.slice(0, 220),
-        lane: raw.lane || "generation",
-        category: raw.category || "ai-video",
-        tags: Array.isArray(raw.tags) ? raw.tags : [],
-        pinned: Boolean(raw.pinned),
-        placeholder: false,
-        status: "live",
-        authorName: preview.authorName || "Tirta",
-        authorHandle: preview.authorHandle || "tirtaVEX",
-        thumb: {
-          src: preview.thumbSrc || "",
-          blurhash: "",
-          dominant: "#10B981",
-          w: preview.thumbWidth || 1280,
-          h: preview.thumbHeight || 720,
-          durationSec: Math.round(preview.durationSec || 0),
-        },
-        videoUrl: preview.videoUrl || "",
-        metrics: { ...preview.metrics, updatedAt: new Date().toISOString() },
-        postedAt: preview.postedAt || new Date().toISOString(),
-      },
+      data: workData,
     });
+
+    if (isCampaign) {
+      await mutateOverrides({
+        op: "create",
+        type: "contests",
+        data: {
+          name: (typeof raw.campaignName === "string" && raw.campaignName.trim()) || String(workData.title),
+          organizer: (typeof raw.organizer === "string" && raw.organizer.trim()) || "Campaign",
+          date: (preview.postedAt || new Date().toISOString()).slice(0, 10),
+          year: new Date(preview.postedAt || Date.now()).getFullYear(),
+          placement: "",
+          result: `Published · ${preview.metrics.impressions || 0} views`,
+          link: preview.xUrl,
+          entryPostId: (workRes as { id?: string })?.id || "",
+          thumb: customThumb || preview.thumbSrc || "",
+          xUrl: preview.xUrl,
+          placeholder: false,
+          hidden: false,
+        },
+      });
+    }
+
     const snapshot = await getAdminSnapshot();
     return { created: true, snapshot };
   });
