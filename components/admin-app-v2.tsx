@@ -266,6 +266,37 @@ export function AdminApp({ initial }: { initial: AdminSnapshot }) {
     return true;
   }
 
+  async function refreshMetrics(id?: string) {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/admin/metrics/refresh", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(id ? { id } : { limit: 25 }),
+      });
+      const json = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        updated?: number;
+        total?: number;
+        snapshot?: AdminSnapshot;
+      };
+      setBusy(false);
+      if (!response.ok || !json.snapshot) {
+        setError(json.error || "Gagal memperbarui impressions dari X");
+        return false;
+      }
+      setSnap(json.snapshot);
+      setToast(`Berhasil memperbarui ${json.updated ?? 1} karya dari X`);
+      setTimeout(() => setToast(""), 2200);
+      return true;
+    } catch {
+      setBusy(false);
+      setError("Gagal menghubungi server");
+      return false;
+    }
+  }
+
   const groups = useMemo(() => {
     const map = new Map<string, typeof NAV>();
     for (const entry of NAV) map.set(entry.group, [...(map.get(entry.group) || []), entry]);
@@ -340,6 +371,7 @@ export function AdminApp({ initial }: { initial: AdminSnapshot }) {
             <Tweets
               items={snap.content.work as unknown as Record<string, unknown>[]}
               disabled={disabled}
+              onRefreshMetrics={refreshMetrics}
               onImport={async (payload) => {
                 const response = await fetch("/api/admin/x/import", {
                   method: "POST",
@@ -435,6 +467,7 @@ function Tweets({
   items,
   disabled,
   onImport,
+  onRefreshMetrics,
   onCreate,
   onUpdate,
   onDelete,
@@ -443,6 +476,7 @@ function Tweets({
   items: Record<string, unknown>[];
   disabled: boolean;
   onImport: (payload: ImportPayload) => Promise<boolean>;
+  onRefreshMetrics: (id?: string) => Promise<boolean>;
   onCreate: (data: Record<string, unknown>) => Promise<boolean>;
   onUpdate: (id: string, data: Record<string, unknown>) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
@@ -457,6 +491,8 @@ function Tweets({
   const [tags, setTags] = useState("");
   const [pinned, setPinned] = useState(false);
   const [working, setWorking] = useState(false);
+  const [refreshingAll, setRefreshingAll] = useState(false);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
   const [previewError, setPreviewError] = useState("");
   const [query, setQuery] = useState("");
@@ -498,9 +534,23 @@ function Tweets({
 
   return (
     <section className="grid gap-6">
-      <div>
-        <h1 className="font-display text-4xl">{TITLES.work}</h1>
-        <p className="mt-1 text-sm muted">Tambah tweet ke The Cut & Campaigns secara instan, atur urutan, edit metadata, atau sembunyikan.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl">{TITLES.work}</h1>
+          <p className="mt-1 text-sm muted">Tambah tweet ke The Cut & Campaigns secara instan, atur urutan, edit metadata, atau sembunyikan.</p>
+        </div>
+        <button
+          type="button"
+          className="rounded-pill border border-emerald-600 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
+          disabled={disabled || refreshingAll}
+          onClick={async () => {
+            setRefreshingAll(true);
+            await onRefreshMetrics();
+            setRefreshingAll(false);
+          }}
+        >
+          {refreshingAll ? "🔄 Memperbarui dari X…" : "🔄 Refresh Semua Impressions"}
+        </button>
       </div>
 
       <div className="rounded-card border border-[var(--tv-line)] bg-white p-5 shadow-sm">
@@ -673,6 +723,18 @@ function Tweets({
           onChange={(event) => setQuery(event.target.value)}
         />
         <p className="text-sm muted">{filtered.length} dari {items.length} karya</p>
+        <button
+          type="button"
+          className="rounded-pill border border-[var(--tv-line)] bg-white px-3 py-2 text-sm font-medium transition hover:border-emerald-600 disabled:opacity-50"
+          disabled={disabled || refreshingAll}
+          onClick={async () => {
+            setRefreshingAll(true);
+            await onRefreshMetrics();
+            setRefreshingAll(false);
+          }}
+        >
+          {refreshingAll ? "🔄 Memperbarui…" : "🔄 Refresh Metrics"}
+        </button>
         <button className="btn ghost" disabled={disabled} onClick={() => setEditing({})}>+ Form Manual</button>
       </div>
 
@@ -730,6 +792,18 @@ function Tweets({
                   </button>
                   <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1" disabled={disabled} onClick={() => move(index, -1)} aria-label="Move up">↑</button>
                   <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1" disabled={disabled} onClick={() => move(index, 1)} aria-label="Move down">↓</button>
+                  <button
+                    className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1 hover:border-emerald-600"
+                    disabled={disabled || refreshingId === String(item.id)}
+                    title="Refresh impressions & likes karya ini langsung dari X"
+                    onClick={async () => {
+                      setRefreshingId(String(item.id));
+                      await onRefreshMetrics(String(item.id));
+                      setRefreshingId(null);
+                    }}
+                  >
+                    {refreshingId === String(item.id) ? "…" : "🔄 Refresh"}
+                  </button>
                   <button
                     className="rounded-pill border border-red-200 px-3 py-1 text-red-700"
                     disabled={disabled}
