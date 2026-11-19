@@ -407,71 +407,60 @@ export function SkillsSection({ full = false }: { full?: boolean }) {
   );
 }
 
-const RATES = [
-  {
-    id: "starter",
-    name: "Starter",
-    model: "Minimax H3",
-    price: "50K",
-    blurb: "A 30s AI video for an intro, teaser, meme or story.",
-    points: ["30s AI video · Minimax H3", "Music bed, 1080p (16:9 or 9:16)", "1 revision", "Delivery 1–2 days"],
-  },
-  {
-    id: "shill",
-    name: "Pro + Post",
-    model: "Minimax H3",
-    price: "100K",
-    blurb: "Scripted video with your branding, posted on my X.",
-    points: ["30s AI video · Minimax H3", "Script, VO & SFX, your logo", "Posted on X @tirtavex", "2 revisions · 2–3 days"],
-    featured: true,
-  },
-  {
-    id: "motion",
-    name: "Motion",
-    model: "Motion graphics",
-    price: "100–150K",
-    blurb: "Clean motion piece for launches, promos or explainers.",
-    points: ["30s motion video", "Launch, promo, explainer or recap", "Your brand kit & copy", "2 revisions · 2–4 days"],
-  },
-  {
-    id: "cinematic",
-    name: "Cinematic",
-    model: "Seedance 2.5",
-    price: "200–300K",
-    blurb: "Premium multi-shot spot for an ad, campaign or mascot.",
-    points: ["30s cinematic · Seedance 2.5", "Multi-shot, consistent character", "Script, VO, SFX + post on X", "3 revisions · 3–5 days"],
-  },
+const RATE_FACTORS = [
+  { label: "Length", note: "Short clip up to ~30s" },
+  { label: "Model", note: "Minimax H3 → Seedance 2.5" },
+  { label: "Style", note: "AI video or motion graphics" },
+  { label: "Extras", note: "Script, VO, SFX, post on X" },
+] as const;
+
+const RATE_EXAMPLES = [
+  { what: "30s AI video · Minimax H3", price: "≈ 50K" },
+  { what: "30s motion video", price: "≈ 100–150K" },
+  { what: "30s cinematic · Seedance 2.5", price: "≈ 200–300K" },
 ] as const;
 
 export function RateCardSection({ full = false }: { full?: boolean }) {
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="rates">
       <div className="ed-wrap">
-        <TitleBlock title="Rate Card" suffix="Open for commission" copy="AI and motion video for brands, creators, Web3 projects — anything. Priced in Rupiah. Shared to a real audience on X — 570K+ impressions in the last 3 months, no bots, no bought reach." as={full ? "h1" : "h2"} />
-        <p className="ed-rate-status"><span aria-hidden className="ed-rate-dot" /> Open · IDR 50K – 300K · X 1.1K followers · 570K+ impressions / 3 mo</p>
-        <div className="ed-rates">
-          {RATES.map((tier, index) => (
-            <motion.article key={tier.id} className={"featured" in tier && tier.featured ? "ed-rate is-featured" : "ed-rate"} {...stairs(index)}>
-              <header className="ed-rate-head">
-                <p className="ed-kicker">{tier.name}</p>
-                <p className="ed-rate-model">{tier.model}</p>
-                <p className="ed-rate-price">
-                  <span>IDR</span> {tier.price}
-                </p>
-                <p className="ed-rate-blurb">{tier.blurb}</p>
-              </header>
-              <ul className="ed-rate-points">
-                {tier.points.map((point) => (
-                  <li key={point}>{point}</li>
-                ))}
-              </ul>
-              <Link className="btn ed-rate-cta" href="/contact">
-                Book this
-              </Link>
-            </motion.article>
-          ))}
+        <TitleBlock title="Rate Card" suffix="Open for commission" copy="AI and motion video for brands, creators, Web3 projects — anything. Pricing is flexible: tell me the idea and I'll quote it." as={full ? "h1" : "h2"} />
+        <p className="ed-rate-status"><span aria-hidden className="ed-rate-dot" /> Open · X 1.1K followers · 570K+ impressions / 3 mo</p>
+        <motion.div className="ed-rate-flex" {...presets.fadeUp40}>
+          <p className="ed-kicker">Flexible pricing</p>
+          <p className="ed-rate-price">
+            <span>IDR</span> 50K – 300K
+          </p>
+          <p className="ed-rate-usd">≈ $3 – $20 per video</p>
+          <Link className="btn ed-rate-cta" href="/contact">
+            Get a quote
+          </Link>
+        </motion.div>
+        <div className="ed-rate-grid">
+          <div>
+            <p className="ed-kicker">What sets the price</p>
+            <ul className="ed-rate-list">
+              {RATE_FACTORS.map((item) => (
+                <li key={item.label}>
+                  <strong>{item.label}</strong>
+                  <span>{item.note}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="ed-kicker">For reference</p>
+            <ul className="ed-rate-list">
+              {RATE_EXAMPLES.map((item) => (
+                <li key={item.what}>
+                  <span>{item.what}</span>
+                  <strong>{item.price}</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <p className="ed-rate-note">X only — @tirtavex, 1.1K followers. Paid upfront in IDR (USDT on request). Promo posts are marked as paid partnerships; no guaranteed engagement (and no financial advice for crypto). Longer edits, threads or rush delivery quoted separately.</p>
+        <p className="ed-rate-note">X only — @tirtavex. Paid upfront in IDR (USDT on request). Promo posts are marked as paid partnerships; no guaranteed engagement (and no financial advice for crypto).</p>
       </div>
     </section>
   );
