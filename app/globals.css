@@ -783,3 +783,4 @@ html[data-theme="dark"] .ed-media { background: #1c1c1c; }
 .ed-rate-points li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 6px; height: 6px; border-radius: 999px; background: var(--tv-accent); }
 .ed-rate-cta { align-self: flex-start; }
 .ed-rate-note { margin-top: 2rem; text-align: center; font-size: 13px; color: var(--tv-ink-muted); }
+.ed-hero-cta { margin-top: 1.5rem; }

@@ -45,6 +45,11 @@ export function Hero() {
           <p className="ed-hero-tag">
             <Split text={settings.heroTagline || settings.heroLede} mode="word" />
           </p>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={spring(0.6, 0.2, 0.9)}>
+            <Link className="btn ed-hero-cta" href="/rates">
+              Check my rate card
+            </Link>
+          </motion.div>
         </motion.div>
       </section>
     </>
