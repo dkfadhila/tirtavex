@@ -1,6 +1,6 @@
 "use client";
 
-import { AboutSection, CampaignSection, ContactSection, Hero, PartnerSection, SkillsSection, StatsSection, WorkSection } from "./sections";
+import { AboutSection, CampaignSection, ContactSection, Hero, PartnerSection, RateCardSection, SkillsSection, StatsSection, WorkSection } from "./sections";
 
 export function HomeView() {
   return (
@@ -12,6 +12,7 @@ export function HomeView() {
       <PartnerSection />
       <StatsSection />
       <SkillsSection />
+      <RateCardSection />
       <ContactSection />
     </>
   );
