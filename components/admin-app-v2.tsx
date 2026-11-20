@@ -2,236 +2,39 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import type { AdminSnapshot, Settings, SiteContent } from "@/lib/types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import type { AdminSnapshot, SiteContent } from "@/lib/types";
+import { AddVideo } from "./admin/add-video";
+import { FIELDS, TITLES } from "./admin/config";
+import type { Row } from "./admin/config";
+import { Collection } from "./admin/editor";
+import { Inbox, LegalForm, SettingsForm, StatsForm } from "./admin/forms";
+import { Overview } from "./admin/overview";
+import { AdminContext, EmptyState, useConfirmState } from "./admin/primitives";
+import type { AskOptions } from "./admin/primitives";
+import { Videos } from "./admin/videos";
 
-const NAV: { href: string; label: string; group: string }[] = [
-  { href: "", label: "Overview", group: "Home" },
-  { href: "work", label: "Tweets · The Cut", group: "Content" },
-  { href: "contests", label: "Campaigns", group: "Content" },
-  { href: "projects", label: "Projects", group: "Content" },
-  { href: "articles", label: "Journal", group: "Content" },
-  { href: "ambassadors", label: "Partners", group: "Content" },
-  { href: "tools", label: "Skills · Tools · AI", group: "Content" },
-  { href: "stats", label: "Engagement", group: "Numbers" },
-  { href: "collabs", label: "Collabs", group: "Numbers" },
-  { href: "programs", label: "Programs", group: "Numbers" },
-  { href: "testimonials", label: "Reviews", group: "Numbers" },
-  { href: "process", label: "Process", group: "Site" },
-  { href: "links", label: "Links", group: "Site" },
-  { href: "settings", label: "Copy & settings", group: "Site" },
-  { href: "legal", label: "Legal", group: "Site" },
-  { href: "submissions", label: "Inbox", group: "Site" },
+const MORE: { href: string; label: string }[] = [
+  { href: "projects", label: "Projects" },
+  { href: "articles", label: "Journal" },
+  { href: "tools", label: "Skills · Tools · AI" },
+  { href: "collabs", label: "Collabs" },
+  { href: "programs", label: "Programs" },
+  { href: "testimonials", label: "Reviews" },
+  { href: "process", label: "Process" },
+  { href: "links", label: "Link" },
 ];
 
-type Field = {
-  key: string;
-  label: string;
-  type: "text" | "textarea" | "number" | "checkbox" | "comma" | "lines" | "select" | "image";
-  options?: string[];
-  optionLabels?: Record<string, string>;
-  group?: string;
-  help?: string;
-  wide?: boolean;
-};
-
-const TWEET_CORE: Field[] = [
-  { key: "title", label: "Title", type: "text", group: "Basics", wide: true },
-  { key: "xUrl", label: "X post URL", type: "text", group: "Basics", wide: true, help: "Paste the status link when editing an existing post." },
-  { key: "note", label: "Caption / note", type: "textarea", group: "Basics", wide: true },
-  { key: "lane", label: "Showcase", type: "select", group: "Basics", options: ["generation", "motion"], optionLabels: { generation: "AI video generation", motion: "Motion video" } },
-  { key: "category", label: "Legacy category", type: "select", group: "Basics", options: ["ai-video", "web3", "contest", "collab"] },
-  { key: "tags", label: "Tags", type: "comma", group: "Basics", wide: true },
-  { key: "thumb.src", label: "Thumbnail", type: "image", group: "Media", wide: true },
-  { key: "videoUrl", label: "Video URL (mp4)", type: "text", group: "Media", wide: true },
-  { key: "thumb.durationSec", label: "Duration (sec)", type: "number", group: "Media" },
-  { key: "thumb.dominant", label: "Accent color", type: "text", group: "Media" },
-  { key: "metrics.impressions", label: "Impressions", type: "number", group: "Numbers" },
-  { key: "metrics.likes", label: "Likes", type: "number", group: "Numbers" },
-  { key: "metrics.reposts", label: "Reposts", type: "number", group: "Numbers" },
-  { key: "metrics.replies", label: "Replies", type: "number", group: "Numbers" },
-  { key: "metrics.bookmarks", label: "Bookmarks", type: "number", group: "Numbers" },
-  { key: "metrics.quotes", label: "Quotes", type: "number", group: "Numbers" },
-  { key: "postedAt", label: "Posted at", type: "text", group: "Meta" },
-  { key: "status", label: "Visibility", type: "select", group: "Meta", options: ["live", "hidden", "deleted"], optionLabels: { live: "Live on site", hidden: "Hidden", deleted: "Deleted" } },
-  { key: "pinned", label: "Pin to top", type: "checkbox", group: "Meta" },
+const SETTINGS: { href: string; label: string }[] = [
+  { href: "settings", label: "Teks & pengaturan" },
+  { href: "stats", label: "Angka engagement" },
+  { href: "legal", label: "Legal" },
 ];
 
-const FIELDS: Record<string, Field[]> = {
-  work: TWEET_CORE,
-  articles: [
-    { key: "title", label: "Title", type: "text", group: "Basics", wide: true },
-    { key: "kind", label: "Kind", type: "select", group: "Basics", options: ["article", "link"] },
-    { key: "slug", label: "Slug", type: "text", group: "Basics" },
-    { key: "url", label: "External URL", type: "text", group: "Basics", wide: true },
-    { key: "source", label: "Source", type: "text", group: "Basics" },
-    { key: "excerpt", label: "Excerpt", type: "textarea", group: "Copy", wide: true },
-    { key: "body", label: "Body (markdown)", type: "textarea", group: "Copy", wide: true },
-    { key: "cover", label: "Cover image", type: "image", group: "Media", wide: true },
-    { key: "coverDominant", label: "Cover color", type: "text", group: "Media" },
-    { key: "publishedAt", label: "Date", type: "text", group: "Meta" },
-    { key: "tags", label: "Tags", type: "comma", group: "Meta", wide: true },
-    { key: "pinned", label: "Pin to top", type: "checkbox", group: "Meta" },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  links: [
-    { key: "label", label: "Label", type: "text", group: "Basics" },
-    { key: "url", label: "URL", type: "text", group: "Basics", wide: true },
-    { key: "group", label: "Where it shows", type: "select", group: "Basics", options: ["footer", "journal", "social"] },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  projects: [
-    { key: "name", label: "Name", type: "text", group: "Basics", wide: true },
-    { key: "slug", label: "Slug", type: "text", group: "Basics" },
-    { key: "year", label: "Year", type: "number", group: "Basics" },
-    { key: "client", label: "Client", type: "text", group: "Basics" },
-    { key: "date", label: "Date", type: "text", group: "Basics" },
-    { key: "industry", label: "Industry", type: "text", group: "Basics" },
-    { key: "services", label: "Services", type: "comma", group: "Basics", wide: true },
-    { key: "scope", label: "Scope", type: "comma", group: "Basics", wide: true },
-    { key: "budget", label: "Budget", type: "text", group: "Basics" },
-    { key: "aiTech", label: "Stack", type: "text", group: "Basics" },
-    { key: "overview", label: "Overview", type: "textarea", group: "Copy", wide: true },
-    { key: "challenge", label: "Challenge", type: "textarea", group: "Copy", wide: true },
-    { key: "approach", label: "Approach", type: "textarea", group: "Copy", wide: true },
-    { key: "achievements", label: "Achievements", type: "lines", group: "Copy", wide: true },
-    { key: "outcome", label: "Outcome", type: "text", group: "Copy", wide: true },
-    { key: "cover", label: "Cover image", type: "image", group: "Media", wide: true },
-    { key: "accent", label: "Accent color", type: "text", group: "Media" },
-    { key: "xUrl", label: "X URL", type: "text", group: "Links", wide: true },
-    { key: "websiteUrl", label: "Website", type: "text", group: "Links", wide: true },
-    { key: "reviewQuote", label: "Review", type: "textarea", group: "Review", wide: true },
-    { key: "reviewAuthor", label: "Review author", type: "text", group: "Review" },
-    { key: "reviewRole", label: "Review role", type: "text", group: "Review" },
-    { key: "reviewStat", label: "Stat", type: "text", group: "Review" },
-    { key: "reviewStatLabel", label: "Stat label", type: "text", group: "Review" },
-    { key: "featured", label: "Featured", type: "checkbox", group: "Meta" },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  collabs: [
-    { key: "name", label: "Name", type: "text", group: "Basics" },
-    { key: "type", label: "Type", type: "select", group: "Basics", options: ["brand", "creator", "project"] },
-    { key: "logo", label: "Logo", type: "image", group: "Media", wide: true },
-    { key: "date", label: "Date", type: "text", group: "Basics" },
-    { key: "summary", label: "Summary", type: "textarea", group: "Copy", wide: true },
-    { key: "result", label: "Result", type: "textarea", group: "Copy", wide: true },
-    { key: "postIds", label: "Linked tweets", type: "comma", group: "Meta", wide: true },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  programs: [
-    { key: "name", label: "Name", type: "text", group: "Basics" },
-    { key: "role", label: "Role", type: "text", group: "Basics" },
-    { key: "start", label: "Start", type: "text", group: "Basics" },
-    { key: "end", label: "End", type: "text", group: "Basics" },
-    { key: "status", label: "Status", type: "select", group: "Basics", options: ["active", "completed"] },
-    { key: "highlights", label: "Highlights", type: "lines", group: "Copy", wide: true },
-    { key: "postIds", label: "Linked tweets", type: "comma", group: "Meta", wide: true },
-    { key: "impressions", label: "Impressions", type: "number", group: "Numbers" },
-    { key: "likes", label: "Likes", type: "number", group: "Numbers" },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  ambassadors: [
-    { key: "project", label: "Partner name", type: "text", group: "Basics" },
-    { key: "url", label: "X / website URL", type: "text", group: "Basics", wide: true },
-    { key: "roleType", label: "Role", type: "select", group: "Basics", options: ["ambassador", "creator-partner", "collaboration-partner"], optionLabels: { ambassador: "Ambassador", "creator-partner": "Creator Partner", "collaboration-partner": "Collaboration Partner" } },
-    { key: "title", label: "Title", type: "text", group: "Basics" },
-    { key: "region", label: "Region", type: "text", group: "Basics" },
-    { key: "start", label: "Start", type: "text", group: "Basics" },
-    { key: "summary", label: "Short description", type: "textarea", group: "Copy", wide: true },
-    { key: "duties", label: "Duties", type: "lines", group: "Copy", wide: true },
-    { key: "logo", label: "Logo", type: "image", group: "Media", wide: true },
-    { key: "status", label: "Status", type: "select", group: "Meta", options: ["active", "past"] },
-    { key: "postIds", label: "Linked tweets", type: "comma", group: "Meta", wide: true },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  contests: [
-    { key: "name", label: "Title", type: "text", group: "Basics", wide: true },
-    { key: "organizer", label: "Campaign / organizer", type: "text", group: "Basics" },
-    { key: "link", label: "Entry link", type: "text", group: "Basics", wide: true },
-    { key: "xUrl", label: "X post URL", type: "text", group: "Basics", wide: true },
-    { key: "date", label: "Date", type: "text", group: "Basics" },
-    { key: "year", label: "Year", type: "number", group: "Basics" },
-    { key: "placement", label: "Placement", type: "select", group: "Basics", options: ["", "winner", "finalist", "top10", "participant"], optionLabels: { "": "No result yet", winner: "Winner", finalist: "Finalist", top10: "Top 10", participant: "Participant" } },
-    { key: "result", label: "Result note", type: "text", group: "Basics", wide: true },
-    { key: "thumb", label: "Thumbnail", type: "image", group: "Media", wide: true },
-    { key: "entryPostId", label: "Linked tweet id", type: "text", group: "Meta", wide: true },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  testimonials: [
-    { key: "quote", label: "Quote", type: "textarea", group: "Basics", wide: true },
-    { key: "name", label: "Name", type: "text", group: "Basics" },
-    { key: "role", label: "Role", type: "text", group: "Basics" },
-    { key: "sourceUrl", label: "Source URL", type: "text", group: "Basics", wide: true },
-    { key: "stat", label: "Stat", type: "text", group: "Numbers" },
-    { key: "statLabel", label: "Stat label", type: "text", group: "Numbers" },
-    { key: "resultLine", label: "Result", type: "text", group: "Numbers", wide: true },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  process: [
-    { key: "kicker", label: "Kicker", type: "text", group: "Basics" },
-    { key: "title", label: "Title", type: "text", group: "Basics" },
-    { key: "body", label: "Body", type: "textarea", group: "Basics", wide: true },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-  tools: [
-    { key: "name", label: "Name", type: "text", group: "Basics" },
-    { key: "kind", label: "Kind", type: "select", group: "Basics", options: ["skill", "tool", "ai"], optionLabels: { skill: "Skill", tool: "Tool", ai: "AI" } },
-    { key: "group", label: "Group / model list", type: "text", group: "Basics", wide: true, help: "For AI rows this text is the model list shown on the card." },
-    { key: "icon", label: "Icon key or logo URL", type: "text", group: "Media" },
-    { key: "note", label: "Note", type: "textarea", group: "Copy", wide: true },
-    { key: "hidden", label: "Hidden", type: "checkbox", group: "Meta" },
-  ],
-};
+const SPECIAL = new Set(["", "add", "settings", "legal", "stats", "submissions"]);
 
-const TITLES: Record<string, string> = {
-  work: "Tweets on the site",
-  contests: "Campaigns",
-  ambassadors: "Partners",
-  tools: "Skills · Tools · AI",
-  articles: "Journal",
-  projects: "Projects",
-  links: "Links",
-  collabs: "Collabs",
-  programs: "Programs",
-  testimonials: "Reviews",
-  process: "Process",
-};
-
-function readPath(source: unknown, path: string): unknown {
-  return path.split(".").reduce<unknown>((current, key) => {
-    if (current && typeof current === "object") return (current as Record<string, unknown>)[key];
-    return undefined;
-  }, source);
-}
-
-function writePath(source: Record<string, unknown>, path: string, value: unknown) {
-  const next = structuredClone(source);
-  const parts = path.split(".");
-  let cursor = next;
-  for (const key of parts.slice(0, -1)) {
-    if (!cursor[key] || typeof cursor[key] !== "object") cursor[key] = {};
-    cursor = cursor[key] as Record<string, unknown>;
-  }
-  cursor[parts[parts.length - 1]] = value;
-  return next;
-}
-
-function labelOf(item: Record<string, unknown>) {
-  return String(item.title || item.name || item.project || item.quote || item.label || item.id || "Item");
-}
-
-function compact(value: unknown) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return "0";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
-  return String(n);
-}
-
-function thumbOf(item: Record<string, unknown>) {
-  const src = readPath(item, "thumb.src") ?? readPath(item, "thumb");
-  return typeof src === "string" && src.startsWith("http") ? src : "";
-}
+type Toast = { id: number; message: string; kind: "ok" | "error" };
 
 export function AdminApp({ initial }: { initial: AdminSnapshot }) {
   const pathname = usePathname();
@@ -239,35 +42,72 @@ export function AdminApp({ initial }: { initial: AdminSnapshot }) {
   const section = pathname.split("/").filter(Boolean)[1] || "";
   const [snap, setSnap] = useState(initial);
   const [error, setError] = useState("");
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState<Toast | null>(null);
   const [busy, setBusy] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [moreToggled, setMoreOpen] = useState(false);
+  const moreOpen = moreToggled || MORE.some((entry) => entry.href === section);
+  const [highlightId, setHighlightId] = useState("");
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastSeq = useRef(0);
+  const { ask, dialog } = useConfirmState();
 
-  async function send(body: unknown, okMessage = "Saved") {
+  const notify = useCallback((message: string, kind: "ok" | "error" = "ok") => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ id: ++toastSeq.current, message, kind });
+    toastTimer.current = setTimeout(() => setToast(null), kind === "error" ? 5000 : 2600);
+  }, []);
+  const clearError = useCallback(() => setError(""), []);
+
+  useEffect(() => () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  async function send(body: unknown, okMessage = "Tersimpan") {
     if (!snap.writable) {
-      setError("Saving is off until a database is connected.");
+      const message = "Belum bisa menyimpan: penyimpanan data belum tersambung.";
+      setError(message);
+      notify(message, "error");
       return false;
     }
     setBusy(true);
     setError("");
-    const response = await fetch("/api/admin/mutate", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const json = (await response.json().catch(() => ({}))) as { error?: string; snapshot?: AdminSnapshot };
-    setBusy(false);
-    if (!response.ok || !json.snapshot) {
-      setError(json.error || "Save failed");
+    try {
+      const response = await fetch("/api/admin/mutate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = (await response.json().catch(() => ({}))) as { error?: string; snapshot?: AdminSnapshot };
+      if (!response.ok || !json.snapshot) {
+        const message = json.error || "Gagal menyimpan. Coba lagi.";
+        setError(message);
+        notify(message, "error");
+        return false;
+      }
+      setSnap(json.snapshot);
+      notify(okMessage);
+      return true;
+    } catch {
+      const message = "Gagal menghubungi server. Cek internet lalu coba lagi.";
+      setError(message);
+      notify(message, "error");
       return false;
+    } finally {
+      setBusy(false);
     }
-    setSnap(json.snapshot);
-    setToast(okMessage);
-    setTimeout(() => setToast(""), 2200);
-    return true;
   }
 
   async function refreshMetrics(id?: string) {
-    setBusy(true);
     setError("");
     try {
       const response = await fetch("/api/admin/metrics/refresh", {
@@ -275,1002 +115,192 @@ export function AdminApp({ initial }: { initial: AdminSnapshot }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(id ? { id } : { limit: 25 }),
       });
-      const json = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        updated?: number;
-        total?: number;
-        snapshot?: AdminSnapshot;
-      };
-      setBusy(false);
+      const json = (await response.json().catch(() => ({}))) as { error?: string; updated?: number; snapshot?: AdminSnapshot };
       if (!response.ok || !json.snapshot) {
-        setError(json.error || "Gagal memperbarui impressions dari X");
+        const message = json.error || "Gagal memperbarui views dari X.";
+        setError(message);
+        notify(message, "error");
         return false;
       }
       setSnap(json.snapshot);
-      setToast(`Berhasil memperbarui ${json.updated ?? 1} karya dari X`);
-      setTimeout(() => setToast(""), 2200);
+      notify(`Views ${json.updated ?? 1} video diperbarui dari X`);
       return true;
     } catch {
-      setBusy(false);
-      setError("Gagal menghubungi server");
+      const message = "Gagal menghubungi server. Cek internet lalu coba lagi.";
+      setError(message);
+      notify(message, "error");
       return false;
     }
   }
 
-  const groups = useMemo(() => {
-    const map = new Map<string, typeof NAV>();
-    for (const entry of NAV) map.set(entry.group, [...(map.get(entry.group) || []), entry]);
-    return [...map.entries()];
-  }, []);
+  const showVideo = useCallback(
+    (id: string) => {
+      setHighlightId(id);
+      router.push("/admin/work");
+    },
+    [router],
+  );
+  const doneHighlight = useCallback(() => setHighlightId(""), []);
+
+  const ctx = useMemo(
+    () => ({ notify, ask: (options: AskOptions) => ask(options), error, clearError }),
+    [notify, ask, error, clearError],
+  );
 
   const disabled = !snap.writable || busy;
+  const work = snap.content.work as unknown as Row[];
+  const inboxCount = snap.submissions.length;
+  const known = SPECIAL.has(section) || section === "work" || Boolean(FIELDS[section]);
+  const pageTitle =
+    section === "" ? "Beranda" : section === "add" ? "Tambah video" : section === "settings" ? "Teks & pengaturan" : section === "stats" ? "Angka engagement" : section === "legal" ? "Legal" : section === "submissions" ? "Kotak masuk" : TITLES[section] || "Admin";
+
+  const navLink = (href: string, label: string, extra?: ReactNode) => {
+    const active = section === href;
+    return (
+      <Link key={href || "home"} href={href ? `/admin/${href}` : "/admin"} className={`ad-nav-link ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}>
+        <span>{label}</span>
+        {extra}
+      </Link>
+    );
+  };
 
   return (
-    <div className="admin">
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[220px_1fr]">
-        <aside className="admin-nav md:sticky md:top-4 md:self-start">
-          <p className="font-display text-2xl text-forest">Tirta admin</p>
-          <p className="mt-1 text-xs muted">{snap.writable ? "Connected · edits save live" : "Read only"}</p>
-          <nav className="mt-4 flex gap-2 overflow-x-auto md:grid md:gap-4">
-            {groups.map(([group, entries]) => (
-              <div key={group} className="min-w-max md:min-w-0">
-                <p className="hidden px-1 text-[11px] uppercase tracking-[0.18em] muted md:block">{group}</p>
-                <div className="mt-1 flex gap-2 md:grid">
-                  {entries.map(({ href, label }) => {
-                    const active = section === href;
-                    return (
-                      <Link
-                        key={href || "home"}
-                        href={href ? `/admin/${href}` : "/admin"}
-                        className={`whitespace-nowrap rounded-pill px-3 py-2 text-sm ${active ? "bg-emerald-700 text-white" : "bg-white"}`}
-                      >
-                        {label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
-          <div className="mt-5 flex flex-wrap gap-3 text-sm">
-            <Link href="/" className="underline">View site</Link>
-            <button
-              className="underline"
-              onClick={async () => {
-                await fetch("/api/admin/logout", { method: "POST" });
-                router.push("/admin/login");
-                router.refresh();
-              }}
-            >
-              Log out
-            </button>
-          </div>
-        </aside>
-        <main className="min-w-0">
-          {!snap.writable ? (
-            <p className="mb-4 rounded-card border border-amber-300 bg-white p-4 text-sm">
-              Read-only mode: no database is attached, so edits cannot be saved yet.
-            </p>
-          ) : null}
-          {snap.warning ? <p className="mb-4 rounded-card bg-white p-4 text-sm">{snap.warning}</p> : null}
-          {error ? <p className="mb-4 rounded-card bg-amber/10 p-3 text-sm text-amber">{error}</p> : null}
-          {section === "" ? <Overview snap={snap} onOpen={(href) => router.push(href)} /> : null}
-          {section === "settings" ? <SettingsForm settings={snap.content.settings} disabled={disabled} onSave={(data) => send({ op: "settings", data }, "Settings saved")} /> : null}
-          {section === "legal" ? <LegalForm content={snap.content} disabled={disabled} onSave={(slug, data) => send({ op: "legal", slug, data }, `${slug} saved`)} /> : null}
-          {section === "stats" ? <StatsForm stats={snap.content.stats} disabled={disabled} onSave={(data) => send({ op: "stats", data }, "Numbers saved")} /> : null}
-          {section === "submissions" ? (
-            <Inbox
-              items={snap.submissions}
-              disabled={disabled}
-              onDelete={(id) => {
-                if (confirm("Delete this brief?")) void send({ op: "delete", type: "submissions", id }, "Brief deleted");
-              }}
-            />
-          ) : null}
-          {section === "work" ? (
-            <Tweets
-              items={snap.content.work as unknown as Record<string, unknown>[]}
-              disabled={disabled}
-              onRefreshMetrics={refreshMetrics}
-              onImport={async (payload) => {
-                const response = await fetch("/api/admin/x/import", {
-                  method: "POST",
-                  headers: { "content-type": "application/json" },
-                  body: JSON.stringify(payload),
-                });
-                const json = (await response.json().catch(() => ({}))) as { error?: string; snapshot?: AdminSnapshot };
-                if (!response.ok) {
-                  setError(json.error || "Import failed");
-                  return false;
-                }
-                if (json.snapshot) setSnap(json.snapshot);
-                setError("");
-                setToast(payload.isCampaign ? "Ditambahkan ke The Cut & Campaigns" : "Tweet ditambahkan ke The Cut");
-                setTimeout(() => setToast(""), 2200);
-                return true;
-              }}
-              onCreate={(data) => send({ op: "create", type: "work", data }, "Tweet added")}
-              onUpdate={(id, data) => send({ op: "update", type: "work", id, data }, "Tweet updated")}
-              onDelete={(id) => send({ op: "delete", type: "work", id }, "Tweet deleted")}
-              onReorder={(ids) => send({ op: "reorder", type: "work", ids }, "Order saved")}
-            />
-          ) : null}
-          {section !== "work" && FIELDS[section] ? (
-            <Collection
-              type={section}
-              title={TITLES[section] || section}
-              items={(snap.content[section as keyof SiteContent] as unknown[]).filter((item) => item && typeof item === "object") as Record<string, unknown>[]}
-              fields={FIELDS[section]}
-              disabled={disabled}
-              onCreate={(data) => send({ op: "create", type: section, data }, "Added")}
-              onUpdate={(id, data) => send({ op: "update", type: section, id, data }, "Saved")}
-              onDelete={(id) => send({ op: "delete", type: section, id }, "Deleted")}
-              onReorder={(ids) => send({ op: "reorder", type: section, ids }, "Order saved")}
-            />
-          ) : null}
-        </main>
-      </div>
-      {toast ? (
-        <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-pill bg-emerald-700 px-4 py-2 text-sm text-white shadow-lg">{toast}</div>
-      ) : null}
-    </div>
-  );
-}
-
-function Overview({ snap, onOpen }: { snap: AdminSnapshot; onOpen: (href: string) => void }) {
-  const cards = [
-    ["Tweets", snap.content.work.length, "/admin/work"],
-    ["Campaigns", snap.content.contests.length, "/admin/contests"],
-    ["Projects", snap.content.projects.length, "/admin/projects"],
-    ["Partners", snap.content.ambassadors.length, "/admin/ambassadors"],
-    ["Journal", snap.content.articles.length, "/admin/articles"],
-    ["Inbox", snap.submissions.length, "/admin/submissions"],
-  ] as const;
-  return (
-    <section>
-      <h1 className="font-display text-5xl">Dashboard</h1>
-      <p className="mt-2 text-sm muted">Everything on tirtavex.tech is editable here. Open a section, change what you need, hit save.</p>
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3">
-        {cards.map(([label, value, href]) => (
-          <button key={label} className="rounded-card bg-white p-4 text-left" onClick={() => onOpen(href)}>
-            <p className="text-sm muted">{label}</p>
-            <p className="font-display text-4xl">{value}</p>
+    <AdminContext.Provider value={ctx}>
+      <div className="admin">
+        <header className="ad-topbar">
+          <button type="button" className="ad-icon-btn" aria-label="Buka menu" aria-expanded={menuOpen} aria-controls="admin-side" onClick={() => setMenuOpen(true)}>
+            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
-        ))}
-      </div>
-      <div className="mt-6 grid gap-3 md:grid-cols-2">
-        <Link href="/admin/work" className="rounded-card bg-white p-4">
-          <p className="font-semibold">Add a tweet</p>
-          <p className="mt-1 text-sm muted">Paste an X status link and the thumbnail, caption, and numbers fill themselves in.</p>
-        </Link>
-        <Link href="/admin/settings" className="rounded-card bg-white p-4">
-          <p className="font-semibold">Edit the copy</p>
-          <p className="mt-1 text-sm muted">Hero, about, section titles, contact details, and meta description.</p>
-        </Link>
-      </div>
-    </section>
-  );
-}
+          <p className="ad-topbar-title">{pageTitle}</p>
+          <Link href="/admin/add" className="ad-btn primary sm" aria-label="Tambah video">+ Video</Link>
+        </header>
 
-type ImportPayload = {
-  url: string;
-  lane: string;
-  tags: string[];
-  pinned: boolean;
-  thumbSrc?: string;
-  isCampaign?: boolean;
-  campaignName?: string;
-  organizer?: string;
-};
+        {menuOpen ? <div className="ad-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" /> : null}
 
-function Tweets({
-  items,
-  disabled,
-  onImport,
-  onRefreshMetrics,
-  onCreate,
-  onUpdate,
-  onDelete,
-  onReorder,
-}: {
-  items: Record<string, unknown>[];
-  disabled: boolean;
-  onImport: (payload: ImportPayload) => Promise<boolean>;
-  onRefreshMetrics: (id?: string) => Promise<boolean>;
-  onCreate: (data: Record<string, unknown>) => Promise<boolean>;
-  onUpdate: (id: string, data: Record<string, unknown>) => Promise<boolean>;
-  onDelete: (id: string) => Promise<boolean>;
-  onReorder: (ids: string[]) => Promise<boolean>;
-}) {
-  const [url, setUrl] = useState("");
-  const [lane, setLane] = useState("generation");
-  const [customThumb, setCustomThumb] = useState("");
-  const [isCampaign, setIsCampaign] = useState(false);
-  const [campaignName, setCampaignName] = useState("");
-  const [organizer, setOrganizer] = useState("");
-  const [tags, setTags] = useState("");
-  const [pinned, setPinned] = useState(false);
-  const [working, setWorking] = useState(false);
-  const [refreshingAll, setRefreshingAll] = useState(false);
-  const [refreshingId, setRefreshingId] = useState<string | null>(null);
-  const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
-  const [previewError, setPreviewError] = useState("");
-  const [query, setQuery] = useState("");
-  const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
-
-  const filtered = items.filter((item) => {
-    if (!query.trim()) return true;
-    const hay = `${labelOf(item)} ${String(readPath(item, "xUrl") || "")} ${(readPath(item, "tags") as string[] | undefined)?.join(" ") || ""}`;
-    return hay.toLowerCase().includes(query.toLowerCase());
-  });
-
-  async function handlePreview() {
-    if (!url.trim()) return;
-    setWorking(true);
-    setPreviewError("");
-    try {
-      const res = await fetch("/api/admin/x/preview", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
-      });
-      const json = await res.json();
-      if (!res.ok) setPreviewError(json.error || "Gagal memuat data X");
-      else setPreview(json);
-    } catch {
-      setPreviewError("Gagal menghubungi server X");
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  function move(index: number, direction: -1 | 1) {
-    const ids = items.map((item) => String(item.id));
-    const next = index + direction;
-    if (next < 0 || next >= ids.length) return;
-    [ids[index], ids[next]] = [ids[next], ids[index]];
-    void onReorder(ids);
-  }
-
-  return (
-    <section className="grid gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl">{TITLES.work}</h1>
-          <p className="mt-1 text-sm muted">Tambah tweet ke The Cut & Campaigns secara instan, atur urutan, edit metadata, atau sembunyikan.</p>
-        </div>
-        <button
-          type="button"
-          className="rounded-pill border border-emerald-600 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
-          disabled={disabled || refreshingAll}
-          onClick={async () => {
-            setRefreshingAll(true);
-            await onRefreshMetrics();
-            setRefreshingAll(false);
-          }}
-        >
-          {refreshingAll ? "🔄 Memperbarui dari X…" : "🔄 Refresh Semua Impressions"}
-        </button>
-      </div>
-
-      <div className="rounded-card border border-[var(--tv-line)] bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--tv-line)] pb-3">
-          <div>
-            <p className="text-base font-semibold">Tambah Karya dari X (The Cut & Campaigns)</p>
-            <p className="text-xs muted">Cukup paste link status X — thumbnail, stream video MP4, caption, dan impressions otomatis ketarik.</p>
-          </div>
-          <span className="rounded-pill bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">Auto-enrich fxtwitter</span>
-        </div>
-
-        <div className="mt-4 grid gap-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_200px]">
-            <label className="field">
-              <span className="font-medium">Link Status X (Twitter) *</span>
-              <input
-                value={url}
-                onChange={(event) => {
-                  setUrl(event.target.value);
-                  setPreview(null);
-                }}
-                placeholder="https://x.com/tirtaVEX/status/2120896958500049359"
-              />
-              <span className="text-[11px] muted">Contoh: https://x.com/tirtaVEX/status/2120896958500049359</span>
-            </label>
-            <label className="field">
-              <span className="font-medium">Kategori Showcase</span>
-              <select value={lane} onChange={(event) => setLane(event.target.value)}>
-                <option value="generation">AI video (Generation)</option>
-                <option value="motion">Motion video</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="grid gap-3 rounded-card bg-[var(--tv-mist)] p-3 md:grid-cols-2">
-            <label className="field">
-              <span className="font-medium">Custom Thumbnail / Poster (Opsional)</span>
-              <input
-                value={customThumb}
-                onChange={(event) => setCustomThumb(event.target.value)}
-                placeholder="/media/gacha-reality-break.webp atau URL gambar"
-              />
-              <ImageUpload onUrl={(u) => setCustomThumb(u)} />
-              <span className="text-[11px] muted">Kosongkan jika ingin memakai thumbnail otomatis dari video X.</span>
-            </label>
-
-            {customThumb ? (
-              <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={customThumb} alt="Custom thumbnail" className="h-20 w-32 rounded object-cover shadow-sm" />
-                <button type="button" className="text-xs text-red-600 underline" onClick={() => setCustomThumb("")}>
-                  Hapus custom thumb
-                </button>
+        <div className="ad-shell">
+          <aside id="admin-side" className={`ad-side ${menuOpen ? "open" : ""}`} aria-label="Menu admin">
+            <div className="ad-side-head">
+              <div>
+                <p className="ad-brand">Tirta admin</p>
+                <p className="muted">{snap.writable ? "Tersambung · perubahan langsung tayang" : "Mode baca saja"}</p>
               </div>
-            ) : (
-              <div className="flex items-center text-xs text-[var(--tv-ink-muted)]">
-                Poster film khusus (PNG/JPEG/WebP, maks 4.5 MB) bisa di-upload di sini jika tidak mau pakai frame pertama dari video. Otomatis diubah ke WebP & diperkecil maks 1920px.
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-card border border-emerald-200 bg-emerald-50/50 p-3">
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-              <input type="checkbox" checked={isCampaign} onChange={(event) => setIsCampaign(event.target.checked)} />
-              Juga masukkan ke bagian &quot;Campaigns&quot; (Lomba, Fest, Quest, Recast)
-            </label>
-
-            {isCampaign ? (
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <label className="field">
-                  <span>Nama Campaign / Judul Karya</span>
-                  <input
-                    value={campaignName}
-                    onChange={(event) => setCampaignName(event.target.value)}
-                    placeholder="GACHA: REALITY BREAK · NEO JAPONISM"
-                  />
-                  <span className="text-[11px] muted">Kosongkan untuk otomatis pakai judul tweet.</span>
-                </label>
-                <label className="field">
-                  <span>Penyelenggara / Organizer</span>
-                  <input
-                    value={organizer}
-                    onChange={(event) => setOrganizer(event.target.value)}
-                    placeholder="AI FUSION FES 2026 WINTER (TapNow)"
-                  />
-                  <span className="text-[11px] muted">Contoh: Renoise AI, AI Fusion Fes, Meteora, Cuddler.</span>
-                </label>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <label className="field">
-              <span>Tags (pisahkan koma)</span>
-              <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="AI Fusion Fes, NEO JAPONISM, TapNow, 4K" />
-            </label>
-            <label className="flex items-center gap-2 self-end pb-3 text-sm">
-              <input type="checkbox" checked={pinned} onChange={(event) => setPinned(event.target.checked)} /> Pin ke paling atas
-            </label>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              type="button"
-              className="btn ghost"
-              disabled={disabled || working || !url.trim()}
-              onClick={handlePreview}
-            >
-              Preview dari X
-            </button>
-            <button
-              type="button"
-              className="btn"
-              disabled={disabled || working || !url.trim()}
-              onClick={async () => {
-                setWorking(true);
-                const ok = await onImport({
-                  url: url.trim(),
-                  lane,
-                  tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-                  pinned,
-                  thumbSrc: customThumb.trim() || undefined,
-                  isCampaign,
-                  campaignName: campaignName.trim() || undefined,
-                  organizer: organizer.trim() || undefined,
-                });
-                setWorking(false);
-                if (ok) {
-                  setUrl("");
-                  setTags("");
-                  setCustomThumb("");
-                  setIsCampaign(false);
-                  setCampaignName("");
-                  setOrganizer("");
-                  setPinned(false);
-                  setPreview(null);
-                }
-              }}
-            >
-              {working ? "Memproses…" : "Simpan ke Portfolio"}
-            </button>
-          </div>
-
-          {previewError ? <p className="text-sm text-red-600">{previewError}</p> : null}
-
-          {preview ? (
-            <div className="mt-2 flex flex-wrap items-start gap-4 rounded-card border border-[var(--tv-line)] bg-[var(--tv-mist)] p-3">
-              {typeof preview.thumbSrc === "string" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={customThumb || String(preview.thumbSrc)} alt="Preview" className="h-24 w-40 rounded object-cover shadow" />
-              ) : null}
-              <div className="min-w-0 flex-1 text-sm">
-                <p className="font-semibold">{String(preview.title || "Detected Tweet")}</p>
-                <p className="mt-1 text-xs muted line-clamp-2">{String(preview.text || "")}</p>
-                <p className="mt-2 font-mono text-xs text-emerald-800">
-                  {compact(readPath(preview, "metrics.impressions"))} views · {compact(readPath(preview, "metrics.likes"))} likes
-                  {preview.videoUrl ? " · Video MP4 terdeteksi ✓" : " · Tidak ada video"}
-                </p>
-              </div>
+              <button type="button" className="ad-icon-btn ad-close-menu" aria-label="Tutup menu" onClick={() => setMenuOpen(false)}>×</button>
             </div>
-          ) : null}
-        </div>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          className="min-w-0 flex-1 rounded-pill border border-[var(--tv-line)] bg-white px-4 py-2 text-sm"
-          placeholder="Cari tweet di The Cut…"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        <p className="text-sm muted">{filtered.length} dari {items.length} karya</p>
-        <button
-          type="button"
-          className="rounded-pill border border-[var(--tv-line)] bg-white px-3 py-2 text-sm font-medium transition hover:border-emerald-600 disabled:opacity-50"
-          disabled={disabled || refreshingAll}
-          onClick={async () => {
-            setRefreshingAll(true);
-            await onRefreshMetrics();
-            setRefreshingAll(false);
-          }}
-        >
-          {refreshingAll ? "🔄 Memperbarui…" : "🔄 Refresh Metrics"}
-        </button>
-        <button className="btn ghost" disabled={disabled} onClick={() => setEditing({})}>+ Form Manual</button>
-      </div>
+            <nav className="ad-nav" aria-label="Navigasi utama" onClick={(event) => { if ((event.target as HTMLElement).closest("a")) setMenuOpen(false); }}>
+              {navLink("", "Beranda")}
+              <Link href="/admin/add" className={`ad-btn primary ad-nav-add ${section === "add" ? "active" : ""}`} aria-current={section === "add" ? "page" : undefined}>
+                + Tambah video
+              </Link>
+              {navLink("work", "Video · The Cut")}
+              {navLink("contests", "Campaigns")}
+              {navLink("ambassadors", "Partners")}
+              {navLink("submissions", "Kotak masuk", inboxCount > 0 ? <span className="ad-count" aria-label={`${inboxCount} pesan`}>{inboxCount}</span> : null)}
 
-      {editing ? (
-        <Editor
-          fields={TWEET_CORE}
-          value={editing}
-          disabled={disabled}
-          onChange={setEditing}
-          onCancel={() => setEditing(null)}
-          onSave={async () => {
-            const ok = editing.id ? await onUpdate(String(editing.id), editing) : await onCreate(editing);
-            if (ok) setEditing(null);
-          }}
-        />
-      ) : null}
+              <button type="button" className="ad-nav-group" aria-expanded={moreOpen} aria-controls="nav-more" onClick={() => setMoreOpen(!moreOpen)}>
+                <span>Konten lain</span>
+                <span aria-hidden="true" className={`ad-caret ${moreOpen ? "open" : ""}`}>›</span>
+              </button>
+              {moreOpen ? <div id="nav-more" className="ad-nav-sub">{MORE.map((entry) => navLink(entry.href, entry.label))}</div> : null}
 
-      <ul className="grid gap-3 md:grid-cols-2">
-        {filtered.map((item) => {
-          const index = items.indexOf(item);
-          const thumb = thumbOf(item);
-          const status = String(item.status || "live");
-          const hidden = Boolean(item.hidden) || status !== "live";
-          return (
-            <li key={String(item.id)} className="overflow-hidden rounded-card bg-white">
-              <div className="relative aspect-[16/10] bg-[#ece7df]">
-                {thumb ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={thumb} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-                ) : null}
-                <span className="absolute left-2 top-2 rounded-pill bg-black/70 px-2 py-1 text-[11px] uppercase tracking-[0.14em] text-white">
-                  {hidden ? "Hidden" : "Live"}
-                </span>
-                {item.pinned ? <span className="absolute right-2 top-2 rounded-pill bg-emerald-700 px-2 py-1 text-[11px] text-white">Pinned</span> : null}
-                <span className="absolute bottom-2 left-2 rounded-pill bg-black/70 px-2 py-1 text-[11px] text-white">
-                  {compact(readPath(item, "metrics.impressions"))} impressions · {compact(readPath(item, "metrics.likes"))} likes
-                </span>
-              </div>
-              <div className="grid gap-2 p-3">
-                <p className="font-medium leading-snug">{labelOf(item)}</p>
-                <p className="text-xs muted">
-                  {(readPath(item, "tags") as string[] | undefined)?.join(" · ") || "No tags"} · {String(readPath(item, "lane") || "generation")}
-                </p>
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1" disabled={disabled} onClick={() => setEditing(structuredClone(item))}>Edit</button>
-                  <button
-                    className="rounded-pill border border-[var(--tv-line)] px-3 py-1"
-                    disabled={disabled}
-                    onClick={() => void onUpdate(String(item.id), { ...item, status: status === "live" ? "hidden" : "live", hidden: status === "live" })}
-                  >
-                    {status === "live" ? "Hide" : "Show"}
-                  </button>
-                  <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, pinned: !item.pinned })}>
-                    {item.pinned ? "Unpin" : "Pin"}
-                  </button>
-                  <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1" disabled={disabled} onClick={() => move(index, -1)} aria-label="Move up">↑</button>
-                  <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1" disabled={disabled} onClick={() => move(index, 1)} aria-label="Move down">↓</button>
-                  <button
-                    className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1 hover:border-emerald-600"
-                    disabled={disabled || refreshingId === String(item.id)}
-                    title="Refresh impressions & likes karya ini langsung dari X"
-                    onClick={async () => {
-                      setRefreshingId(String(item.id));
-                      await onRefreshMetrics(String(item.id));
-                      setRefreshingId(null);
-                    }}
-                  >
-                    {refreshingId === String(item.id) ? "…" : "🔄 Refresh"}
-                  </button>
-                  <button
-                    className="rounded-pill border border-red-200 px-3 py-1 text-red-700"
-                    disabled={disabled}
-                    onClick={() => {
-                      if (confirm(`Delete “${labelOf(item)}” from the site?`)) void onDelete(String(item.id));
-                    }}
-                  >
-                    Delete
-                  </button>
-                  {String(readPath(item, "xUrl") || "").includes("/status/") ? (
-                    <a className="ml-auto text-xs underline" href={String(readPath(item, "xUrl"))} target="_blank" rel="noopener noreferrer">Open on X ↗</a>
-                  ) : null}
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      {filtered.length === 0 ? <p className="text-sm muted">Nothing matches that search.</p> : null}
-    </section>
-  );
-}
+              <p className="ad-nav-label">Pengaturan</p>
+              {SETTINGS.map((entry) => navLink(entry.href, entry.label))}
+            </nav>
 
-function Collection({
-  type,
-  title,
-  items,
-  fields,
-  disabled,
-  onCreate,
-  onUpdate,
-  onDelete,
-  onReorder,
-}: {
-  type: string;
-  title: string;
-  items: Record<string, unknown>[];
-  fields: Field[];
-  disabled: boolean;
-  onCreate: (data: Record<string, unknown>) => Promise<boolean>;
-  onUpdate: (id: string, data: Record<string, unknown>) => Promise<boolean>;
-  onDelete: (id: string) => Promise<boolean>;
-  onReorder: (ids: string[]) => Promise<boolean>;
-}) {
-  const blank = useMemo(() => {
-    const base: Record<string, unknown> = {};
-    for (const field of fields) {
-      const value = field.type === "checkbox" ? false : field.type === "number" ? 0 : field.type === "comma" || field.type === "lines" ? [] : field.type === "select" ? field.options?.[0] : "";
-      const parts = field.key.split(".");
-      let cursor = base;
-      for (const key of parts.slice(0, -1)) {
-        cursor[key] = cursor[key] && typeof cursor[key] === "object" ? cursor[key] : {};
-        cursor = cursor[key] as Record<string, unknown>;
-      }
-      cursor[parts[parts.length - 1]] = value;
-    }
-    if (type === "work") {
-      base.thumb = { ...(base.thumb as object), dominant: "#10B981", w: 1280, h: 720 };
-      base.metrics = { ...(base.metrics as object), updatedAt: new Date().toISOString() };
-      base.postedAt = new Date().toISOString();
-    }
-    if (type === "articles") base.publishedAt = new Date().toISOString();
-    return base;
-  }, [fields, type]);
-  const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
-  const [query, setQuery] = useState("");
-  const filtered = items.filter((item) => !query.trim() || labelOf(item).toLowerCase().includes(query.toLowerCase()));
-
-  function move(index: number, direction: -1 | 1) {
-    const ids = items.map((item) => String(item.id));
-    const next = index + direction;
-    if (next < 0 || next >= ids.length) return;
-    [ids[index], ids[next]] = [ids[next], ids[index]];
-    void onReorder(ids);
-  }
-
-  return (
-    <section className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-4xl">{title}</h1>
-        <button className="btn" disabled={disabled} onClick={() => setDraft(structuredClone(blank))}>Add new</button>
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          className="min-w-0 flex-1 rounded-pill border border-[var(--tv-line)] bg-white px-4 py-2 text-sm"
-          placeholder={`Search ${title.toLowerCase()}`}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        <p className="text-sm muted">{filtered.length} of {items.length}</p>
-      </div>
-      {draft ? (
-        <Editor
-          fields={fields}
-          value={draft}
-          disabled={disabled}
-          onChange={setDraft}
-          onCancel={() => setDraft(null)}
-          onSave={async () => {
-            const ok = draft.id ? await onUpdate(String(draft.id), draft) : await onCreate(draft);
-            if (ok) setDraft(null);
-          }}
-        />
-      ) : null}
-      <ul className="grid gap-2">
-        {filtered.map((item) => {
-          const index = items.indexOf(item);
-          const thumb = thumbOf(item);
-          const hidden = Boolean(item.hidden) || item.status === "hidden" || item.status === "deleted";
-          return (
-            <li key={String(item.id)} className="flex flex-wrap items-center gap-3 rounded-card bg-white p-3">
-              {thumb ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={thumb} alt="" className="h-12 w-16 rounded object-cover" loading="lazy" />
-              ) : null}
-              <p className="min-w-0 flex-1 font-medium">{labelOf(item)}</p>
-              {item.pinned ? <span className="chip">Pinned</span> : null}
-              {hidden ? <span className="chip">Hidden</span> : null}
-              <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1 text-sm" disabled={disabled} onClick={() => move(index, -1)} aria-label="Move up">↑</button>
-              <button className="rounded-pill border border-[var(--tv-line)] px-2.5 py-1 text-sm" disabled={disabled} onClick={() => move(index, 1)} aria-label="Move down">↓</button>
-              {"pinned" in item ? (
-                <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1 text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, pinned: !item.pinned })}>
-                  {item.pinned ? "Unpin" : "Pin"}
-                </button>
-              ) : null}
-              {"hidden" in item ? (
-                <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1 text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, hidden: !item.hidden })}>
-                  {item.hidden ? "Show" : "Hide"}
-                </button>
-              ) : null}
-              {"status" in item && (item.status === "live" || item.status === "hidden") ? (
-                <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1 text-sm" disabled={disabled} onClick={() => void onUpdate(String(item.id), { ...item, status: item.status === "live" ? "hidden" : "live" })}>
-                  {item.status === "live" ? "Hide" : "Show"}
-                </button>
-              ) : null}
-              <button className="rounded-pill border border-[var(--tv-line)] px-3 py-1 text-sm" disabled={disabled} onClick={() => setDraft(structuredClone(item))}>Edit</button>
+            <div className="ad-side-foot">
+              <Link href="/" target="_blank" rel="noopener noreferrer" className="ad-link">Lihat situs ↗</Link>
               <button
-                className="rounded-pill border border-red-200 px-3 py-1 text-sm text-red-700"
-                disabled={disabled}
+                type="button"
+                className="ad-link"
                 onClick={() => {
-                  if (confirm(`Delete “${labelOf(item)}”?`)) void onDelete(String(item.id));
+                  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+                  document.documentElement.dataset.theme = next;
+                  try {
+                    localStorage.setItem("tv-theme", next);
+                  } catch {}
                 }}
               >
-                Delete
+                Ganti tema
               </button>
-            </li>
-          );
-        })}
-      </ul>
-      {filtered.length === 0 ? <p className="text-sm muted">Nothing here yet.</p> : null}
-    </section>
-  );
-}
-
-function Editor({
-  fields,
-  value,
-  onChange,
-  onSave,
-  onCancel,
-  disabled,
-}: {
-  fields: Field[];
-  value: Record<string, unknown>;
-  onChange: (value: Record<string, unknown>) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  disabled: boolean;
-}) {
-  const groups = useMemo(() => {
-    const map = new Map<string, Field[]>();
-    for (const field of fields) {
-      const key = field.group || "Details";
-      map.set(key, [...(map.get(key) || []), field]);
-    }
-    return [...map.entries()];
-  }, [fields]);
-  const preview = typeof readPath(value, "thumb.src") === "string" ? String(readPath(value, "thumb.src")) : "";
-
-  return (
-    <form
-      className="grid gap-4 rounded-card border border-[var(--tv-line)] bg-white p-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSave();
-      }}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold">{value.id ? `Editing: ${labelOf(value)}` : "New entry"}</p>
-        <div className="flex gap-2">
-          <button className="btn" disabled={disabled} type="submit">Save</button>
-          <button className="btn ghost" type="button" onClick={onCancel}>Cancel</button>
-        </div>
-      </div>
-      {preview ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview} alt="" className="h-32 w-full rounded object-cover" />
-      ) : null}
-      {groups.map(([group, groupFields]) => (
-        <div key={group} className="grid gap-3">
-          <p className="text-[11px] uppercase tracking-[0.18em] muted">{group}</p>
-          <div className="grid gap-3 md:grid-cols-2">
-            {groupFields.map((field) => {
-              const current = readPath(value, field.key);
-              const set = (next: unknown) => onChange(writePath(value, field.key, next));
-              if (field.type === "checkbox") {
-                return (
-                  <label key={field.key} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={Boolean(current)} onChange={(event) => set(event.target.checked)} />
-                    {field.label}
-                  </label>
-                );
-              }
-              if (field.type === "select") {
-                return (
-                  <label key={field.key} className="field">
-                    <span>{field.label}</span>
-                    <select value={String(current ?? "")} onChange={(event) => set(event.target.value)}>
-                      {field.options?.map((option) => (
-                        <option key={option || "empty"} value={option}>{field.optionLabels?.[option] || option || "None"}</option>
-                      ))}
-                    </select>
-                  </label>
-                );
-              }
-              const text = Array.isArray(current) ? current.join(field.type === "lines" ? "\n" : ", ") : current == null ? "" : String(current);
-              return (
-                <label key={field.key} className={`field ${field.wide || field.type === "textarea" || field.type === "lines" ? "md:col-span-2" : ""}`}>
-                  <span>{field.label}</span>
-                  {field.type === "textarea" || field.type === "lines" ? (
-                    <textarea
-                      value={text}
-                      onChange={(event) => set(field.type === "lines" ? event.target.value.split("\n").map((line) => line.trim()).filter(Boolean) : event.target.value)}
-                    />
-                  ) : (
-                    <input
-                      value={text}
-                      type={field.type === "number" ? "number" : "text"}
-                      onChange={(event) => set(field.type === "number" ? Number(event.target.value) : field.type === "comma" ? event.target.value.split(",").map((part) => part.trim()).filter(Boolean) : event.target.value)}
-                    />
-                  )}
-                  {field.help ? <span className="text-xs muted">{field.help}</span> : null}
-                  {field.type === "image" ? <ImageUpload onUrl={(url) => set(url)} /> : null}
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-      <div className="flex gap-2">
-        <button className="btn" disabled={disabled} type="submit">Save changes</button>
-        <button className="btn ghost" type="button" onClick={onCancel}>Cancel</button>
-      </div>
-    </form>
-  );
-}
-
-function ImageUpload({ onUrl }: { onUrl: (url: string) => void }) {
-  const [note, setNote] = useState("");
-  return (
-    <span className="text-xs">
-      <input
-        type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
-        onChange={async (event) => {
-          const file = event.target.files?.[0];
-          if (!file) return;
-          const body = new FormData();
-          body.set("file", file);
-          const response = await fetch("/api/admin/upload", { method: "POST", body });
-          const json = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
-          if (!response.ok || !json.url) setNote(json.error || "Upload failed. Paste a URL instead.");
-          else {
-            onUrl(json.url);
-            setNote("Uploaded.");
-          }
-        }}
-      />
-      {note ? <span className="mt-1 block">{note}</span> : null}
-    </span>
-  );
-}
-
-function prettyKey(key: string) {
-  return key
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\bUrl\b/g, "URL")
-    .replace(/\bLede\b/g, "subtitle")
-    .replace(/\bSeo\b/gi, "SEO")
-    .replace(/^./, (c) => c.toUpperCase());
-}
-
-function SettingsForm({ settings, disabled, onSave }: { settings: Settings; disabled: boolean; onSave: (data: Settings) => void }) {
-  const [draft, setDraft] = useState(settings);
-  const GROUPS: { title: string; keys: (keyof Settings)[] }[] = [
-    { title: "Hero", keys: ["heroEyebrow", "heroTitle", "heroTagline", "heroHeadline", "heroLede", "heroPrimaryLabel", "heroSecondaryLabel", "heroImage", "heroImageAlt"] },
-    { title: "About", keys: ["aboutEyebrow", "aboutTitle", "aboutMore", "aboutImage", "aboutImageAlt", "introLeftKicker", "introLeftTitle", "introLeftBody", "introRightKicker", "introRightTitle", "introRightBody", "bio", "bioLong"] },
-    { title: "Section titles", keys: ["workTitle", "workLede", "campaignsTitle", "campaignsLede", "partnersTitle", "partnersLede", "statsTitle", "statsLede", "skillsTitle", "skillsLede"] },
-    { title: "Contact", keys: ["contactTitle", "contactHeadline", "contactLede", "email", "phone", "location", "availability", "xHandle", "xUrl", "tiktokUrl", "instagramUrl", "footerBlurb", "pressNote", "pulseLede"] },
-    { title: "SEO", keys: ["metaTitle", "metaDescription"] },
-  ];
-  return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSave(draft);
-      }}
-    >
-      <h1 className="font-display text-4xl">Copy & settings</h1>
-      <p className="text-sm muted">Every headline on the site. Long fields get a larger box.</p>
-      {GROUPS.map((group) => (
-        <div key={group.title} className="grid gap-3 rounded-card bg-white p-4">
-          <p className="text-[11px] uppercase tracking-[0.18em] muted">{group.title}</p>
-          <div className="grid gap-3 md:grid-cols-2">
-            {group.keys.map((key) => {
-              const value = String(draft[key] ?? "");
-              const long = value.length > 56 || key === "bioLong" || key === "metaDescription" || key === "contactLede" || key === "bio" || key.endsWith("Alt");
-              return (
-                <label key={key} className={`field ${long ? "md:col-span-2" : ""}`}>
-                  <span>{prettyKey(key)}</span>
-                  {long ? (
-                    <textarea value={value} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} />
-                  ) : (
-                    <input value={value} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} />
-                  )}
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-      <div className="grid gap-3 rounded-card bg-white p-4">
-        <p className="text-[11px] uppercase tracking-[0.18em] muted">Lists</p>
-        <label className="field">
-          <span>Genres</span>
-          <input value={draft.genres.join(", ")} onChange={(event) => setDraft({ ...draft, genres: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} />
-        </label>
-        <label className="field">
-          <span>Marquee words</span>
-          <input value={draft.marquee.join(", ")} onChange={(event) => setDraft({ ...draft, marquee: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} />
-        </label>
-        <label className="field">
-          <span>Budget options</span>
-          <input value={draft.budgetOptions.join(", ")} onChange={(event) => setDraft({ ...draft, budgetOptions: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} />
-        </label>
-        <div className="grid gap-2">
-          <p className="text-sm">Socials</p>
-          {draft.socials.map((item, index) => (
-            <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2">
-              <input value={item.label} onChange={(event) => {
-                const socials = [...draft.socials];
-                socials[index] = { ...item, label: event.target.value };
-                setDraft({ ...draft, socials });
-              }} />
-              <input value={item.url} onChange={(event) => {
-                const socials = [...draft.socials];
-                socials[index] = { ...item, url: event.target.value };
-                setDraft({ ...draft, socials });
-              }} />
-              <button type="button" className="text-sm text-amber" onClick={() => setDraft({ ...draft, socials: draft.socials.filter((_, i) => i !== index) })}>Remove</button>
+              <button
+                type="button"
+                className="ad-link"
+                onClick={async () => {
+                  await fetch("/api/admin/logout", { method: "POST" }).catch(() => null);
+                  router.push("/admin/login");
+                  router.refresh();
+                }}
+              >
+                Keluar
+              </button>
             </div>
-          ))}
-          <button type="button" className="justify-self-start text-sm underline" onClick={() => setDraft({ ...draft, socials: [...draft.socials, { label: "", url: "https://" }] })}>
-            Add social
-          </button>
+          </aside>
+
+          <main className="ad-main" id="admin-main">
+            {!snap.writable && section !== "" ? (
+              <p className="ad-alert warn" role="alert">
+                Mode baca saja: penyimpanan data belum tersambung, jadi perubahan belum bisa disimpan.
+              </p>
+            ) : null}
+            {error ? (
+              <p className="ad-alert error ad-dismissible" role="alert">
+                <span>{error}</span>
+                <button type="button" aria-label="Tutup pesan" onClick={clearError}>×</button>
+              </p>
+            ) : null}
+
+            {section === "" ? <Overview snap={snap} onShowVideo={showVideo} /> : null}
+            {section === "add" ? (
+              <section className="ad-page">
+                <header className="ad-page-head">
+                  <div>
+                    <h1>Tambah video</h1>
+                    <p className="muted">Tempel link dari X. Sisanya terisi otomatis.</p>
+                  </div>
+                </header>
+                <AddVideo items={work} disabled={disabled} onSnapshot={setSnap} onShowExisting={showVideo} />
+              </section>
+            ) : null}
+            {section === "work" ? (
+              <Videos
+                items={work}
+                disabled={disabled}
+                highlightId={highlightId}
+                onHighlightDone={doneHighlight}
+                onRefreshMetrics={refreshMetrics}
+                onCreate={(data) => send({ op: "create", type: "work", data }, "Video ditambahkan")}
+                onUpdate={(id, data) => send({ op: "update", type: "work", id, data }, "Video diperbarui")}
+                onDelete={(id) => send({ op: "delete", type: "work", id }, "Video dihapus")}
+                onReorder={(ids) => send({ op: "reorder", type: "work", ids }, "Urutan tersimpan")}
+              />
+            ) : null}
+            {section === "settings" ? <SettingsForm settings={snap.content.settings} disabled={disabled} onSave={(data) => send({ op: "settings", data }, "Pengaturan tersimpan")} /> : null}
+            {section === "legal" ? <LegalForm content={snap.content} disabled={disabled} onSave={(slug, data) => send({ op: "legal", slug, data }, "Halaman legal tersimpan")} /> : null}
+            {section === "stats" ? <StatsForm stats={snap.content.stats} disabled={disabled} onSave={(data) => send({ op: "stats", data }, "Angka tersimpan")} /> : null}
+            {section === "submissions" ? <Inbox items={snap.submissions} disabled={disabled} onDelete={(id) => send({ op: "delete", type: "submissions", id }, "Pesan dihapus")} /> : null}
+            {section !== "work" && FIELDS[section] ? (
+              <Collection
+                key={section}
+                type={section}
+                title={TITLES[section] || section}
+                items={((snap.content[section as keyof SiteContent] as unknown[]) || []).filter((item) => item && typeof item === "object") as Row[]}
+                fields={FIELDS[section]}
+                disabled={disabled}
+                onCreate={(data) => send({ op: "create", type: section, data }, "Ditambahkan")}
+                onUpdate={(id, data) => send({ op: "update", type: section, id, data }, "Tersimpan")}
+                onDelete={(id) => send({ op: "delete", type: section, id }, "Dihapus")}
+                onReorder={(ids) => send({ op: "reorder", type: section, ids }, "Urutan tersimpan")}
+              />
+            ) : null}
+            {!known ? <EmptyState title="Halaman tidak ditemukan" hint="Pilih menu di samping." action={<Link href="/admin" className="ad-btn primary">Ke Beranda</Link>} /> : null}
+          </main>
         </div>
+
+        <div className="ad-toast-wrap" aria-live="polite" role="status">
+          {toast ? <div key={toast.id} className={`ad-toast ${toast.kind}`}>{toast.message}</div> : null}
+        </div>
+        {dialog}
       </div>
-      <button className="btn justify-self-start" disabled={disabled}>Save settings</button>
-    </form>
-  );
-}
-
-function LegalForm({ content, disabled, onSave }: { content: SiteContent; disabled: boolean; onSave: (slug: "terms" | "privacy", data: { title: string; eyebrow: string; body: string }) => void }) {
-  return (
-    <div className="grid gap-6">
-      <h1 className="font-display text-4xl">Legal pages</h1>
-      {(["terms", "privacy"] as const).map((slug) => {
-        const page = content.legal[slug];
-        return (
-          <form
-            key={slug}
-            className="grid gap-3 rounded-card bg-white p-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const data = new FormData(event.currentTarget);
-              onSave(slug, { title: String(data.get("title") || ""), eyebrow: String(data.get("eyebrow") || ""), body: String(data.get("body") || "") });
-            }}
-          >
-            <p className="eyebrow">{slug}</p>
-            <label className="field"><span>Title</span><input name="title" defaultValue={page.title} /></label>
-            <label className="field"><span>Eyebrow</span><input name="eyebrow" defaultValue={page.eyebrow} /></label>
-            <label className="field"><span>Body</span><textarea name="body" defaultValue={page.body} className="min-h-64" /></label>
-            <button className="btn justify-self-start" disabled={disabled}>Save {slug}</button>
-          </form>
-        );
-      })}
-    </div>
-  );
-}
-
-function StatsForm({ stats, disabled, onSave }: { stats: SiteContent["stats"]; disabled: boolean; onSave: (data: SiteContent["stats"]) => void }) {
-  const [draft, setDraft] = useState(stats);
-  function setPlatform(index: number, key: "impressions" | "followers" | "videos" | "handle" | "label" | "url", value: string) {
-    const platforms = draft.platforms.map((row, i) => {
-      if (i !== index) return row;
-      if (key === "impressions" || key === "followers" || key === "videos") return { ...row, [key]: Number(value) || 0 };
-      return { ...row, [key]: value };
-    });
-    setDraft({ ...draft, platforms });
-  }
-  return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSave(draft);
-      }}
-    >
-      <h1 className="font-display text-4xl">Engagement</h1>
-      <p className="text-sm muted">X followers refresh automatically from the profile. Everything else is what you type here.</p>
-      {draft.platforms.map((row, index) => row.platform === "overall" ? null : (
-        <fieldset key={row.platform} className="grid gap-3 rounded-card bg-white p-4 md:grid-cols-3">
-          <legend className="px-1 text-sm">{row.label || row.platform}</legend>
-          <label className="field"><span>Label</span><input value={row.label} onChange={(event) => setPlatform(index, "label", event.target.value)} /></label>
-          <label className="field"><span>Handle</span><input value={row.handle} onChange={(event) => setPlatform(index, "handle", event.target.value)} /></label>
-          <label className="field"><span>Profile URL</span><input value={row.url} onChange={(event) => setPlatform(index, "url", event.target.value)} /></label>
-          <label className="field"><span>Impressions</span><input type="number" value={row.impressions} onChange={(event) => setPlatform(index, "impressions", event.target.value)} /></label>
-          <label className="field"><span>Followers</span><input type="number" value={row.followers} onChange={(event) => setPlatform(index, "followers", event.target.value)} /></label>
-          <label className="field"><span>Videos published</span><input type="number" value={row.videos} onChange={(event) => setPlatform(index, "videos", event.target.value)} /></label>
-        </fieldset>
-      ))}
-      <details className="rounded-card bg-white p-4">
-        <summary className="cursor-pointer text-sm">Legacy totals</summary>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          {(["impressionsAll", "impressions30d", "likes", "posts", "followers", "engagement", "videos"] as const).map((key) => (
-            <label key={key} className="field">
-              <span>{key}</span>
-              <input type="number" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: Number(event.target.value) })} />
-            </label>
-          ))}
-          <label className="field">
-            <span>Best post id</span>
-            <input value={draft.bestPostId} onChange={(event) => setDraft({ ...draft, bestPostId: event.target.value })} />
-          </label>
-        </div>
-      </details>
-      <button className="btn justify-self-start" disabled={disabled}>Save numbers</button>
-    </form>
-  );
-}
-
-function Inbox({ items, disabled, onDelete }: { items: AdminSnapshot["submissions"]; disabled: boolean; onDelete: (id: string) => void }) {
-  return (
-    <section>
-      <h1 className="font-display text-4xl">Collab inbox</h1>
-      <ul className="mt-4 grid gap-3">
-        {items.length === 0 ? <li className="text-sm muted">No briefs yet.</li> : null}
-        {items.map((item) => (
-          <li key={item.id} className="rounded-card bg-white p-4">
-            <p className="font-semibold">{item.name} · {item.project}</p>
-            <p className="text-sm muted">{item.budget} · {item.link}</p>
-            <p className="mt-2">{item.message}</p>
-            <button className="mt-2 text-sm text-amber" disabled={disabled} onClick={() => onDelete(item.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
-    </section>
+    </AdminContext.Provider>
   );
 }
