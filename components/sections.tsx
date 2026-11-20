@@ -8,11 +8,12 @@ import { presets, spring, stairs, textFx } from "@/lib/motion";
 import { compactNumber, fullNumber, laneLabel, partnerRoleLabel, placementLabel } from "@/lib/format";
 import { isPlaceholderEmail, safeHttpUrl, safeMediaUrl, safeXUrl } from "@/lib/safe-url";
 import type { Ambassador, Contest, Settings, Tool, WorkItem } from "@/lib/types";
+import { twimg, twimgSrcSet } from "@/lib/twimg";
 import { useSite } from "./site-provider";
 
 const LANES = [
   { id: "generation", label: "AI video" },
-  { id: "motion", label: "Motion design" },
+  { id: "motion", label: "Motion video" },
 ] as const;
 
 export function Hero() {
@@ -150,7 +151,7 @@ function VideoModal({ clip, onClose }: { clip: ModalClip | null; onClose: () => 
             autoPlay
             playsInline
             preload="metadata"
-            poster={clip.poster || undefined}
+            poster={clip.poster ? twimg(clip.poster, "medium") : undefined}
             src={clip.videoUrl}
           />
         </div>
@@ -873,11 +874,14 @@ function StillImage({
       // Remote posters are not rewritten by the image optimizer.
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={src}
+        src={twimg(src, "small")}
+        srcSet={twimgSrcSet(src)}
         alt={alt}
         width={fill ? undefined : width}
         height={fill ? undefined : height}
         loading={priority ? "eager" : "lazy"}
+        decoding="async"
+        fetchPriority={priority ? "high" : "low"}
         className={className}
         sizes={sizes}
         style={fill ? { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%" } : undefined}

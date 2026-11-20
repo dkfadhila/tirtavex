@@ -39,7 +39,7 @@ const TWEET_CORE: Field[] = [
   { key: "title", label: "Title", type: "text", group: "Basics", wide: true },
   { key: "xUrl", label: "X post URL", type: "text", group: "Basics", wide: true, help: "Paste the status link when editing an existing post." },
   { key: "note", label: "Caption / note", type: "textarea", group: "Basics", wide: true },
-  { key: "lane", label: "Showcase", type: "select", group: "Basics", options: ["generation", "motion"], optionLabels: { generation: "AI video generation", motion: "Motion design" } },
+  { key: "lane", label: "Showcase", type: "select", group: "Basics", options: ["generation", "motion"], optionLabels: { generation: "AI video generation", motion: "Motion video" } },
   { key: "category", label: "Legacy category", type: "select", group: "Basics", options: ["ai-video", "web3", "contest", "collab"] },
   { key: "tags", label: "Tags", type: "comma", group: "Basics", wide: true },
   { key: "thumb.src", label: "Thumbnail", type: "image", group: "Media", wide: true },
@@ -580,7 +580,7 @@ function Tweets({
               <span className="font-medium">Kategori Showcase</span>
               <select value={lane} onChange={(event) => setLane(event.target.value)}>
                 <option value="generation">AI video (Generation)</option>
-                <option value="motion">Motion design</option>
+                <option value="motion">Motion video</option>
               </select>
             </label>
           </div>

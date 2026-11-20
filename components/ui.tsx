@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { compactNumber, fullNumber } from "@/lib/format";
 import { safeColor, safeHttpUrl, safeXUrl } from "@/lib/safe-url";
+import { twimg, twimgSrcSet } from "@/lib/twimg";
 
 export function Reveal({
   children,
@@ -255,7 +256,7 @@ export function Thumb({
       {safe && !broken ? (
         // External thumbs come from X or Blob and are not known at build time.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={safe} alt={alt} className="absolute inset-0 h-full w-full object-cover" onError={() => setBroken(true)} />
+        <img src={twimg(safe, "small")} srcSet={twimgSrcSet(safe)} sizes="(min-width: 800px) 50vw, 100vw" alt={alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" onError={() => setBroken(true)} />
       ) : (
         <span className="sr-only">{alt}</span>
       )}
