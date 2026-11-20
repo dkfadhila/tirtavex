@@ -4,7 +4,7 @@ import { databaseUrl } from "@/lib/db";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { json } from "@/lib/api";
 import { mutateOverrides, overridesWritable } from "@/lib/overrides-mutate";
-import { addWorkByX, previewX } from "@/lib/repository";
+import { addWorkByX, HttpError, mutate, previewX } from "@/lib/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +18,46 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   return run(async () => {
     if (databaseUrl()) {
-      const result = await addWorkByX(body);
+      const raw = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+      const isCampaign = Boolean(raw.isCampaign);
+      const rawTags = Array.isArray(raw.tags) ? (raw.tags as unknown[]).map(String) : [];
+      const tags = isCampaign && !rawTags.includes("Campaign") ? [...rawTags, "Campaign"] : rawTags;
+      const result = await addWorkByX({
+        ...raw,
+        xUrl: typeof raw.xUrl === "string" ? raw.xUrl : raw.url,
+        category: isCampaign ? "contest" : raw.category,
+        tags,
+      });
+      if (!result.created) {
+        throw new HttpError(`Tweet ini sudah ada di The Cut ("${result.item.title}"). Edit dari daftar di bawah.`, 409);
+      }
+      const item = result.item;
+      const customThumb = typeof raw.thumbSrc === "string" && raw.thumbSrc.trim() ? raw.thumbSrc.trim() : "";
+      if (customThumb) {
+        await mutate({ op: "update", type: "work", id: item.id, data: { thumb: { ...item.thumb, src: customThumb } } });
+      }
+      if (isCampaign) {
+        await mutate({
+          op: "create",
+          type: "contests",
+          data: {
+            name: (typeof raw.campaignName === "string" && raw.campaignName.trim()) || item.title,
+            organizer: (typeof raw.organizer === "string" && raw.organizer.trim()) || "Campaign",
+            date: item.postedAt.slice(0, 10),
+            year: new Date(item.postedAt).getFullYear(),
+            placement: "",
+            result: `Published · ${item.metrics.impressions || 0} views`,
+            link: (typeof raw.campaignLink === "string" && raw.campaignLink.trim()) || item.xUrl,
+            entryPostId: item.id,
+            thumb: customThumb || item.thumb.src,
+            xUrl: item.xUrl,
+            placeholder: false,
+            hidden: false,
+          },
+        });
+      }
       const snapshot = await getAdminSnapshot();
-      return { ...result, snapshot };
+      return { created: true, item, snapshot };
     }
     if (!overridesWritable()) throw new Error("Storage is not connected. Nothing was saved.");
     const raw = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
