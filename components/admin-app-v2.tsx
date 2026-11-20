@@ -607,7 +607,7 @@ function Tweets({
               </div>
             ) : (
               <div className="flex items-center text-xs text-[var(--tv-ink-muted)]">
-                Poster film khusus (PNG/WebP) bisa di-upload di sini jika tidak mau pakai frame pertama dari video.
+                Poster film khusus (PNG/JPEG/WebP, maks 4.5 MB) bisa di-upload di sini jika tidak mau pakai frame pertama dari video. Otomatis diubah ke WebP & diperkecil maks 1920px.
               </div>
             )}
           </div>
