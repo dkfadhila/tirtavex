@@ -418,7 +418,7 @@ export function RateCardSection({ full = false }: { full?: boolean }) {
         <p className="ed-rate-status"><span aria-hidden className="ed-rate-dot" /> Open · DM on X @tirtavex</p>
         <motion.div className="ed-rate-flex" {...presets.fadeUp40}>
           <p className="ed-kicker">Starting at</p>
-          <p className="ed-rate-price">$500</p>
+          <p className="ed-rate-price">$50</p>
           <p className="ed-rate-sub">Final price depends on scope — discussed in DM.</p>
           <a className="btn ed-rate-cta" href={xHref} target="_blank" rel="noopener noreferrer">
             DM @tirtavex on X
