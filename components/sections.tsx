@@ -408,60 +408,23 @@ export function SkillsSection({ full = false }: { full?: boolean }) {
   );
 }
 
-const RATE_FACTORS = [
-  { label: "Length", note: "Short clip up to ~30s" },
-  { label: "Model", note: "Minimax H3 → Seedance 2.5" },
-  { label: "Style", note: "AI video or motion graphics" },
-  { label: "Extras", note: "Script, VO, SFX, post on X" },
-] as const;
-
-const RATE_EXAMPLES = [
-  { what: "30s AI video · Minimax H3", price: "≈ 50K" },
-  { what: "30s motion video", price: "≈ 100–150K" },
-  { what: "30s cinematic · Seedance 2.5", price: "≈ 200–300K" },
-] as const;
-
 export function RateCardSection({ full = false }: { full?: boolean }) {
+  const { settings } = useSite().content;
+  const xHref = safeXUrl(settings.xUrl) || "https://x.com/tirtavex";
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="rates">
       <div className="ed-wrap">
-        <TitleBlock title="Rate Card" suffix="Open for commission" copy="AI and motion video for brands, creators, Web3 projects — anything. Pricing is flexible: tell me the idea and I'll quote it." as={full ? "h1" : "h2"} />
-        <p className="ed-rate-status"><span aria-hidden className="ed-rate-dot" /> Open · X 1.1K followers · 570K+ impressions / 3 mo</p>
+        <TitleBlock title="Rate Card" suffix="Open for commission" copy="AI and motion video for brands, creators and Web3 projects. Every project is scoped together — send me a DM on X and let's talk." as={full ? "h1" : "h2"} />
+        <p className="ed-rate-status"><span aria-hidden className="ed-rate-dot" /> Open · DM on X @tirtavex</p>
         <motion.div className="ed-rate-flex" {...presets.fadeUp40}>
-          <p className="ed-kicker">Flexible pricing</p>
-          <p className="ed-rate-price">
-            <span>IDR</span> 50K – 300K
-          </p>
-          <p className="ed-rate-usd">≈ $3 – $20 per video</p>
-          <Link className="btn ed-rate-cta" href="/contact">
-            Get a quote
-          </Link>
+          <p className="ed-kicker">Starting at</p>
+          <p className="ed-rate-price">$500</p>
+          <p className="ed-rate-sub">Final price depends on scope — discussed in DM.</p>
+          <a className="btn ed-rate-cta" href={xHref} target="_blank" rel="noopener noreferrer">
+            DM @tirtavex on X
+          </a>
         </motion.div>
-        <div className="ed-rate-grid">
-          <div>
-            <p className="ed-kicker">What sets the price</p>
-            <ul className="ed-rate-list">
-              {RATE_FACTORS.map((item) => (
-                <li key={item.label}>
-                  <strong>{item.label}</strong>
-                  <span>{item.note}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="ed-kicker">For reference</p>
-            <ul className="ed-rate-list">
-              {RATE_EXAMPLES.map((item) => (
-                <li key={item.what}>
-                  <span>{item.what}</span>
-                  <strong>{item.price}</strong>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <p className="ed-rate-note">X only — @tirtavex. Paid upfront in IDR (USDT on request). Promo posts are marked as paid partnerships; no guaranteed engagement (and no financial advice for crypto).</p>
+        <p className="ed-rate-note">X only — @tirtavex. Promo posts are marked as paid partnerships.</p>
       </div>
     </section>
   );
