@@ -12,7 +12,7 @@
 
 ## Catalog
 
-Postgres keeps the 21 films posted after Black hole to the 5th dimension (20 Nov 2026, 21:35 WIB) through 24 Nov. Seven films from 10–20 Nov that were added on 24 Nov were removed. Older entries, including Dark fantasy 4K on 17 Nov, stay. Metrics on 42 older films were refreshed from the 24 Nov pull. Live catalog count after that delete is 140.
+Postgres keeps the 28 films posted 10–24 Nov 2026. A short-lived delete of the seven from 10–20 Nov was reversed; those films are back. Older entries, including Dark fantasy 4K on 17 Nov, stay. Metrics on 42 older films were refreshed from the 24 Nov pull. Live catalog count is 147.
 
 News, tutorials, and explainers that were clearly that kind of film were moved to Motion Design, including Lushan GPU, the ElevenLabs + Flow + HyperFrames workflow, and Geger on-chain hari ini.
 
