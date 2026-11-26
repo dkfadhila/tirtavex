@@ -231,6 +231,70 @@ export function WorkSection({ full = false }: { full?: boolean }) {
   );
 }
 
+export function PinnedSection() {
+  const { work } = useSite().content;
+  const [active, setActive] = useState<ModalClip | null>(null);
+  const item = work.filter((entry) => entry.pinned && entry.status === "live").sort((a, b) => b.sortOrder - a.sortOrder)[0];
+  if (!item) return null;
+  const x = safeXUrl(item.xUrl);
+  const video = safeHttpUrl(item.videoUrl);
+  const open = () => {
+    if (!video) return;
+    setActive({
+      title: item.title,
+      date: formatClipDate(item.postedAt),
+      caption: item.note,
+      videoUrl: video,
+      poster: item.thumb.src || "",
+      xUrl: x || "",
+      kicker: "Pinned",
+      stats: `${compactNumber(item.metrics.impressions)} impressions · ${compactNumber(item.metrics.likes)} likes`,
+      tags: item.tags,
+      vertical: Boolean(item.thumb.h && item.thumb.w && item.thumb.h > item.thumb.w),
+    });
+  };
+  return (
+    <section className="ed-section" id="pinned">
+      <div className="ed-wrap">
+        <TitleBlock title="Pinned" as="h2" />
+        <motion.article className="ed-split" {...presets.fadeUp40}>
+          <div className={mediaClass(item.thumb)}>
+            {video ? (
+              <button type="button" className="ed-media-play" aria-label={`Play ${item.title}`} onClick={open}>
+                {item.thumb.src ? <StillImage src={item.thumb.src} alt={item.title} sizes="(min-width: 860px) 55vw, 100vw" fill /> : null}
+              </button>
+            ) : item.thumb.src ? (
+              <StillImage src={item.thumb.src} alt={item.title} sizes="(min-width: 860px) 55vw, 100vw" fill />
+            ) : (
+              <span>Pinned</span>
+            )}
+            <div className="ed-media-stats" aria-label="Post metrics">
+              <span>{compactNumber(item.metrics.impressions)} impressions</span>
+              <span>{compactNumber(item.metrics.likes)} likes</span>
+            </div>
+          </div>
+          <div className="ed-card" style={{ borderTop: 0, paddingTop: 0, minHeight: 0 }}>
+            <p className="ed-kicker">Pinned · {laneLabel(item.lane)}</p>
+            <h3 className="t-statement">{item.title}</h3>
+            {item.note ? <p>{item.note}</p> : null}
+            <ul className="ed-tags">
+              {item.tags.map((tag) => (
+                <li key={tag}>{tag}</li>
+              ))}
+            </ul>
+            {x ? (
+              <a className="ed-link" href={x} target="_blank" rel="noopener noreferrer">
+                View on X ↗
+              </a>
+            ) : null}
+          </div>
+        </motion.article>
+      </div>
+      <VideoModal clip={active} onClose={() => setActive(null)} />
+    </section>
+  );
+}
+
 export function CampaignSection({ full = false }: { full?: boolean }) {
   const { settings, contests, work } = useSite().content;
   const [sort, setSort] = useState<"newest" | "order">("newest");
