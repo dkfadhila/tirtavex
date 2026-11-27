@@ -12,8 +12,8 @@ type Sort = "newest" | "views" | "order";
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: "all", label: "Semua" },
-  { value: "generation", label: "AI video" },
-  { value: "motion", label: "Motion video" },
+  { value: "generation", label: "AI Generated" },
+  { value: "motion", label: "Motion Design" },
   { value: "campaign", label: "Campaign" },
   { value: "hidden", label: "Disembunyikan" },
 ];
@@ -219,7 +219,7 @@ export function Videos({
                   <span className="ad-media-empty">Tanpa thumbnail</span>
                 )}
                 <div className="ad-badges over">
-                  <span className="ad-badge solid">{lane === "motion" ? "Motion video" : "AI video"}</span>
+                  <span className="ad-badge solid">{lane === "motion" ? "Motion Design" : "AI Generated"}</span>
                   {isCampaignWork(item) ? <span className="ad-badge solid">Campaign</span> : null}
                   {item.pinned ? <span className="ad-badge accent">Dipin</span> : null}
                   {hidden ? <span className="ad-badge warn">Disembunyikan</span> : null}

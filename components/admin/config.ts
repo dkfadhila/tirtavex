@@ -17,7 +17,7 @@ export const TWEET_CORE: Field[] = [
   { key: "title", label: "Judul", type: "text", group: "Dasar", wide: true },
   { key: "xUrl", label: "Link post X", type: "text", group: "Dasar", wide: true, help: "Link status X dari video ini." },
   { key: "note", label: "Caption", type: "textarea", group: "Dasar", wide: true },
-  { key: "lane", label: "Tampil di", type: "select", group: "Dasar", options: ["generation", "motion"], optionLabels: { generation: "AI video", motion: "Motion video" } },
+  { key: "lane", label: "Tampil di", type: "select", group: "Dasar", options: ["generation", "motion"], optionLabels: { generation: "AI Generated", motion: "Motion Design" } },
   { key: "category", label: "Kategori lama", type: "select", group: "Dasar", options: ["ai-video", "web3", "contest", "collab"] },
   { key: "tags", label: "Tag", type: "comma", group: "Dasar", wide: true },
   { key: "thumb.src", label: "Poster / thumbnail", type: "image", group: "Media", wide: true },

@@ -99,7 +99,7 @@ export function placementLabel(placement: string): string {
 }
 
 export function laneLabel(lane: string): string {
-  return lane === "motion" ? "Motion video" : "AI video";
+  return lane === "motion" ? "Motion Design" : "AI Generated";
 }
 
 export function partnerRoleLabel(role: string): string {

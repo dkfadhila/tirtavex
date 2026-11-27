@@ -12,8 +12,8 @@ import { twimg, twimgSrcSet } from "@/lib/twimg";
 import { useSite } from "./site-provider";
 
 const LANES = [
-  { id: "generation", label: "AI video" },
-  { id: "motion", label: "Motion video" },
+  { id: "generation", label: "AI Generated" },
+  { id: "motion", label: "Motion Design" },
 ] as const;
 
 export function Hero() {
@@ -185,11 +185,11 @@ function VideoModal({ clip, onClose }: { clip: ModalClip | null; onClose: () => 
 
 export function WorkSection({ full = false }: { full?: boolean }) {
   const { settings, work } = useSite().content;
-  const [lane, setLane] = useState<(typeof LANES)[number]["id"]>("generation");
-  const [sort, setSort] = useState<"newest" | "impressions">("newest");
+  const [lane, setLane] = useState<(typeof LANES)[number]["id"] | "featured">(full ? "generation" : "featured");
+  const [sort, setSort] = useState<"newest" | "impressions">(full ? "newest" : "impressions");
   const [active, setActive] = useState<ModalClip | null>(null);
   const matched = work
-    .filter((item) => item.lane === lane)
+    .filter((item) => lane === "featured" || item.lane === lane)
     .sort((a, b) =>
       sort === "impressions"
         ? b.metrics.impressions - a.metrics.impressions
@@ -224,7 +224,7 @@ export function WorkSection({ full = false }: { full?: boolean }) {
             </motion.div>
           ))}
         </div>
-        {shown.length === 0 ? <p className="ed-note">No {laneLabel(lane).toLowerCase()} pieces yet.</p> : null}
+        {shown.length === 0 ? <p className="ed-note">No {lane === "featured" ? "films" : laneLabel(lane).toLowerCase()} pieces yet.</p> : null}
       </div>
       <VideoModal clip={active} onClose={() => setActive(null)} />
     </section>
@@ -366,43 +366,19 @@ export function PartnerSection({ full = false }: { full?: boolean }) {
 
 export function StatsSection({ full = false }: { full?: boolean }) {
   const { settings, stats } = useSite().content;
-  const [live, setLive] = useState<Record<string, { followers: number }>>({});
-
-  useEffect(() => {
-    let alive = true;
-    const load = async () => {
-      try {
-        const response = await fetch("/api/stats", { cache: "no-store" });
-        if (!response.ok) return;
-        const payload = (await response.json()) as { platforms?: { platform: string; followers: number }[] };
-        if (!alive || !Array.isArray(payload.platforms)) return;
-        const next: Record<string, { followers: number }> = {};
-        for (const row of payload.platforms) {
-          if (row.platform === "x") next[row.platform] = { followers: row.followers };
-        }
-        setLive(next);
-      } catch {
-        /* keep static numbers */
-      }
-    };
-    load();
-    const timer = setInterval(load, 300000);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-    };
-  }, []);
-
   const platforms = stats.platforms.filter((row) => row.platform !== "overall");
   return (
     <section className={full ? "ed-page ed-section" : "ed-section"} id="stats">
       <div className="ed-wrap">
         <TitleBlock title={settings.statsTitle || "Engagement"} suffix="By platform" copy={settings.statsLede} as={full ? "h1" : "h2"} />
-        <p className="ed-stats-updated">Updated 12 November 2026 · UTC</p>
+        <p className="ed-stats-updated">Updated 24 Nov 2026</p>
+        <p className="ed-stats-note">
+          X impressions, posts, and engagement cover 25 Sep–24 Nov 2026: original posts and quotes. Replies and reposts are not included. TikTok and Instagram are still the 12 Nov 2026 counts.
+        </p>
         <div className="ed-platforms">
           {platforms.map((row) => {
             const profile = safeHttpUrl(row.url);
-            const feed = live[row.platform];
+            const x = row.platform === "x";
             return (
               <article key={row.platform} className="ed-platform">
                 <header className="ed-platform-head">
@@ -416,9 +392,10 @@ export function StatsSection({ full = false }: { full?: boolean }) {
                   {row.handle ? <span>@{row.handle.replace(/^@/, "")}</span> : null}
                 </header>
                 <div className="ed-platform-metrics">
-                  <Stat value={row.impressions} label={row.platform === "x" ? "Impressions (Last 3 months)" : "Impressions"} />
-                  <Stat value={feed ? feed.followers : row.followers} label="Followers" />
-                  <Stat value={row.videos} label="Video published" />
+                  <Stat value={row.impressions} label={x ? "Impressions · 60 days" : "Impressions"} />
+                  <Stat value={row.followers} label="Followers" />
+                  <Stat value={row.videos} label={x ? "Posts · 60 days" : "Videos published"} />
+                  {x ? <Rate value={row.engagement} label="Engagement" /> : null}
                 </div>
               </article>
             );
@@ -697,7 +674,7 @@ function WorkCard({ item, onPlay }: { item: WorkItem; onPlay: (clip: ModalClip) 
           <span>{compactNumber(item.metrics.likes)} likes</span>
         </div>
       </div>
-      <p className="ed-kicker">{laneLabel(item.lane)}</p>
+      <p className={item.lane === "motion" ? "ed-lane-badge motion" : "ed-lane-badge"}>{laneLabel(item.lane)}</p>
       <h3>{item.title}</h3>
       {item.note ? <p>{item.note}</p> : null}
       <ul className="ed-tags">
@@ -825,12 +802,22 @@ function Stat({ value, label }: { value: number; label: string; placeholder?: bo
   );
 }
 
+function Rate({ value, label }: { value: number; label: string }) {
+  const text = `${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+  return (
+    <div>
+      <span className="ed-num">{text}</span>
+      <p className="ed-stat-label">{label}</p>
+    </div>
+  );
+}
+
 function CountUp({ value }: { value: number }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.6 });
-  const [shown, setShown] = useState(0);
-  const display = reduce || !inView ? (reduce ? fullNumber(value) : "0") : fullNumber(Math.round(shown));
+  const inView = useInView(ref, { once: true, amount: 0.2 });
+  const [shown, setShown] = useState(value);
+  const display = reduce || !inView ? fullNumber(value) : fullNumber(Math.round(shown));
   useEffect(() => {
     if (!inView || reduce) return;
     const controls = animate(0, value, {

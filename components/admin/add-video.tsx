@@ -208,7 +208,7 @@ export function AddVideo({
           <div className="min-w-0">
             <p className="ad-card-title">{String(item.title || title || "Video baru")}</p>
             <p className="muted">
-              {saved.campaign ? "Tampil di Video dan Campaigns." : lane === "motion" ? "Tampil di Motion video." : "Tampil di AI video."}
+              {saved.campaign ? "Tampil di Video dan Campaigns." : lane === "motion" ? "Tampil di Motion Design." : "Tampil di AI Generated."}
             </p>
           </div>
         </div>
@@ -335,8 +335,8 @@ export function AddVideo({
               value={lane}
               onChange={setLane}
               options={[
-                { value: "generation", label: "AI video" },
-                { value: "motion", label: "Motion video" },
+                { value: "generation", label: "AI Generated" },
+                { value: "motion", label: "Motion Design" },
               ]}
             />
           </div>
